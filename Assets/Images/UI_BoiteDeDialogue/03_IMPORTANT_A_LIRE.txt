@@ -1,0 +1,6 @@
+- Quand un personnage quelconque parle : utiliser la boîte simple
+- Quand l'avatar parle : ajouter les fleurs de lys à la boîte
+
+Couleur pour le nom : #7d6e26
+Couleur pour le texte : #49411b
+
