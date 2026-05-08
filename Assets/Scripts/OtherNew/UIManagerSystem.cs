@@ -8,9 +8,6 @@ public class UIManagerSystem : MonoBehaviour
     public static UIManagerSystem Instance;
 
     [SerializeField] private Menu menu;
-    // On garde les valeurs en mémoire pour les rétablir plus tard
-    private float _defaultRotationSpeed;
-    private float _defaultVerticalSpeed;
 
     [SerializeField] private GameObject crosshair;
 
@@ -37,12 +34,6 @@ public class UIManagerSystem : MonoBehaviour
 
     void Start()
     {
-        // On récupère les vitesses de base via l'Instance de la caméra
-        //if (ThirdPersonCameraController.Instance != null)
-        //{
-        //    _defaultRotationSpeed = ThirdPersonCameraController.Instance.RotationSpeed;
-        //    _defaultVerticalSpeed = ThirdPersonCameraController.Instance.VerticalSpeed;
-        //}
         ToggleCursor(false); // On commence sans le curseur
     }
     private void Update()

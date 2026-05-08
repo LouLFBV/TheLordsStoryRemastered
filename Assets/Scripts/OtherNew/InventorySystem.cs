@@ -230,6 +230,34 @@ public class InventorySystem : MonoBehaviour
         return contentEquipment;
     }
 
+    public int GetItemCount(ItemData item)
+    {
+        if (item == null) return 0;
+
+        // On récupère la liste cible selon le type
+        List<ItemInInventory> targetList = item.itemType switch
+        {
+            ItemType.Equipment or ItemType.Consumable => contentEquipment,
+            ItemType.Ressource => contentRessources,
+            ItemType.Craft => contentCraft,
+            _ => null // Cas inconnu
+        };
+
+        if (targetList == null)
+        {
+            Debug.LogWarning($"Type d'item {item.itemType} non géré dans GetItemCount");
+            return 0;
+        }
+
+        // Version boucle simple (plus performante que LINQ si appelée souvent)
+        int total = 0;
+        foreach (var slot in targetList)
+        {
+            if (slot.itemData == item)
+                total += slot.count;
+        }
+        return total;
+    }
 
     public void RefreshContent()
     {

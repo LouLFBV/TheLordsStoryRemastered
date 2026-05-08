@@ -34,8 +34,7 @@ public class Marchand : InteractableBase
     [SerializeField] private UINavigationManager navManager;
 
     private void Start()
-    {
-       
+    {       
         animator = GetComponent<Animator>();
     }
     public override void OnInteract(PlayerInteractor player)
@@ -180,61 +179,85 @@ public class Marchand : InteractableBase
         }
         foreach (ItemData produit in produits)
         {
+            //GameObject produitItem = Instantiate(produitItemPrefab, parentsProduits.transform);
+
+            //Transform childName = produitItem.transform.GetChild(0); // Correct usage of GetChild
+            //if (childName.TryGetComponent<TextMeshProUGUI>(out var nameText))
+            //{
+            //    nameText.text = produit.itemName; // Assign the name text
+            //}
+
+
+            //Transform childIcone = produitItem.transform.GetChild(1); // Correct usage of GetChild
+            //if (childIcone.TryGetComponent<Image>(out var spriteRenderer))
+            //{
+            //    spriteRenderer.sprite = produit.visual; // Assign the sprite
+            //}
+
+            //Transform childDescription = produitItem.transform.GetChild(2); // Correct usage of GetChild
+            //if (childDescription.TryGetComponent<TextMeshProUGUI>(out var descriptionText))
+            //{
+            //    descriptionText.text = produit.description; // Assign the description text
+            //}
+
+            //Transform childButton = produitItem.transform.GetChild(3); // Correct usage of GetChild
+            //if (childButton.TryGetComponent<Button>(out var button))
+            //{
+            //    button.onClick.RemoveAllListeners();
+            //    button.onClick.AddListener(delegate { Acheter(produit); });
+            //    VerfifButtonAcheter(produit, button); // Check if the button should be interactable
+
+            //    if(button.TryGetComponent<UISelectable>(out var uiSelectable))
+            //    {
+            //        navManager.elements.Add(uiSelectable);
+            //    }
+            //}
+
+            //Transform childPrix = produitItem.transform.GetChild(4).GetChild(0); // Correct usage of GetChild
+            //if (childPrix.TryGetComponent<TextMeshProUGUI>( out var prixText))
+            //{
+            //    prixText.text = "Prix : " + produit.prix.ToString(); // Assign the price text
+            //}
+
             GameObject produitItem = Instantiate(produitItemPrefab, parentsProduits.transform);
 
-            Transform childName = produitItem.transform.GetChild(0); // Correct usage of GetChild
-            if (childName.TryGetComponent<TextMeshProUGUI>(out var nameText))
+            if (produitItem.TryGetComponent<UIProduitMarchand>(out var produitMarchand))
             {
-                nameText.text = produit.itemName; // Assign the name text
-            }
+                int remainingStock = produit.maxStack - InventorySystem.instance.GetItemCount(produit);
+                produitMarchand.nameItem.text = produit.itemName; // Assign the name text
+                produitMarchand.iconeItem.sprite = produit.visual; // Assign the sprite
+                produitMarchand.priceItem.text = "Prix : " + produit.prix.ToString(); // Assign the price text
+                produitMarchand.stockItemInInventory.text = "Stock : " + InventorySystem.instance.GetItemCount(produit).ToString() + "/" + produit.maxStack.ToString() + ")"; // Assign the stock text
+                produitMarchand.priceFillStock.text = ((produit.maxStack - InventorySystem.instance.GetItemCount(produit)) * produit.prix).ToString() ; // Assign the price to fill stock text
+
+                produitMarchand.buyButton.onClick.RemoveAllListeners();
+                produitMarchand.buyButton.onClick.AddListener(delegate { Acheter(produit); });
+                VerfifButtonAcheter(produit, produitMarchand.buyButton); // Check if the button should be interactable
 
 
-            Transform childIcone = produitItem.transform.GetChild(1); // Correct usage of GetChild
-            if (childIcone.TryGetComponent<Image>(out var spriteRenderer))
-            {
-                spriteRenderer.sprite = produit.visual; // Assign the sprite
-            }
-
-            Transform childDescription = produitItem.transform.GetChild(2); // Correct usage of GetChild
-            if (childDescription.TryGetComponent<TextMeshProUGUI>(out var descriptionText))
-            {
-                descriptionText.text = produit.description; // Assign the description text
-            }
-
-            Transform childButton = produitItem.transform.GetChild(3); // Correct usage of GetChild
-            if (childButton.TryGetComponent<Button>(out var button))
-            {
-                button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(delegate { Acheter(produit); });
-                VerfifButtonAcheter(produit, button); // Check if the button should be interactable
-
-                if(button.TryGetComponent<UISelectable>(out var uiSelectable))
-                {
-                    navManager.elements.Add(uiSelectable);
-                }
-            }
-
-            Transform childPrix = produitItem.transform.GetChild(4).GetChild(0); // Correct usage of GetChild
-            if (childPrix.TryGetComponent<TextMeshProUGUI>( out var prixText))
-            {
-                prixText.text = "Prix : " + produit.prix.ToString(); // Assign the price text
+                produitMarchand.buyButton.onClick.RemoveAllListeners();
+                produitMarchand.buyButton.onClick.AddListener(delegate { Acheter(produit, remainingStock); });
+                VerfifButtonAcheter(produit, produitMarchand.buyButton, remainingStock); // Check if the button should be interactable
             }
         }
     }
 
-    private void Acheter(ItemData produit)
+    private void Acheter(ItemData produit, int amount = 1)
     {
-        if (player.Wallet.SpendGold(produit.prix) && !InventorySystem.instance.IsFullEquipment())
-        {
-            InventorySystem.instance.AddItem(produit);
-            RefreshProduits();
+        for (int i = 0; i < amount; i++)
+        {        
+            if (player.Wallet.SpendGold(produit.prix) && !InventorySystem.instance.IsFullEquipment())
+            {
+                InventorySystem.instance.AddItem(produit);
+            }
         }
+        RefreshProduits();
     }
 
-    private void VerfifButtonAcheter(ItemData produit, Button buyButton)
+    private void VerfifButtonAcheter(ItemData produit, Button buyButton, int amount = 1)
     {
         Image buttonImage = buyButton.GetComponent<Image>();
-        if (player.Wallet.CanSpendGold(produit.prix)  && VerifInInventoryAndPalette(produit))
+        if (player.Wallet.CanSpendGold(produit.prix*amount)  && VerifInInventoryAndPalette(produit))
         {
             buttonImage.color = Color.green; // Set button color to white if affordable
             buyButton.interactable = true;
@@ -248,24 +271,24 @@ public class Marchand : InteractableBase
 
     private bool VerifInInventoryAndPalette(ItemData produit)
     {
-        foreach (ItemInInventory item in Inventory.instance.GetContent())
+        foreach (ItemInInventory item in InventorySystem.instance.GetContent())
         {
             if ((item.itemData.itemType == ItemType.Equipment  || item.itemData.itemType == ItemType.Key || item.itemData.itemType == ItemType.QuestItem) && item.itemData == produit)
             {
                 return false; // Item is already in the inventory
             }
         }
-        if (Palette.instance.equipmentWeapon1Item == produit || Palette.instance.equipmentWeapon2Item == produit)
+        if (PaletteSystem.instance.slotManager.weapons[0].itemData == produit || PaletteSystem.instance.slotManager.weapons[1].itemData)
         {
             return false; // Item is already equipped in weapon slot 1
         }
-        else if (Palette.instance.equipmentObject1Item == produit  && (Palette.instance.equipmentObject1Item.itemType == ItemType.Equipment || 
-            Palette.instance.equipmentObject1Item.itemType == ItemType.Key ||
-            Palette.instance.equipmentObject1Item.itemType == ItemType.QuestItem) 
+        else if (PaletteSystem.instance.slotManager.objects[0].itemData == produit  && (PaletteSystem.instance.slotManager.objects[0].itemData.itemType == ItemType.Equipment ||
+            PaletteSystem.instance.slotManager.objects[0].itemData.itemType == ItemType.Key ||
+            PaletteSystem.instance.slotManager.objects[0].itemData.itemType == ItemType.QuestItem) 
             ||
-            (Palette.instance.equipmentObject2Item == produit && (Palette.instance.equipmentObject2Item.itemType == ItemType.Equipment ||
-            Palette.instance.equipmentObject2Item.itemType == ItemType.Key ||
-            Palette.instance.equipmentObject2Item.itemType == ItemType.QuestItem)))
+            (PaletteSystem.instance.slotManager.objects[1].itemData == produit && (PaletteSystem.instance.slotManager.objects[1].itemData.itemType == ItemType.Equipment ||
+            PaletteSystem.instance.slotManager.objects[1].itemData.itemType == ItemType.Key ||
+            PaletteSystem.instance.slotManager.objects[1].itemData.itemType == ItemType.QuestItem)))
         {
             return false; // Item is already equipped in armor slots
         }
