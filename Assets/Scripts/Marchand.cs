@@ -12,6 +12,7 @@ public class Marchand : InteractableBase
     [SerializeField] private Animator animatorPanelProduits;
     private DialogueManager.Speaker currentSpeaker;
     [SerializeField] private GameObject isActive;
+    [SerializeField] private TextMeshProUGUI goldPlayer;
 
     [Header("PNJ")]
     public string namePNJ;
@@ -173,52 +174,13 @@ public class Marchand : InteractableBase
     // GESTION DES PRODUITS
     private void RefreshProduits()
     {
+        UpdateGoldPlayerText();
         foreach (Transform child in parentsProduits.transform)
         {
             Destroy(child.gameObject);
         }
         foreach (ItemData produit in produits)
         {
-            //GameObject produitItem = Instantiate(produitItemPrefab, parentsProduits.transform);
-
-            //Transform childName = produitItem.transform.GetChild(0); // Correct usage of GetChild
-            //if (childName.TryGetComponent<TextMeshProUGUI>(out var nameText))
-            //{
-            //    nameText.text = produit.itemName; // Assign the name text
-            //}
-
-
-            //Transform childIcone = produitItem.transform.GetChild(1); // Correct usage of GetChild
-            //if (childIcone.TryGetComponent<Image>(out var spriteRenderer))
-            //{
-            //    spriteRenderer.sprite = produit.visual; // Assign the sprite
-            //}
-
-            //Transform childDescription = produitItem.transform.GetChild(2); // Correct usage of GetChild
-            //if (childDescription.TryGetComponent<TextMeshProUGUI>(out var descriptionText))
-            //{
-            //    descriptionText.text = produit.description; // Assign the description text
-            //}
-
-            //Transform childButton = produitItem.transform.GetChild(3); // Correct usage of GetChild
-            //if (childButton.TryGetComponent<Button>(out var button))
-            //{
-            //    button.onClick.RemoveAllListeners();
-            //    button.onClick.AddListener(delegate { Acheter(produit); });
-            //    VerfifButtonAcheter(produit, button); // Check if the button should be interactable
-
-            //    if(button.TryGetComponent<UISelectable>(out var uiSelectable))
-            //    {
-            //        navManager.elements.Add(uiSelectable);
-            //    }
-            //}
-
-            //Transform childPrix = produitItem.transform.GetChild(4).GetChild(0); // Correct usage of GetChild
-            //if (childPrix.TryGetComponent<TextMeshProUGUI>( out var prixText))
-            //{
-            //    prixText.text = "Prix : " + produit.prix.ToString(); // Assign the price text
-            //}
-
             GameObject produitItem = Instantiate(produitItemPrefab, parentsProduits.transform);
 
             if (produitItem.TryGetComponent<UIProduitMarchand>(out var produitMarchand))
@@ -294,4 +256,9 @@ public class Marchand : InteractableBase
         }
         return true; // Item is not in the inventory
     }    
+
+    private void UpdateGoldPlayerText()
+    {
+        goldPlayer.text = player.Wallet.GetGoldAmount().ToString();
+    }
 }

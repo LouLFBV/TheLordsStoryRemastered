@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class UIManagerSystem : MonoBehaviour
 {
@@ -25,6 +26,10 @@ public class UIManagerSystem : MonoBehaviour
     [Header("Cursor Settings")]
     [SerializeField] private float cursorSpeed = 1000f;
     private bool _isCursorVisible = false;
+
+    [Header("Scroll Settings")]
+    [SerializeField] private float scrollSpeed = 20f;
+    [SerializeField] private float scrollSensitivity = 0.025f;
 
     void Awake()
     {
@@ -50,6 +55,14 @@ public class UIManagerSystem : MonoBehaviour
             newMousePos.y = Mathf.Clamp(newMousePos.y, 0, Screen.height);
             Mouse.current.WarpCursorPosition(newMousePos);
         }
+
+
+        Vector2 scrollInput = PlayerController.Instance.Input.GamepadScroll;
+        if (scrollInput.y != 0)
+        {
+            SimulateScroll(scrollInput.y * scrollSpeed);
+        }
+
 
         // 2. Clic (Plus permissif)
         if (PlayerController.Instance.Input.SubmitPressed)
@@ -88,18 +101,36 @@ public class UIManagerSystem : MonoBehaviour
             EventSystem.current.SetSelectedGameObject(clickedObject);
         }
     }
+
+    private void SimulateScroll(float scrollAmount)
+    {
+        PointerEventData eventData = new PointerEventData(EventSystem.current);
+        eventData.position = Mouse.current.position.ReadValue();
+
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+
+        foreach (var result in results)
+        {
+            // On cherche un composant ScrollRect dans l'objet touché ou ses parents
+            ScrollRect scrollRect = result.gameObject.GetComponentInParent<ScrollRect>();
+            if (scrollRect != null)
+            {
+                // On applique le scroll
+                float scrollDelta = scrollAmount * scrollSensitivity * Time.unscaledDeltaTime;
+
+                float newPos = scrollRect.verticalNormalizedPosition + scrollDelta;
+                scrollRect.verticalNormalizedPosition = Mathf.Clamp01(newPos);
+                break; // On ne scroll que le premier panneau trouvé
+            }
+        }
+    }
+
     public void ToggleCursor(bool isVisible)
     {
         _isCursorVisible = isVisible;
         Cursor.visible = isVisible;
         Cursor.lockState = isVisible ? CursorLockMode.None : CursorLockMode.Locked;
-
-        // Si l'UI est visible, vitesse = 0. Sinon, on remet les vitesses par défaut.
-        //if (ThirdPersonCameraController.Instance != null)
-        //{
-        //    ThirdPersonCameraController.Instance.RotationSpeed = isVisible ? 0f : _defaultRotationSpeed;
-        //    ThirdPersonCameraController.Instance.VerticalSpeed = isVisible ? 0f : _defaultVerticalSpeed;
-        //}
     }
 
     public void OpenPanel(UIPanelType type)

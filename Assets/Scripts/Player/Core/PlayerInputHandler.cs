@@ -15,6 +15,7 @@ public class PlayerInputHandler : MonoBehaviour
     public Vector2 MouseLook { get; private set; }
     public Vector2 GamepadLook { get; private set; }
     public Vector2 NavigateLook { get; private set; }
+    public Vector2 GamepadScroll { get; private set; }
     public bool AttackPressed { get; private set; }
     public bool AttackSpecialPressed { get; private set; }
     public bool RollPressed { get; private set; }
@@ -67,17 +68,28 @@ public class PlayerInputHandler : MonoBehaviour
         input.actions["LookGamepad"].performed += ctx => GamepadLook = ctx.ReadValue<Vector2>() * gamepadSensitivity;
         input.actions["LookGamepad"].canceled += _ => GamepadLook = Vector2.zero;
 
-        // --- NAVIGATE (UI) avec Deadzone ---
+        // --- NAVIGATE (UI) ---
         input.actions["Navigate"].performed += ctx => {
             Vector2 raw = ctx.ReadValue<Vector2>();
-            // Important pour l'UI : si le stick "drifte" un peu, le curseur ne bougera pas tout seul
+            // Deadzone appliquée
             NavigateLook = (raw.magnitude < stickDeadzone) ? Vector2.zero : raw;
-            NavigationInput = NavigateLook; // Pour garder tes deux variables synchro
+            NavigationInput = NavigateLook;
         };
         input.actions["Navigate"].canceled += _ => {
             NavigateLook = Vector2.zero;
             NavigationInput = Vector2.zero;
         };
+
+        // --- SCROLL (UI) ---
+        input.actions["Scroll"].performed += ctx => {
+            Vector2 raw = ctx.ReadValue<Vector2>();
+            // On utilise GamepadScroll UNIQUEMENT pour le défilement
+            GamepadScroll = (raw.magnitude < stickDeadzone) ? Vector2.zero : raw;
+        };
+        input.actions["Scroll"].canceled += _ => {
+            GamepadScroll = Vector2.zero;
+        };
+
 
 
         input.actions["Attack"].performed += ctx => AttackPressed = true;
@@ -129,8 +141,8 @@ public class PlayerInputHandler : MonoBehaviour
 
         // UI
 
-        input.actions["Navigate"].performed += ctx => NavigationInput = ctx.ReadValue<Vector2>(); ;
-        input.actions["Navigate"].canceled += ctx => NavigationInput = Vector2.zero;
+        //input.actions["Navigate"].performed += ctx => NavigationInput = ctx.ReadValue<Vector2>(); ;
+        //input.actions["Navigate"].canceled += ctx => NavigationInput = Vector2.zero;
 
         input.actions["Submit"].performed += ctx => SubmitPressed = true;
         input.actions["Submit"].canceled += ctx => SubmitPressed = false;
@@ -175,6 +187,7 @@ public class PlayerInputHandler : MonoBehaviour
         // Reset des valeurs pour éviter que le perso continue de courir 
         // si on ouvre l'inventaire en plein sprint
         MoveInput = Vector2.zero;
+        GamepadScroll = Vector2.zero;
         AttackPressed = false;
         AttackSpecialPressed = false;
         RollPressed = false;
