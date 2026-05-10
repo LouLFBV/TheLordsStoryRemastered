@@ -63,7 +63,7 @@ public class NewItemActionsSystem : MonoBehaviour
         }
 
         // Équiper
-        else if (player.Input.EqupActionPressed && equipmentItemButton.gameObject.activeInHierarchy)
+        else if (player.Input.EquipActionPressed && equipmentItemButton.gameObject.activeInHierarchy)
         {
             EquipActionButton();
         }

@@ -37,7 +37,7 @@ public class PlayerInputHandler : MonoBehaviour
     public bool InteractPressed { get; private set; }
     public bool DialogueNextPressed { get; private set; }
     public bool UseActionPressed { get; private set; }
-    public bool EqupActionPressed { get; private set; }
+    public bool EquipActionPressed { get; private set; }
     public bool DropActionPressed { get; private set; }
     public bool DestroyActionPressed { get; private set; }
     public bool UnequipActionPressed { get; private set; }
@@ -165,8 +165,8 @@ public class PlayerInputHandler : MonoBehaviour
         input.actions["UseAction"].performed += ctx => UseActionPressed = true;
         input.actions["UseAction"].canceled += ctx => UseActionPressed = false;
 
-        input.actions["EquipAction"].performed += ctx => EqupActionPressed = true;
-        input.actions["EquipAction"].canceled += ctx => EqupActionPressed = false;
+        input.actions["EquipAction"].performed += ctx => EquipActionPressed = true;
+        input.actions["EquipAction"].canceled += ctx => EquipActionPressed = false;
 
         input.actions["DropAction"].performed += ctx => DropActionPressed = true;
         input.actions["DropAction"].canceled += ctx => DropActionPressed = false;
@@ -217,6 +217,8 @@ public class PlayerInputHandler : MonoBehaviour
     public void UseAttackSpecialInput() => AttackSpecialPressed = false;
     public void UseLockOnInput() => LockOnPressed = false;
     public void UseSubmitInput() => SubmitPressed = false;
+    public void UseCancelInput() => CancelPressed = false;
     public void UseDropActionInput() => DropActionPressed = false;
-    public void UseEquipActionInput() => EqupActionPressed = false;
+    public void UseEquipActionInput() => EquipActionPressed = false;
+    public void UseUseActionInput() => UseActionPressed = false;
 }

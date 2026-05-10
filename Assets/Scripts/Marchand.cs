@@ -1,4 +1,5 @@
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,6 +14,7 @@ public class Marchand : InteractableBase
     private DialogueManager.Speaker currentSpeaker;
     [SerializeField] private GameObject isActive;
     [SerializeField] private TextMeshProUGUI goldPlayer;
+    private UIProduitMarchand currentSlotProduit;
 
     [Header("PNJ")]
     public string namePNJ;
@@ -133,6 +135,7 @@ public class Marchand : InteractableBase
         }
     }
 
+
     public void EndCommerce()
     {
         isOnDial = false;
@@ -172,6 +175,40 @@ public class Marchand : InteractableBase
         }
     }
     // GESTION DES PRODUITS
+    private void Update()
+    {
+        // On ne vérifie les touches que si le panel est ouvert et qu'un slot est survolé
+        if (animatorPanelProduits.GetBool("PanelIsOpen"))
+        {
+            if( currentSlotProduit != null)
+            {
+                // Achat simple (Touche E / EquipAction)
+                if (player.Input.EquipActionPressed)
+                {
+                    Acheter(currentSlotProduit.itemData);
+                    player.Input.UseEquipActionInput(); // Consomme l'input
+                }
+                // Remplir le stock (Touche 1 / UseAction)
+                else if (player.Input.UseActionPressed)
+                {
+                    int remainingToFill = currentSlotProduit.itemData.maxStack - InventorySystem.instance.GetItemCount(currentSlotProduit.itemData);
+                    if (remainingToFill > 0)
+                    {
+                        Acheter(currentSlotProduit.itemData, remainingToFill);
+                    }
+                    player.Input.UseUseActionInput();
+                }
+            }
+            if (player.Input.CancelPressed || player.Input.CloseMenuPressed)
+            {
+                EndCommerce();
+                player.Input.UseCancelInput();
+                player.Input.UseCloseMenuInput();
+            }
+        }
+    }
+
+    // Version corrigée de RefreshProduits
     private void RefreshProduits()
     {
         UpdateGoldPlayerText();
@@ -179,27 +216,35 @@ public class Marchand : InteractableBase
         {
             Destroy(child.gameObject);
         }
+
         foreach (ItemData produit in produits)
         {
             GameObject produitItem = Instantiate(produitItemPrefab, parentsProduits.transform);
 
             if (produitItem.TryGetComponent<UIProduitMarchand>(out var produitMarchand))
             {
-                int remainingStock = produit.maxStack - InventorySystem.instance.GetItemCount(produit);
-                produitMarchand.nameItem.text = produit.itemName; // Assign the name text
-                produitMarchand.iconeItem.sprite = produit.visual; // Assign the sprite
-                produitMarchand.priceItem.text = "Prix : " + produit.prix.ToString(); // Assign the price text
-                produitMarchand.stockItemInInventory.text = "Stock : " + InventorySystem.instance.GetItemCount(produit).ToString() + "/" + produit.maxStack.ToString() + ")"; // Assign the stock text
-                produitMarchand.priceFillStock.text = ((produit.maxStack - InventorySystem.instance.GetItemCount(produit)) * produit.prix).ToString() ; // Assign the price to fill stock text
+                // IMPORTANT : On initialise le slot
+                produitMarchand.Setup(produit, this);
 
+                int currentStock = InventorySystem.instance.GetItemCount(produit);
+                int remainingStock = produit.maxStack - currentStock;
+
+                produitMarchand.nameItem.text = produit.itemName;
+                produitMarchand.iconeItem.sprite = produit.visual;
+                produitMarchand.priceItem.text = "Prix : " + produit.prix;
+                produitMarchand.stockItemInInventory.text = $"Stock : {currentStock}/{produit.maxStack}";
+                produitMarchand.priceFillStock.text = (remainingStock * produit.prix).ToString();
+
+                // On vide et on met UN SEUL listener (Acheter simple par exemple sur le bouton)
                 produitMarchand.buyButton.onClick.RemoveAllListeners();
-                produitMarchand.buyButton.onClick.AddListener(delegate { Acheter(produit); });
-                VerfifButtonAcheter(produit, produitMarchand.buyButton); // Check if the button should be interactable
+                produitMarchand.buyButton.onClick.AddListener(() => Acheter(produit));
+                VerfifButtonAcheter(produit, produitMarchand.buyButton);
 
+                produitMarchand.fillStockButton.onClick.RemoveAllListeners();
+                produitMarchand.fillStockButton.onClick.AddListener(() => Acheter(produit, remainingStock));
+                VerfifButtonAcheter(produit, produitMarchand.fillStockButton, remainingStock);
 
-                produitMarchand.buyButton.onClick.RemoveAllListeners();
-                produitMarchand.buyButton.onClick.AddListener(delegate { Acheter(produit, remainingStock); });
-                VerfifButtonAcheter(produit, produitMarchand.buyButton, remainingStock); // Check if the button should be interactable
+                produitMarchand.actionButtonsGroup.SetActive(false);
             }
         }
     }
@@ -255,7 +300,14 @@ public class Marchand : InteractableBase
             return false; // Item is already equipped in armor slots
         }
         return true; // Item is not in the inventory
-    }    
+    }
+
+
+    // Cette méthode sera appelée par UIProduitMarchand
+    public void SetCurrentHoveredItem(UIProduitMarchand slot)
+    {
+        currentSlotProduit = slot;
+    }
 
     private void UpdateGoldPlayerText()
     {
