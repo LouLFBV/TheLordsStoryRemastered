@@ -53,7 +53,7 @@ public class Item : WorldDisappearOnCollected
 
     private void OnDestroy()
     {
-        Debug.Log($"[Item] {name} destroyed. Triggering popup: {triggerPopupOnOpen}, Message: {popupMessage}");
+        //Debug.Log($"[Item] {name} destroyed. Triggering popup: {triggerPopupOnOpen}, Message: {popupMessage}");
         if (triggerPopupOnOpen)
             PopupEvent.Raise(popupMessage);
     }

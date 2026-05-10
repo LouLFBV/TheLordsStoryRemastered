@@ -65,7 +65,7 @@ public class ForgeronUI : MonoBehaviour
     {
         if (!isOpen) return;
 
-        if(player.Input.EquipActionPressed)
+        if (player.Input.EquipActionPressed)
         {
             UpgradeItem(_currentItem);
             player.Input. UseEquipActionInput();

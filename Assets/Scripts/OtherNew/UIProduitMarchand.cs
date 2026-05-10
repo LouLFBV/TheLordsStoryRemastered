@@ -16,24 +16,33 @@ public class UIProduitMarchand : MonoBehaviour, IPointerEnterHandler, IPointerEx
     public GameObject actionButtonsGroup;
 
     private Marchand _marchandScript;
+    private PNJAcheteur _pnjAcheteur;
 
     public void Setup(ItemData data, Marchand marchand)
     {
         itemData = data;
         _marchandScript = marchand;
     }
+    public void SetupPNJAcheteur(ItemData data, PNJAcheteur pnjAchetuer)
+    {
+        itemData = data;
+        _pnjAcheteur = pnjAchetuer;
+    }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
         actionButtonsGroup.SetActive(true);
         // On dit au marchand que c'est nous l'item sélectionné
-        _marchandScript.SetCurrentHoveredItem(this);
+        if (_marchandScript != null) _marchandScript.SetCurrentHoveredItem(this);
+        if (_pnjAcheteur != null) _pnjAcheteur.SetCurrentHoveredItem(this);
+
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         actionButtonsGroup.SetActive(false);
         // On prévient le marchand qu'on ne le survole plus
-        _marchandScript.SetCurrentHoveredItem(null);
+        if (_marchandScript != null) _marchandScript.SetCurrentHoveredItem(null);
+        if (_pnjAcheteur != null) _pnjAcheteur.SetCurrentHoveredItem(this);
     }
 }

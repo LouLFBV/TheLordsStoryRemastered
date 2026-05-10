@@ -30,8 +30,6 @@ public class PNJParent : InteractableBase
     [HideInInspector] public float inputCooldown = 1f; // Temps d'attente après lancement du dialogue
     protected float dialogueStartTime;
     [HideInInspector] public float dialogueEndTime;
-
-    [SerializeField] protected UINavigationManager navManager;
     
     private void Start()
     {
@@ -51,16 +49,13 @@ public class PNJParent : InteractableBase
         animatorPanelProduits.SetBool("PanelIsOpen", false);
         isActive.SetActive(false);
         animator.SetBool("isTalking", false);
-        if (navManager != null)
-        {
-            navManager.onCancel = null;
-        }
     }
     public void EndDiscussion(bool haveItems = true)
     {
         if (!haveItems)
         {
             player.StateMachine.ChangeState(PlayerStateType.Idle);
+            Debug.Log("[PNJParent] EndDiscussion() - No items, just ending dialogue");
             isOnDial = false;
         }
         firstDialoguePnjDone = false;
@@ -100,10 +95,5 @@ public class PNJParent : InteractableBase
     {
         animatorPanelProduits.SetBool("PanelIsOpen", true);
         isActive.SetActive(true);
-
-        if (navManager != null)
-        {
-            navManager.onCancel = EndCommerce;
-        }
     }
 }

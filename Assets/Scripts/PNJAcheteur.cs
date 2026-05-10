@@ -3,18 +3,16 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System;
+using Unity.VisualScripting;
+using static UnityEditor.Progress;
 
 public class PNJAcheteur : PNJParent
 {
     [Header("Pourcentage de Rachat")]
     [SerializeField] private float pourcentageDeRachat = 0.9f;
 
-    [Header("Reputation")]
-    [SerializeField] private int pointMinReputationPourGain;
-    [SerializeField] private float pourcentageGain;
-    [SerializeField] private int pointmaxReputationPourPerte;
-    [SerializeField] private float pourcentagePerte;
-
+    private UIProduitMarchand currentSlotProduit;
+    [SerializeField] private TextMeshProUGUI goldPlayer;
     public override void OnInteract(PlayerInteractor player)
     {
         if (isOnDial && Time.time - dialogueStartTime > inputCooldown && !animatorPanelProduits.GetBool("PanelIsOpen"))
@@ -22,7 +20,7 @@ public class PNJAcheteur : PNJParent
             if (!DialogueManager.instance.SkipOrFinish(currentSpeaker) && !DialogueManager.instance.inDelay)
                 StartDialogue(sentences);
         }
-        else
+        else if (!animatorPanelProduits.GetBool("PanelIsOpen"))
         {
             StartDialogue(sentences);
             SetTargeted(false, playerTransform);
@@ -48,6 +46,47 @@ public class PNJAcheteur : PNJParent
         }
     }
     // GESTION DU DIALOGUE
+
+
+    private void Update()
+    {
+        if (animatorPanelProduits.GetBool("PanelIsOpen"))
+        {
+            if (currentSlotProduit != null)
+            {
+                // Vendre 1 unité (Touche E)
+                if (player.Input.EquipActionPressed)
+                {
+                    currentSlotProduit.buyButton.onClick.Invoke(); // Utilise la bonne méthode (Vendre, VendreWeapons, etc.)
+                    player.Input.UseEquipActionInput();
+                }
+
+                // Vendre TOUT le stock (Touche F / UseAction)
+                if (player.Input.UseActionPressed)
+                {
+                    // On vérifie si le bouton "Vendre tout" est actif sur ce slot
+                    if (currentSlotProduit.fillStockButton != null && currentSlotProduit.fillStockButton.gameObject.activeSelf)
+                    {
+                        currentSlotProduit.fillStockButton.onClick.Invoke();
+                    }
+                    else
+                    {
+                        // S'il n'y a qu'un exemplaire, on vend juste celui-là
+                        currentSlotProduit.buyButton.onClick.Invoke();
+                    }
+                    player.Input.UseUseActionInput();
+                }
+            }
+
+            // Fermeture
+            if (player.Input.CancelPressed || player.Input.CloseMenuPressed)
+            {
+                EndCommerce();
+                player.Input.UseCancelInput();
+                player.Input.UseCloseMenuInput();
+            }
+        }
+    }
     public void StartDialogue(List<DialogueResponse> sentence)
     {
         if (index == 0 && leghthSentences == sentences.Count)
@@ -138,8 +177,11 @@ public class PNJAcheteur : PNJParent
     }
 
     // GESTION DES PRODUITS
+    
     private void RefreshProduits()
     {
+        UpdateGoldPlayerText();
+        currentSlotProduit = null;
         // CLEAR PARENTS PRODUITS
         foreach (Transform child in parentsProduits.transform)
         {
@@ -147,30 +189,30 @@ public class PNJAcheteur : PNJParent
         }
 
         // INVENTORY
-        foreach (ItemInInventory produit in Inventory.instance.GetContent())
+        foreach (ItemInInventory produit in InventorySystem.instance.GetContent())
         {
             VerifItemData(produit.itemData, Vendre);
         }
 
         // OBJECTS
-        foreach (ItemInInventory produit in Palette.instance.objects)
+        foreach (ItemInInventory produit in PaletteSystem.instance.slotManager.weapons)
         {
             VerifItemData(produit.itemData, VendreObjects);
         }
 
         // WEAPONS
-        foreach (ItemInInventory produit in Palette.instance.weapons)
+        foreach (ItemInInventory produit in PaletteSystem.instance.slotManager.objects)
         {
             VerifItemData(produit.itemData, VendreWeapons);
         }
 
         // EQUIPMENT
-
-        VerifItemData(Equipment.instance.equipmentHeadItem, VendreEquipment);
-        VerifItemData(Equipment.instance.equipmentChestItem, VendreEquipment);
-        VerifItemData(Equipment.instance.equipmentHandsItem, VendreEquipment);
-        VerifItemData(Equipment.instance.equipmentLegsItem, VendreEquipment);
-        VerifItemData(Equipment.instance.equipmentFeetItem, VendreEquipment);
+        VerifItemData(EquipmentSystem.instance.arrowItemInInventory.itemData, VendreWeapons);
+        VerifItemData(EquipmentSystem.instance.headSlot.item, VendreEquipment);
+        VerifItemData(EquipmentSystem.instance.chestSlot.item, VendreEquipment);
+        VerifItemData(EquipmentSystem.instance.handsSlot.item, VendreEquipment);
+        VerifItemData(EquipmentSystem.instance.legsSlot.item, VendreEquipment);
+        VerifItemData(EquipmentSystem.instance.feetSlot.item, VendreEquipment);
         if (VerifIfEmpty())
         {
             EndCommerce();
@@ -179,92 +221,105 @@ public class PNJAcheteur : PNJParent
 
     private void VerifItemData(ItemData item, Action<ItemData> methode)
     {
-        if (item != null && item.prix > 0)
+        if (item == null || item.prix <= 0) return;
+
+        GameObject produitItem = Instantiate(produitItemPrefab, parentsProduits.transform);
+
+        if (produitItem.TryGetComponent<UIProduitMarchand>(out var slot))
         {
-            GameObject produitItem = Instantiate(produitItemPrefab, parentsProduits.transform);
-            Transform childName = produitItem.transform.GetChild(0); // Correct usage of GetChild
-            if (childName.TryGetComponent<TextMeshProUGUI>(out var nameText))
-            {
-                nameText.text = item.itemName; // Assign the name text
-            }
-            Transform childIcone = produitItem.transform.GetChild(1); // Correct usage of GetChild
-            if (childIcone.TryGetComponent<Image>(out var spriteRenderer))
-            {
-                spriteRenderer.sprite = item.visual; // Assign the sprite
-            }
-            // PRIX
-            Transform childPrix = produitItem.transform.GetChild(2); // Correct usage of GetChild
-            if (childPrix.TryGetComponent<TextMeshProUGUI>(out var prixText))
-            {
-                if(PlayerStats.instance.reputationData.reputationPoints == 0)
-                    prixText.text = Mathf.RoundToInt(item.prix * pourcentageDeRachat).ToString(); 
+            // 1. Initialisation de base
+            slot.SetupPNJAcheteur(item, this);
+            slot.nameItem.text = item.itemName;
+            slot.iconeItem.sprite = item.visual;
 
-                else if (PlayerStats.instance.reputationData.reputationPoints <= pointmaxReputationPourPerte)
-                        prixText.text = Mathf.RoundToInt(item.prix * (pourcentageDeRachat-pourcentagePerte)).ToString(); 
+            // 2. Calcul des prix de rachat
+            int prixUnitaireRachat = Mathf.RoundToInt(item.prix * pourcentageDeRachat);
+            slot.priceItem.text = prixUnitaireRachat.ToString();
 
-                else if (PlayerStats.instance.reputationData.reputationPoints >= pointmaxReputationPourPerte)
-                        prixText.text = Mathf.RoundToInt(item.prix * (pourcentageDeRachat+pourcentageGain)).ToString(); 
+            // 3. Gestion du stock
+            int currentStock = InventorySystem.instance.GetItemCount(item);
+            if (slot.stockItemInInventory != null)
+                slot.stockItemInInventory.text = $"Stock : {currentStock}/{slot.itemData.maxStack}";
 
-            }
-            // BUTTON
-            Transform childButton = produitItem.transform.GetChild(3); // Correct usage of GetChild
-            if (childButton.TryGetComponent<Button>(out var button))
+            // 4. Bouton Vendre 1 unité
+            slot.buyButton.onClick.RemoveAllListeners();
+            slot.buyButton.onClick.AddListener(() => methode(item));
+
+            // 5. Bouton Vendre TOUT le stock (si tu as un bouton dédié comme fillStockButton)
+            if (slot.fillStockButton != null)
             {
-                button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(() => methode(item));
-                if (button.gameObject.TryGetComponent<UISelectable>(out var uiSelectable))
+                if (currentStock > 1)
                 {
-                    navManager.elements.Add(uiSelectable);
+                    slot.fillStockButton.gameObject.SetActive(true);
+                    int prixTotalRachat = prixUnitaireRachat * currentStock;
+                    slot.priceFillStock.text = prixTotalRachat.ToString();
+
+                    slot.fillStockButton.onClick.RemoveAllListeners();
+                    // On boucle sur la méthode de vente pour vendre tout le stock
+                    slot.fillStockButton.onClick.AddListener(() => {
+                        for (int i = 0; i < currentStock; i++) methode(item);
+                    });
+                }
+                else
+                {
+                    slot.fillStockButton.gameObject.SetActive(false);
                 }
             }
+
+            slot.actionButtonsGroup.SetActive(false);
         }
     }
     private void Vendre(ItemData produit)
     {
-        PlayerStats.instance.goldAmount += Mathf.RoundToInt(produit.prix * pourcentageDeRachat);
-        PlayerStats.instance.UpdateGoldText();
-        Inventory.instance.RemoveItem(produit);
+        PlayerController.Instance.Wallet.AddGold(Mathf.RoundToInt(produit.prix * pourcentageDeRachat));
+        InventorySystem.instance.RemoveItem(produit);
         RefreshProduits();
     }
     private void VendreObjects(ItemData produit)
     {
-        PlayerStats.instance.goldAmount += Mathf.RoundToInt(produit.prix * pourcentageDeRachat);
-        PlayerStats.instance.UpdateGoldText();
-        if (produit == Palette.instance.equipmentObject1Item)
-            Palette.instance.DesequipObject(1);
-        else if (produit == Palette.instance.equipmentObject2Item)
-            Palette.instance.DesequipObject(2);
-        Inventory.instance.RemoveItem(produit);
+        PlayerController.Instance.Wallet.AddGold(Mathf.RoundToInt(produit.prix * pourcentageDeRachat));
+        if (produit == PaletteSystem.instance.slotManager.objects[0].itemData)
+            PaletteSystem.instance.equipmentManager.RemoveObject(1);
+        else if (produit == PaletteSystem.instance.slotManager.objects[1].itemData)
+            PaletteSystem.instance.equipmentManager.RemoveObject(2);
+        InventorySystem.instance.RemoveItem(produit);
         RefreshProduits();
     }
     private void VendreWeapons(ItemData produit)
     {
-        PlayerStats.instance.goldAmount += Mathf.RoundToInt(produit.prix * pourcentageDeRachat);
-        PlayerStats.instance.UpdateGoldText();
-        if (produit == Palette.instance.equipmentWeapon1Item)
-            Palette.instance.DesequipWeapon(1);
-        else if (produit == Palette.instance.equipmentWeapon2Item)
-            Palette.instance.DesequipWeapon(2);
-        Inventory.instance.RemoveItem(produit);
+        PlayerController.Instance.Wallet.AddGold(Mathf.RoundToInt(produit.prix * pourcentageDeRachat));
+        if (produit == PaletteSystem.instance.slotManager.weapons[0].itemData)
+            PaletteSystem.instance.equipmentManager.DesequipWeapon(1);
+        else if (produit == PaletteSystem.instance.slotManager.weapons[1].itemData)
+            PaletteSystem.instance.equipmentManager.DesequipWeapon(2);
+        InventorySystem.instance.RemoveItem(produit);
         RefreshProduits();
     }
 
     private void VendreEquipment(ItemData produit)
     {
-        PlayerStats.instance.goldAmount += Mathf.RoundToInt(produit.prix * pourcentageDeRachat);
-        PlayerStats.instance.UpdateGoldText();
-        Equipment.instance.DesequipEquipment(produit.equipmentType);
-        Inventory.instance.RemoveItem(produit);
+        PlayerController.Instance.Wallet.AddGold(Mathf.RoundToInt(produit.prix * pourcentageDeRachat));
+        EquipmentSystem.instance.DesequipEquipment(produit.equipmentType);
+        InventorySystem.instance.RemoveItem(produit);
         RefreshProduits();
     }
 
     private bool VerifIfEmpty()
     {
-        return Inventory.instance.GetContent().Count == 0 && 
-            Palette.instance.equipmentObject1Item == null && Palette.instance.equipmentObject2Item == null &&
-            Palette.instance.equipmentWeapon1Item == null && Palette.instance.equipmentWeapon2Item == null && 
-            Equipment.instance.equipmentHeadItem == null && Equipment.instance.equipmentChestItem == null &&
-            Equipment.instance.equipmentHandsItem == null && Equipment.instance.equipmentLegsItem == null &&
-            Equipment.instance.equipmentFeetItem == null;
-    }    
+        return PaletteSystem.instance.slotManager.weapons[0].itemData == null && PaletteSystem.instance.slotManager.weapons[1].itemData == null &&
+                EquipmentSystem.instance.headSlot.item == null && EquipmentSystem.instance.chestSlot.item == null &&
+                EquipmentSystem.instance.handsSlot.item == null && EquipmentSystem.instance.legsSlot.item == null &&
+                EquipmentSystem.instance.feetSlot.item == null && InventorySystem.instance.GetContent().Count == 0;
+    }
+
+    // Cette méthode sera appelée par UIProduitMarchand
+    public void SetCurrentHoveredItem(UIProduitMarchand slot)
+    {
+        currentSlotProduit = slot;
+    }
+
+    private void UpdateGoldPlayerText()
+    {
+        goldPlayer.text = player.Wallet.GetGoldAmount().ToString();
+    }
 }
