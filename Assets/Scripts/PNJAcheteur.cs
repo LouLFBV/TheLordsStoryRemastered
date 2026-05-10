@@ -177,45 +177,79 @@ public class PNJAcheteur : PNJParent
     }
 
     // GESTION DES PRODUITS
-    
+
     private void RefreshProduits()
     {
         UpdateGoldPlayerText();
         currentSlotProduit = null;
-        // CLEAR PARENTS PRODUITS
+
         foreach (Transform child in parentsProduits.transform)
         {
             Destroy(child.gameObject);
         }
 
-        // INVENTORY
+        // Liste pour garder une trace des items déjà affichés dans le shop
+        List<ItemData> itemsTraites = new List<ItemData>();
+
+        // 1. INVENTAIRE (Cumul)
         foreach (ItemInInventory produit in InventorySystem.instance.GetContent())
         {
-            VerifItemData(produit.itemData, Vendre);
+            if (!itemsTraites.Contains(produit.itemData))
+            {
+                VerifItemData(produit.itemData, Vendre);
+                itemsTraites.Add(produit.itemData);
+            }
         }
 
-        // OBJECTS
+        // 2. ARMES (Cumul)
         foreach (ItemInInventory produit in PaletteSystem.instance.slotManager.weapons)
         {
-            VerifItemData(produit.itemData, VendreObjects);
+            if (produit.itemData != null && !itemsTraites.Contains(produit.itemData))
+            {
+                VerifItemData(produit.itemData, VendreWeapons);
+                itemsTraites.Add(produit.itemData);
+            }
         }
 
-        // WEAPONS
+        // 3. OBJETS RAPIDES (Cumul)
         foreach (ItemInInventory produit in PaletteSystem.instance.slotManager.objects)
         {
-            VerifItemData(produit.itemData, VendreWeapons);
+            if (produit.itemData != null && !itemsTraites.Contains(produit.itemData))
+            {
+                VerifItemData(produit.itemData, VendreObjects);
+                itemsTraites.Add(produit.itemData);
+            }
         }
 
-        // EQUIPMENT
-        VerifItemData(EquipmentSystem.instance.arrowItemInInventory.itemData, VendreWeapons);
-        VerifItemData(EquipmentSystem.instance.headSlot.item, VendreEquipment);
-        VerifItemData(EquipmentSystem.instance.chestSlot.item, VendreEquipment);
-        VerifItemData(EquipmentSystem.instance.handsSlot.item, VendreEquipment);
-        VerifItemData(EquipmentSystem.instance.legsSlot.item, VendreEquipment);
-        VerifItemData(EquipmentSystem.instance.feetSlot.item, VendreEquipment);
+        // 4. ÉQUIPEMENT (Cumul)
+        // On vérifie les flèches
+        ItemData arrows = EquipmentSystem.instance.arrowItemInInventory.itemData;
+        if (arrows != null && !itemsTraites.Contains(arrows))
+        {
+            VerifItemData(arrows, VendreWeapons);
+            itemsTraites.Add(arrows);
+        }
+
+        // On vérifie chaque slot d'armure
+        VerifSlotEquipement(EquipmentSystem.instance.headSlot.item, itemsTraites);
+        VerifSlotEquipement(EquipmentSystem.instance.chestSlot.item, itemsTraites);
+        VerifSlotEquipement(EquipmentSystem.instance.handsSlot.item, itemsTraites);
+        VerifSlotEquipement(EquipmentSystem.instance.legsSlot.item, itemsTraites);
+        VerifSlotEquipement(EquipmentSystem.instance.feetSlot.item, itemsTraites);
+
         if (VerifIfEmpty())
         {
             EndCommerce();
+        }
+    }
+
+    // Petite méthode d'aide pour l'équipement
+    private void VerifSlotEquipement(ItemData item, List<ItemData> liste)
+    {
+        if (item != null && !liste.Contains(item))
+        {
+            VerifItemData(item, VendreEquipment);
+            liste.Add(item);
         }
     }
 
@@ -239,7 +273,7 @@ public class PNJAcheteur : PNJParent
             // 3. Gestion du stock
             int currentStock = InventorySystem.instance.GetItemCount(item);
             if (slot.stockItemInInventory != null)
-                slot.stockItemInInventory.text = $"Stock : {currentStock}/{slot.itemData.maxStack}";
+                slot.stockItemInInventory.text = $"Stock : {currentStock}";
 
             // 4. Bouton Vendre 1 unité
             slot.buyButton.onClick.RemoveAllListeners();

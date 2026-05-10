@@ -264,7 +264,7 @@ public class Marchand : InteractableBase
     private void VerfifButtonAcheter(ItemData produit, Button buyButton, int amount = 1)
     {
         Image buttonImage = buyButton.GetComponent<Image>();
-        if (player.Wallet.CanSpendGold(produit.prix*amount)  && VerifInInventoryAndPalette(produit))
+        if (player.Wallet.CanSpendGold(produit.prix*amount)  && VerifInInventoryAndPalette(produit) && InventorySystem.instance.GetItemCount(produit) < produit.maxStack)
         {
             buttonImage.color = Color.green; // Set button color to white if affordable
             buyButton.interactable = true;
