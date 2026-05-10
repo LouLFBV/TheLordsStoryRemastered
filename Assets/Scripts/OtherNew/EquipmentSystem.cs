@@ -20,6 +20,8 @@ public class EquipmentSystem : MonoBehaviour
 
     public Slot headSlot, chestSlot, handsSlot, legsSlot, feetSlot, arrowSlot;
 
+    public Slot[] equipmentSlots;
+
     [SerializeField] private GameObject[] quiverArrowsInEquipment = new GameObject[10];
 
 
@@ -45,6 +47,8 @@ public class EquipmentSystem : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        equipmentSlots = new Slot[] { headSlot, chestSlot, handsSlot, legsSlot, feetSlot, arrowSlot };
     }
     public bool IsEquipped(ItemData item)
     {

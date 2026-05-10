@@ -88,9 +88,10 @@ public class Forgeron : PNJParent
         {
             if (!VerifIfEmpty())
             {
+                Debug.Log("Opening Forgeron UI");
                 forgeronUI.OpenForgeonUI();
             }
-            EndDiscussion();
+            EndDiscussion(!VerifIfEmpty());
             return;
         }
 
@@ -136,13 +137,9 @@ public class Forgeron : PNJParent
 
     private bool VerifIfEmpty()
     {
-        if (InventorySystem.instance.GetContent().Count == 0)
-            return PaletteSystem.instance.slotManager.weapons[0] == null && PaletteSystem.instance.slotManager.weapons[1] == null && 
+        return PaletteSystem.instance.slotManager.weapons[0].itemData == null && PaletteSystem.instance.slotManager.weapons[1].itemData == null &&
                 EquipmentSystem.instance.headSlot.item == null && EquipmentSystem.instance.chestSlot.item == null &&
                 EquipmentSystem.instance.handsSlot.item == null && EquipmentSystem.instance.legsSlot.item == null &&
-                EquipmentSystem.instance.feetSlot.item == null ;
-        else
-            return InventorySystem.instance.GetContentEquipment().Count == 0;
+                EquipmentSystem.instance.feetSlot.item == null && InventorySystem.instance.GetContent().Count == 0;
     }
-
 }

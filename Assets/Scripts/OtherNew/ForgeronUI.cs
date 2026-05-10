@@ -74,6 +74,13 @@ public class ForgeronUI : MonoBehaviour
         {
             DestroyItem(_currentItem);
         }
+        else if (player.Input.CancelPressed || player.Input.CloseMenuPressed)
+        {
+            Debug.Log("Fermeture du forgeron UI via input Cancel ou Menu");
+            CloseForgeronUI();
+            player.Input.UseCancelInput();
+            player.Input.UseCloseMenuInput();
+        }
     }
     public void OpenForgeonUI()
     {
@@ -98,30 +105,75 @@ public class ForgeronUI : MonoBehaviour
 
     public void UpdateForgeronUI(EquipmentType equipmentType)
     {
-        Debug.Log("Mise à jour de l'UI du forgeron pour le type d'équipement : " + equipmentType);
+        Debug.Log($"Mise à jour de l'UI du forgeron : {equipmentType}");
 
-        List<ItemInInventory> items = inventory.GetContentEquipment();
-        items = GetContentForEquipment(items, equipmentType);
+        // 1. On prépare une liste globale qui va contenir TOUT ce qui est éligible à la forge
+        List<ItemData> allEligibleItems = new List<ItemData>();
 
+        // AJOUTER : Les items de l'inventaire filtrés par type
+        var inventoryItems = inventory.GetContentEquipment();
+        foreach (var item in GetContentForEquipment(inventoryItems, equipmentType))
+        {
+            if (item.itemData != null) allEligibleItems.Add(item.itemData);
+        }
+
+        // AJOUTER : Les items de la palette (armes équipées) si le type correspond
+        foreach (var slotPalette in PaletteSystem.instance.slotManager.weapons)
+        {
+            if (slotPalette.itemData != null && slotPalette.itemData.equipmentType == equipmentType)
+            {
+                allEligibleItems.Add(slotPalette.itemData);
+            }
+        }
+
+        foreach (var slotPalette in EquipmentSystem.instance.equipmentSlots)
+        {
+            if (slotPalette.item != null && slotPalette.item.equipmentType == equipmentType)
+            {
+                allEligibleItems.Add(slotPalette.item);
+            }
+        }
+
+
+        // AJOUTER : La flèche équipée (si on cherche des armes à distance ou munitions)
+        var arrowItem = EquipmentSystem.instance.arrowItemInInventory;
+        if (arrowItem != null && arrowItem.itemData != null && arrowItem.itemData.equipmentType == equipmentType)
+        {
+            allEligibleItems.Add(arrowItem.itemData);
+        }
+
+
+        // 2. On nettoie l'UI
         CleanForgeronUI();
+
+        // 3. On remplit les slots UI à partir de notre liste consolidée
         for (int i = 0; i < slotForgeronUIs.Count; i++)
         {
-            var slot = slotForgeronUIs[i];
-            if (i >= items.Count)
+            if (i < allEligibleItems.Count)
             {
-                Debug.Log("Pas assez d'items pour remplir tous les slots du forgeron UI");
-                slot.itemData = null;
-                slot.equipmentIcone.enabled = false;
-                slot.equipmentIcone.sprite = null;
+                FillForgeronSlot(slotForgeronUIs[i], allEligibleItems[i]);
             }
             else
             {
-                Debug.Log("Remplissage du slot " + i + " avec l'item : " + items[i].itemData.itemName);
-                slot.itemData = items[i].itemData;
-                slot.equipmentIcone.enabled = true;
-                slot.equipmentIcone.sprite = items[i].itemData.visual;
+                ClearForgeronSlot(slotForgeronUIs[i]);
             }
         }
+    }
+
+    // Méthode helper pour remplir un slot (évite la répétition)
+    private void FillForgeronSlot(SlotForgeronUI slot, ItemData data)
+    {
+        slot.itemData = data;
+        slot.equipmentIcone.sprite = data.visual;
+        slot.equipmentIcone.enabled = true;
+    }
+
+    // Méthode helper pour vider un slot
+    private void ClearForgeronSlot(SlotForgeronUI slot)
+    {
+        slot.itemData = null;
+        slot.equipmentIcone.sprite = null;
+        slot.equipmentIcone.enabled = false;
     }
     private void CleanForgeronUI()
     {

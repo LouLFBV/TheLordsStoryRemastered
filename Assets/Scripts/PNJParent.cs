@@ -56,8 +56,13 @@ public class PNJParent : InteractableBase
             navManager.onCancel = null;
         }
     }
-    public void EndDiscussion()
+    public void EndDiscussion(bool haveItems = true)
     {
+        if (!haveItems)
+        {
+            player.StateMachine.ChangeState(PlayerStateType.Idle);
+            isOnDial = false;
+        }
         firstDialoguePnjDone = false;
         firstDialoguePlayerDone = false;
         animator.SetBool("isTalking", false);
