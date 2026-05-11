@@ -252,7 +252,6 @@ public class PNJAcheteur : PNJParent
             liste.Add(item);
         }
     }
-
     private void VerifItemData(ItemData item, Action<ItemData> methode)
     {
         if (item == null || item.prix <= 0) return;
@@ -261,25 +260,47 @@ public class PNJAcheteur : PNJParent
 
         if (produitItem.TryGetComponent<UIProduitMarchand>(out var slot))
         {
-            // 1. Initialisation de base
             slot.SetupPNJAcheteur(item, this);
             slot.nameItem.text = item.itemName;
             slot.iconeItem.sprite = item.visual;
 
-            // 2. Calcul des prix de rachat
+            // --- CORRECTION DU STOCK ---
+            // 1. On compte dans l'inventaire
+            int currentStock = InventorySystem.instance.GetItemCount(item);
+
+            // 2. On ajoute +1 si l'item est équipé dans la palette d'armes
+            foreach (var weaponSlot in PaletteSystem.instance.slotManager.weapons)
+            {
+                if (weaponSlot.itemData == item) currentStock++;
+            }
+
+            // 3. On ajoute +1 si l'item est dans les objets rapides
+            foreach (var objectSlot in PaletteSystem.instance.slotManager.objects)
+            {
+                if (objectSlot.itemData == item) currentStock++;
+            }
+
+            // 4. On ajoute +1 si l'item est porté en armure
+            if (EquipmentSystem.instance.headSlot.item == item) currentStock++;
+            if (EquipmentSystem.instance.chestSlot.item == item) currentStock++;
+            if (EquipmentSystem.instance.handsSlot.item == item) currentStock++;
+            if (EquipmentSystem.instance.legsSlot.item == item) currentStock++;
+            if (EquipmentSystem.instance.feetSlot.item == item) currentStock++;
+
+            // 5. Cas spécial des flèches (si elles sont équipées)
+            if (EquipmentSystem.instance.arrowItemInInventory.itemData == item) currentStock++;
+
+            // Affichage du stock total réel
+            if (slot.stockItemInInventory != null)
+                slot.stockItemInInventory.text = $"Stock : {currentStock}";
+            // ---------------------------
+
             int prixUnitaireRachat = Mathf.RoundToInt(item.prix * pourcentageDeRachat);
             slot.priceItem.text = prixUnitaireRachat.ToString();
 
-            // 3. Gestion du stock
-            int currentStock = InventorySystem.instance.GetItemCount(item);
-            if (slot.stockItemInInventory != null)
-                slot.stockItemInInventory.text = $"Stock : {currentStock}";
-
-            // 4. Bouton Vendre 1 unité
             slot.buyButton.onClick.RemoveAllListeners();
             slot.buyButton.onClick.AddListener(() => methode(item));
 
-            // 5. Bouton Vendre TOUT le stock (si tu as un bouton dédié comme fillStockButton)
             if (slot.fillStockButton != null)
             {
                 if (currentStock > 1)
@@ -289,7 +310,6 @@ public class PNJAcheteur : PNJParent
                     slot.priceFillStock.text = prixTotalRachat.ToString();
 
                     slot.fillStockButton.onClick.RemoveAllListeners();
-                    // On boucle sur la méthode de vente pour vendre tout le stock
                     slot.fillStockButton.onClick.AddListener(() => {
                         for (int i = 0; i < currentStock; i++) methode(item);
                     });
