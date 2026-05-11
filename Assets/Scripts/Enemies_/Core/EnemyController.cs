@@ -97,7 +97,14 @@ public class EnemyController : MonoBehaviour, ICombatant
             foreach (var attack in setup.usableAttacks)
             {
                 if (!_attackToWeaponMap.ContainsKey(attack))
+                {
                     _attackToWeaponMap.Add(attack, setup);
+                    Debug.Log($"[EnemyController] Mapping attack {attack.animationName} to weapon {setup.weaponData.itemName}.");
+                }
+                else
+                {
+                    Debug.LogWarning($"[EnemyController] Duplicate attack {attack.animationName} found in weapon setups. Only the first mapping will be used.");
+                }
             }
         }
 
@@ -236,6 +243,8 @@ public class EnemyController : MonoBehaviour, ICombatant
         {
             Combat.UpdateWeaponDetector(detector);
         }
+        else
+            Debug.LogWarning($"[EnemyController] No WeaponDamageDetector found for attack {weapon.animationName} in weaponDict.");
     }
     public void PrepareAttack(AttackSO attack)
     {
@@ -252,6 +261,10 @@ public class EnemyController : MonoBehaviour, ICombatant
                 if (source != null) source.PlayOneShot(attack.attackSound);
                 else AudioSource.PlayClipAtPoint(attack.attackSound, transform.position);
             }
+        }
+        else
+        {
+            Debug.LogWarning($"[EnemyController] No weapon setup found for attack {attack.animationName} in _attackToWeaponMap.");
         }
     }
 

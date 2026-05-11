@@ -34,7 +34,7 @@ public class PlayerAttackState : PlayerGroundedState
 
         // On ordonne l'exécution
         player.Combat.ExecuteAttack(player.CurrentAttack);
-        //player.Animator.SetLayerWeight(player.CurrentAttack.animatorLayer, 1f);
+        player.Animator.SetLayerWeight(player.CurrentAttack.animatorLayer, 1f);
     }
 
     public override void Update()
@@ -54,7 +54,14 @@ public class PlayerAttackState : PlayerGroundedState
             }
         }
 
-        
+        if (player.Input.RollPressed && player.Stamina.HasStamina())
+        {
+            player.Input.UseRollInput();
+            player.Combat.InterruptAttack();
+            player.StateMachine.ChangeState(PlayerStateType.Roll);
+            return;
+        }
+
 
         if (animationFinished)
         {
@@ -77,10 +84,13 @@ public class PlayerAttackState : PlayerGroundedState
     {
         base.Exit();
         player.usingSpecialAttack = false;
-        //player.Animator.applyRootMotion = false;
 
-        //player.Animator.SetLayerWeight(player.CurrentAttack.animatorLayer, 0f);
-        player.CurrentAttack = null; // Reset le combo
+        // Si on quitte l'attaque normalement, on reset aussi le poids
+        if (player.CurrentAttack != null)
+            player.Animator.SetLayerWeight(player.CurrentAttack.animatorLayer, 0f);
+
+        animationFinished = true;
+        player.CurrentAttack = null;
     }
 
     public void OnAnimationFinished() => animationFinished = true;

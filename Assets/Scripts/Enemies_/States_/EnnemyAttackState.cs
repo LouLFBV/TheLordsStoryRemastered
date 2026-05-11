@@ -18,7 +18,7 @@ public class EnemyAttackState : EnemyState
 
         if (_currentAttack != null)
         {
-            Debug.Log($"<color=red>[ATTACK]</color> Lancement de : {_currentAttack.animationName}");
+            //Debug.Log($"<color=red>[ATTACK]</color> Lancement de : {_currentAttack.animationName}");
             _currentPostAttackDelay = _currentAttack.postAttackDelay;
             agent.isStopped = true;
             agent.velocity = Vector3.zero;
@@ -28,7 +28,7 @@ public class EnemyAttackState : EnemyState
         }
         else
         {
-            Debug.LogWarning("[ATTACK] Enter sans attaque valide, retour immédiat.");
+            //Debug.LogWarning("[ATTACK] Enter sans attaque valide, retour immédiat.");
             isAnimationFinished = true;
             _currentPostAttackDelay = 0f;
         }
@@ -40,13 +40,13 @@ public class EnemyAttackState : EnemyState
         // (ou tu peux stopper la rotation via un Event si besoin)
         if (!isAnimationFinished)
         {
-            Debug.Log("[ATTACK] En cours d'animation, pivotement vers la cible.");
-            Debug.Log($"[ATTACK] Animation en cours, délai post-attaque: {_currentPostAttackDelay:F2}s");
+            //Debug.Log("[ATTACK] En cours d'animation, pivotement vers la cible.");
+            //Debug.Log($"[ATTACK] Animation en cours, délai post-attaque: {_currentPostAttackDelay:F2}s");
             FaceTarget();
         }
         else
         {
-            Debug.Log($"[ATTACK] Animation finie, attente du délai post-attaque: {_currentPostAttackDelay:F2}s");
+            //Debug.Log($"[ATTACK] Animation finie, attente du délai post-attaque: {_currentPostAttackDelay:F2}s");
             // 4. Une fois l'animation finie, on attend le délai de l'AttackSO
             _exitTimer += Time.deltaTime;
             if (_exitTimer >= _currentPostAttackDelay)

@@ -27,7 +27,7 @@ public class EnemyFollowState : EnemyState
         AttackSO ready = enemy.PeekBestAttack();
         if (ready != null)
         {
-            Debug.Log($"<color=green>[FOLLOW]</color> Cible à portée ({distance:F2}m). Transition vers Attack.");
+            //Debug.Log($"<color=green>[FOLLOW]</color> Cible à portée ({distance:F2}m). Transition vers Attack.");
             enemy.StateMachine.ChangeState(EnemyStateType.Attack);
             return;
         }
@@ -36,7 +36,7 @@ public class EnemyFollowState : EnemyState
         // c'est que les AttackSO sont mal réglés (minDistance trop haute)
         if (distance <= agent.stoppingDistance + 0.5f && ready == null)
         {
-            Debug.LogWarning("[FOLLOW] Au contact mais aucune attaque possible. Vérifiez les ranges/cooldowns des SO.");
+            //Debug.LogWarning("[FOLLOW] Au contact mais aucune attaque possible. Vérifiez les ranges/cooldowns des SO.");
         }
 
         if (enemy.AIManager.HasPermission(EnemyStateType.Orbit) && distance <= enemy.AIManager.OrbitDistance + 2f)

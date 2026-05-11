@@ -23,6 +23,7 @@ public class HealthSystem : MonoBehaviour
 
     public void TakeDamage(float damage)
     {
+        Debug.Log($"Dégâts reçus : {damage}");
         if (_isInvulnerable)
         {
             Debug.Log("Esquivé !");

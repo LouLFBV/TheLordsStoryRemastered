@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PlayerRollState : PlayerState
+public class PlayerRollState : PlayerGroundedState
 {
     private bool isRollFinished;
     private Vector3 rollDirection;

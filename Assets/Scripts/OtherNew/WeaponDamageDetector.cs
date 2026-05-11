@@ -27,6 +27,7 @@ public class WeaponDamageDetector : MonoBehaviour
     public void DisableDamage() => myCollider.enabled = false;
     private void OnTriggerEnter(Collider other)
     {
+        Debug.Log($"Collision détectée avec {other.gameObject.name} sur {gameObject.name} (Dégâts: {damageForThisFrame})");
         // On évite de se frapper soi-même ou de frapper 2x la même cible
         if (other.gameObject == transform.root.gameObject || alreadyHit.Contains(other.gameObject))
         {
@@ -37,6 +38,7 @@ public class WeaponDamageDetector : MonoBehaviour
         // On cherche une interface de dégâts (plus propre que Tag "AI")
         if (other.TryGetComponent<IDamageable>(out var target))
         {
+            Debug.Log($"Cible valide touchée : {other.gameObject.name} avec {damageForThisFrame} dégâts.");
             alreadyHit.Add(other.gameObject);
             ExecuteHitLogic(other, target);
         }
