@@ -1,6 +1,12 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Imports/metal-ingot/source/Ingot/Ingot/Textures.meta
 guid: 41d9bbd191d67cc43a72e0b32ef673a2
+========
+guid: d8cd45e390f79ef448e486ff1d41acf5
+>>>>>>>> origin/YOHOHOHOmael:Assets/Imports/Altar_Ruins_FREE/Art/Textures.meta
 folderAsset: yes
+timeCreated: 1515528014
+licenseType: Store
 DefaultImporter:
   externalObjects: {}
   userData: 

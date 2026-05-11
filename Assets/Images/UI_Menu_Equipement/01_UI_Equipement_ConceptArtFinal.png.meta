@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Images/UI_Menu_Equipement/01_UI_Equipement_ConceptArtFinal.png.meta
 guid: c00eb6adb200d99458675aabd7148471
+========
+guid: bfe5c1cfd94f59848b6a111228e6a0f2
+>>>>>>>> origin/YOHOHOHOmael:Assets/Images/UI_IconeChargement/UI_Icone_Chargement_Base.png.meta
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}

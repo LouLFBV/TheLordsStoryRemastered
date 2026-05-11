@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Models/chess-knight/source/1b5bbda1d0254074ad1657d24df19365.zip/Knight_Low_default_Diffuse.png.meta
 guid: a77b0443cfa45344789daf607a847944
+========
+guid: 1a716a936005c1e489643a1c56e4df28
+>>>>>>>> origin/YOHOHOHOmael:Assets/Images/UI_IconeChargement/UI_Icone_Chargement_Rayon2.png.meta
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
