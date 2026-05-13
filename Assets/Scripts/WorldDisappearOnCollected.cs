@@ -35,17 +35,17 @@ public abstract class WorldDisappearOnCollected : MonoBehaviour
         if (worldID != null && WorldStateManager.Instance.IsCollected(worldID.UniqueID))
         {
             StartCoroutine(DestroyNextFrame());
-            //Debug.LogWarning($"<color=orange>[{name}] checked world state: Collected = {WorldStateManager.Instance.IsCollected(worldID.UniqueID)}, with ID : {worldID.UniqueID}</color>");
+            Debug.LogWarning($"<color=orange>[{name}] checked world state: Collected = {WorldStateManager.Instance.IsCollected(worldID.UniqueID)}, with ID : {worldID.UniqueID}</color>");
         }
-        //else if (worldID != null)
-        //{
-        //    Debug.LogWarning($"<color=cyan>[{name}] checked world state: Collected = {WorldStateManager.Instance.IsCollected(worldID.UniqueID)}, with ID : {worldID.UniqueID}</color>");
-        //}
-        //else
-        //{
-        //    Debug.LogWarning($"<color=red>[{name}] has no WorldObjectID component!, with ID : {worldID.UniqueID}</color>");
-        //}
-        //Debug.Log($"[ApplyWorldState] {name} activeSelf={gameObject.activeSelf} activeInHierarchy={gameObject.activeInHierarchy}, with ID : {worldID.UniqueID}");
+        else if (worldID != null)
+        {
+            Debug.LogWarning($"<color=cyan>[{name}] checked world state: Collected = {WorldStateManager.Instance.IsCollected(worldID.UniqueID)}, with ID : {worldID.UniqueID}</color>");
+        }
+        else
+        {
+            Debug.LogWarning($"<color=red>[{name}] has no WorldObjectID component!, with ID : {worldID.UniqueID}</color>");
+        }
+        Debug.Log($"[ApplyWorldState] {name} activeSelf={gameObject.activeSelf} activeInHierarchy={gameObject.activeInHierarchy}, with ID : {worldID.UniqueID}");
     }
     private IEnumerator DestroyNextFrame()
     {

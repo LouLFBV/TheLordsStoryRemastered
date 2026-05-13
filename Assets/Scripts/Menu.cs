@@ -44,16 +44,19 @@ public class Menu : MonoBehaviour
     [SerializeField] private Slider deadzoneSlider;
 
     [Header("UI for Menu")]
-    [SerializeField] private Image iconeLoadGameKeyboard;
-    [SerializeField] private Image iconeDeleteGameKeyboard;
-    [SerializeField] private Image iconeLoadGameGamepad;
-    [SerializeField] private Image iconeDeleteGameGamepad;
+    [SerializeField] private Image iconeInputLoadGame;
+    [SerializeField] private Image iconeInputDeleteGame;
+    [SerializeField] private Sprite iconeLoadGameKeyboard;
+    [SerializeField] private Sprite iconeDeleteGameKeyboard;
+    [SerializeField] private Sprite iconeLoadGameGamepad;
+    [SerializeField] private Sprite iconeDeleteGameGamepad;
 
 
     static private int pendingSlot;
     private bool isNewGame;
     private bool isTransitioning = false;
     private static bool _backToMenu = false;
+    private static bool _saveInMenu = false;
 
 
     public static Menu Instance;
@@ -155,16 +158,15 @@ public class Menu : MonoBehaviour
 
     private void Update()
     {
-        // 1. Quitter le jeu sur MainMenu
         if (SceneManager.GetActiveScene().name == "MainMenu")
         {
-            if (Input.GetKeyDown(KeyCode.Escape))
+            // Quitter
+            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
-                Quit(); // Utilise ta fonction Quit() déjà existante
+                Quit();
             }
 
-            // 2. Vérification des boutons de sauvegarde
-            // On vérifie si le panel des parties est ouvert et si un slot est sélectionné (boutons interactables)
+            // Gestion des slots
             if (partiesPanel.activeInHierarchy && clearSavedDataButton.interactable && loadGameButton.interactable)
             {
                 HandleSaveInput();
@@ -174,23 +176,47 @@ public class Menu : MonoBehaviour
 
     private void HandleSaveInput()
     {
-        //if (playerInput == null) return;
+        UpdateIcone();
 
-        //// Utilisation du Input System pour détecter l'appui unique ce frame
-        //if (playerInput.actions["EquipAction"].WasPressedThisFrame())
-        //{
-        //    Debug.Log("Input: Delete Slot");
-        //    OnDeleteSlot();
-        //}
-        //else if (playerInput.actions["UseAction"].WasPressedThisFrame())
-        //{
-        //    Debug.Log("Input: Continue/Load Slot");
-        //    // On utilise LoadGame avec le pendingSlot actuel
-        //    LoadGame(pendingSlot);
-        //}
+        // 1. Détection Manette (Gamepad)
+        if (Gamepad.current != null)
+        {
+            if (Gamepad.current.buttonWest.wasPressedThisFrame) // Carré / X
+            {
+                LoadGame(pendingSlot);
+                return;
+            }
+            if (Gamepad.current.buttonEast.wasPressedThisFrame) // Rond / B
+            {
+                OnDeleteSlot();
+                return;
+            }
+        }
+
+        // 2. Détection Clavier (Keyboard)
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.eKey.wasPressedThisFrame)
+            {
+                LoadGame(pendingSlot);
+            }
+            else if (Keyboard.current.fKey.wasPressedThisFrame)
+            {
+                OnDeleteSlot();
+            }
+        }
     }
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    private void UpdateIcone()
+    {
+        // On vérifie si une manette est connectée et utilisée
+        bool isGamepad = Gamepad.current != null;
+
+        iconeInputLoadGame.sprite = isGamepad ? iconeLoadGameGamepad : iconeLoadGameKeyboard;
+        iconeInputDeleteGame.sprite = isGamepad ? iconeDeleteGameGamepad : iconeDeleteGameKeyboard;
+    }
+
+private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (scene.name != "Bootstrap")
         {
@@ -273,7 +299,20 @@ public class Menu : MonoBehaviour
         isNewGame = false;
         TransitionPanel.Instance.PlayTransitionOut();
     }
-    public void SaveGame() { SaveManager.Instance.SaveGame(); }
+    public void SaveGame() 
+    {
+        _saveInMenu = true;
+        if (TransitionPanel.Instance == null)
+        {
+            Debug.LogWarning("Menu: TransitionPanel.Instance is null, cannot play transition out");
+            SaveManager.Instance.SaveGame();
+            return;
+        }
+        TransitionPanel.Instance.PlayTransitionOut();
+        SaveManager.Instance.SaveGame();
+        TransitionPanel.Instance.Continue();
+
+    }
     public void LoadGame(int slot)
     {
         pendingSlot = slot;
@@ -289,6 +328,11 @@ public class Menu : MonoBehaviour
     //  Appelé par l'Animation Event
     public void OnOpenAnimationFinished()
     {
+        if (_saveInMenu)
+        {
+            _saveInMenu = false;
+            return;
+        }
         Debug.Log($"SceneManager.GetActiveScene().name : {SceneManager.GetActiveScene().name}, _backToMenu : {_backToMenu} ");
         if (SceneManager.GetActiveScene().name != "MainMenu" && _backToMenu)
         {

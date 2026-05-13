@@ -66,8 +66,8 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private Animator deathAnimator;
 
     [Header("Camera Shake")]
-    [SerializeField] private float cameraShakeIntensity = 0.15f;
-    [SerializeField] private float cameraShakeDuration = 0.2f;
+    //[SerializeField] private float cameraShakeIntensity = 0.15f;
+    //[SerializeField] private float cameraShakeDuration = 0.2f;
 
     [HideInInspector] public bool isDead = false;
     [HideInInspector] public EquipmentLibraryItem equipmentToEquip, equipmentToDesequip;

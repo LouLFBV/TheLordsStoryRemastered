@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(Animator))]
-public class EnemyController : MonoBehaviour, ICombatant
+public class EnemyController : WorldDisappearOnCollected, ICombatant
 {
     [Header("Core Components")]
     public EnemyStateMachine StateMachine { get; private set; }
@@ -48,9 +48,9 @@ public class EnemyController : MonoBehaviour, ICombatant
     public EnemyDeathState DeathState { get; private set; }
 
     [Header("Other")]
-    private WorldObjectID _worldID; 
+    private WorldObjectID _worldID;
 
-    private void Awake()
+    protected override void Awake()
     {
         // 1. Initialisation des composants physiques
         Agent = GetComponent<NavMeshAgent>();
@@ -269,8 +269,9 @@ public class EnemyController : MonoBehaviour, ICombatant
     }
 
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         if (Health != null)
         {
             Health.OnDeath += HandleDeath;
@@ -278,7 +279,7 @@ public class EnemyController : MonoBehaviour, ICombatant
         }
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
         if (Health != null)
         {

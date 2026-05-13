@@ -11,11 +11,11 @@ public class ThirdPersonCameraController : MonoBehaviour
     [SerializeField] private float smoothTime = 10f;
 
     [Header("Orbit Settings")]
-    [SerializeField] private float defaultDistance = 3f;
+    //[SerializeField] private float defaultDistance = 3f;
     [SerializeField] private Vector3 defaultPivotOffset = new Vector3(0f, 1.7f, 0f);
     [SerializeField] private Vector3 defaultCamOffset = new Vector3(0f, 0f, -3f);
-    [SerializeField] private float distance = 3f; // Gardé selon ta demande
-    [SerializeField] private float height = 1.7f; // Gardé selon ta demande
+    //[SerializeField] private float distance = 3f; // Gardé selon ta demande
+    //[SerializeField] private float height = 1.7f; // Gardé selon ta demande
 
     [Header("FOV Settings")]
     public float SprintFOV { get; private set; }

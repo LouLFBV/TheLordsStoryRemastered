@@ -33,6 +33,10 @@ public class TransitionPanel : MonoBehaviour
         animator.SetTrigger("Open");
     }
 
+    public void Continue()
+    {
+        animator.SetTrigger("Continue");
+    }
     public void PlayTransitionOut()
     {
         if (animator == null)

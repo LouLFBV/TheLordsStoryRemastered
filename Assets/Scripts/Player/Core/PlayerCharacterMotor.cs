@@ -3,7 +3,7 @@ using UnityEngine;
 public class PlayerCharacterMotor : MonoBehaviour
 {
     [SerializeField] private PlayerController player;
-    [SerializeField] private float moveSpeed = 5f;
+    //[SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float rotationSpeed = 10f;
     [SerializeField] private Transform cameraTransform;
 

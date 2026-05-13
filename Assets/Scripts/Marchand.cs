@@ -26,7 +26,7 @@ public class Marchand : InteractableBase
     private DialogueResponse[] currentDialogue; // tableau actif
     private Transform playerTransform;
     private PlayerController player;
-    private bool isPlayerInZone;
+    //private bool isPlayerInZone;
     private Animator animator;
 
 
@@ -60,14 +60,14 @@ public class Marchand : InteractableBase
         {
             player = other.GetComponent<PlayerController>();
             playerTransform = other.transform;
-            isPlayerInZone = true;
+            //isPlayerInZone = true;
         }
     }
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Player"))
         {
-            isPlayerInZone = false;
+            //isPlayerInZone = false;
             player = null;
         }
     }

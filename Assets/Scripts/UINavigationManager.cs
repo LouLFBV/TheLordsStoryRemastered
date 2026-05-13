@@ -348,29 +348,29 @@ public class UINavigationManager : MonoBehaviour
 {
     public List<UISelectable> elements;
     public int currentIndex = 0;
-    [SerializeField] private float offset = 40f;
+    //[SerializeField] private float offset = 40f;
 
-    [Tooltip("Nombre de colonnes pour la grille de navigation")]
-    public int columns = 4;
+    //[Tooltip("Nombre de colonnes pour la grille de navigation")]
+    //public int columns = 4;
 
-    [SerializeField] private float moveCooldown = 0.2f;
-    private float lastMoveTime;
+    //[SerializeField] private float moveCooldown = 0.2f;
+    //private float lastMoveTime;
 
-    [Header("Enfant/ Parent")]
-    [SerializeField] private GameObject childToDisableWhenActive;
+    //[Header("Enfant/ Parent")]
+    //[SerializeField] private GameObject childToDisableWhenActive;
 
-    public PlayerInput playerInput;
-    private Vector2 navigationInput;
-    private bool isSubmitting = false;
+    //public PlayerInput playerInput;
+    //private Vector2 navigationInput;
+    //private bool isSubmitting = false;
     public System.Action onCancel;
 
     [SerializeField] private ScrollRect scrollRect; // drag ton ScrollRect dans l'inspecteur
 
     public bool isActive = true;
 
-    [Header("Virtual Cursor Settings")]
-    [SerializeField] private float cursorSpeed = 1000f; // Vitesse de déplacement du curseur
-    private InputAction stickAction; // Pour lire le stick directement
+    //[Header("Virtual Cursor Settings")]
+    //[SerializeField] private float cursorSpeed = 1000f; // Vitesse de déplacement du curseur
+    //private InputAction stickAction; // Pour lire le stick directement
 
     //#region Méthodes PlayerInput 
     //private void Awake()
