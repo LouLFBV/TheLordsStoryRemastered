@@ -14,6 +14,8 @@ public class TransitionPanel : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        Debug.Log("TransitionPanel Awake");
     }
     private void OnDestroy()
     {

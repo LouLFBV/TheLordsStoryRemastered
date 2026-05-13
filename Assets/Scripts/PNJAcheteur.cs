@@ -3,8 +3,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System;
-using Unity.VisualScripting;
-using static UnityEditor.Progress;
 
 public class PNJAcheteur : PNJParent
 {
@@ -119,7 +117,7 @@ public class PNJAcheteur : PNJParent
 
             player.RequestedPanelType = UIPanelType.Dialogue;
             player.StateMachine.ChangeState(PlayerStateType.UI);
-            DialogueManager.instance.textName.text = namePNJ;
+            DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePanel);
 
             index = 0;
             dialogueStartTime = Time.time; // Enregistrer le temps de début du dialogue
@@ -141,30 +139,19 @@ public class PNJAcheteur : PNJParent
         // Affiche le dialogue PNJ ou la réponse du joueur selon l'index
         if (sentenceIndex < dialogueGroup.pnjDialogues.Length)
         {
-            if (!firstDialoguePnjDone)
-            {
-                DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ, 0.5f);
-                DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePanel);
-                firstDialoguePnjDone = true;
-            }
-            else
-                DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ);
-            animator.SetBool("isTalking", true);
             currentSpeaker = DialogueManager.Speaker.PNJ;
+
+            DialogueManager.instance.SetSpeakerName(DialogueManager.Speaker.PNJ, namePNJ, nicknamePNJ);
+            DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ);
+            animator.SetBool("isTalking", true);
         }
         else
         {
-            int playerIndex = sentenceIndex - dialogueGroup.pnjDialogues.Length;
-            if (!firstDialoguePlayerDone)
-            {
-                DialogueManager.instance.ShowLine(dialogueGroup.playerResponses[playerIndex], DialogueManager.Speaker.Player, 0.5f);
-                firstDialoguePlayerDone = true;
-                DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePlayerPanel);
-            }
-            else
-                DialogueManager.instance.ShowLine(dialogueGroup.playerResponses[playerIndex], DialogueManager.Speaker.Player);
-            animator.SetBool("isTalking", false);
             currentSpeaker = DialogueManager.Speaker.Player;
+            DialogueManager.instance.SetSpeakerName(DialogueManager.Speaker.Player, "Vous");
+            int playerIndex = sentenceIndex - dialogueGroup.pnjDialogues.Length;
+            DialogueManager.instance.ShowLine(dialogueGroup.playerResponses[playerIndex], DialogueManager.Speaker.Player);
+            animator.SetBool("isTalking", false);
         }
         sentenceIndex++;
 

@@ -7,12 +7,12 @@ public class PNJ : InteractableBase
     #region Champs/Paramètres
     [Header("Dialogue")]
     public string namePNJ;
+    public string nicknamePNJ;
     public DialogueResponse[] sentences; // Dialogue par défaut
     public bool isOnDial;
     private int index = 0;
     private int sentenceIndex = 0;
     private DialogueResponse[] currentDialogue; // tableau actif
-    private bool firstDialoguePlayerDone = false, firstDialoguePnjDone = false;
     private DialogueManager.Speaker currentSpeakerDisplaying;
 
 
@@ -69,7 +69,7 @@ public class PNJ : InteractableBase
             if (!DialogueManager.instance.SkipOrFinish(currentSpeakerDisplaying) && !DialogueManager.instance.inDelay)
                 NextLine();
         }
-        else if (!firstDialoguePnjDone && !isOnDial && Time.time - dialogueEndTime > inputCooldownEnding)
+        else if (!isOnDial && Time.time - dialogueEndTime > inputCooldownEnding)
         {
             StartDialogue();
             SetTargeted(false, playerTransform);
@@ -142,7 +142,6 @@ public class PNJ : InteractableBase
         player.StateMachine.ChangeState(PlayerStateType.UI);
 
         // 2. Logique propre au PNJ
-        StartCoroutine(RotateTowardsToPlayer());
         animator.SetFloat("Speed", 0f);
         canWander = false;
         isOnDial = true;
@@ -150,7 +149,7 @@ public class PNJ : InteractableBase
 
         StartCoroutine(RotateTowardsToPlayer());
 
-        DialogueManager.instance.textName.text = namePNJ;
+        DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePanel);
         index = 0;
         dialogueStartTime = Time.time;
 
@@ -197,15 +196,10 @@ public class PNJ : InteractableBase
         isOnDial = false;
         index = 0;
         sentenceIndex = 0;
-        firstDialoguePlayerDone = false;
-        firstDialoguePnjDone = false;
         dialogueEndTime = Time.time;
 
         if (DialogueManager.instance.dialoguePanel.transform.localScale.y > 0f)
             DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePanel);
-
-        if (DialogueManager.instance.dialoguePlayerPanel.transform.localScale.y > 0f)
-            DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePlayerPanel);
 
         animator.SetBool("isTalking", false);
         if (canWanderOnStart) canWander = true;
@@ -217,17 +211,6 @@ public class PNJ : InteractableBase
     public void NextLine()
     {
         Debug.Log("NextLine called for PNJ: " + namePNJ);
-        // Vérifie si le joueur a une mauvaise réputation
-        //if (PlayerStats.instance.reputationData.reputationPoints < seuilDeReputationQuest
-        //    && sentencesIfPlayerIsBad.Length > 0
-        //    && (activeQuestInstance != null && !currentQuestSO.isMainQuest)
-        //    && currentDialogue != sentencesIfPlayerIsBad)
-        //{
-        //    currentDialogue = sentencesIfPlayerIsBad;
-        //    index = 0;
-        //    sentenceIndex = 0;
-        //}
-
         if (index >= currentDialogue.Length)
         {
             if (activeQuestInstance != null)
@@ -266,28 +249,17 @@ public class PNJ : InteractableBase
         if (sentenceIndex < dialogueGroup.pnjDialogues.Length)
         {
             currentSpeakerDisplaying = DialogueManager.Speaker.PNJ;
-            if (!firstDialoguePnjDone)
-            {
-                DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ, 0.5f);
-                firstDialoguePnjDone = true;
-                DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePanel);
-            }
-            else
-                DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ);
+
+            DialogueManager.instance.SetSpeakerName(DialogueManager.Speaker.PNJ, namePNJ, nicknamePNJ);
+            DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ);
             animator.SetBool("isTalking", true);
         }
         else
         {
             currentSpeakerDisplaying = DialogueManager.Speaker.Player;
+            DialogueManager.instance.SetSpeakerName(DialogueManager.Speaker.Player, "Vous");
             int playerIndex = sentenceIndex - dialogueGroup.pnjDialogues.Length;
-            if (!firstDialoguePlayerDone)
-            {
-                DialogueManager.instance.ShowLine(dialogueGroup.playerResponses[playerIndex], DialogueManager.Speaker.Player, 0.5f);
-                firstDialoguePlayerDone = true;
-                DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePlayerPanel);
-            }
-            else
-                DialogueManager.instance.ShowLine(dialogueGroup.playerResponses[playerIndex], DialogueManager.Speaker.Player);
+            DialogueManager.instance.ShowLine(dialogueGroup.playerResponses[playerIndex], DialogueManager.Speaker.Player);
             animator.SetBool("isTalking", false);
         }
         sentenceIndex++;

@@ -2,22 +2,20 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.Rendering;
 
 public class DialogueManager : MonoBehaviour
 {
     public static DialogueManager instance;
 
-    [Header("UI PNJ")]
+    [Header("UI")]
     public TextMeshProUGUI textName;
+    public TextMeshProUGUI textNickname;
     public TextMeshProUGUI textDialogue;
     public GameObject dialoguePanel;
     public Animator animatorDialoguePanel;
+    public GameObject playerIcone;
     public GameObject questButtons; // panneau avec les boutons Accepter/Refuser
-
-    [Header("UI Joueur")]
-    public TextMeshProUGUI textPlayerDialogue;
-    public GameObject dialoguePlayerPanel;
-    public Animator animatorDialoguePlayerPanel;
 
 
     [Header("Others")]
@@ -41,7 +39,6 @@ public class DialogueManager : MonoBehaviour
             Destroy(gameObject);
         }
         animatorDialoguePanel = dialoguePanel.GetComponent<Animator>();
-        animatorDialoguePlayerPanel = dialoguePlayerPanel.GetComponent<Animator>();
     }
 
     public void ShowQuestButtons(PNJ pnj)
@@ -72,10 +69,11 @@ public class DialogueManager : MonoBehaviour
         if (typingCoroutine != null)
             StopCoroutine(typingCoroutine);
 
-        if (speaker == Speaker.PNJ)
-            typingCoroutine = StartCoroutine(TypeTextWithDelay(line, typingSpeed, delay, textDialogue));
-        else
-            typingCoroutine = StartCoroutine(TypeTextWithDelay(line, typingSpeed, delay, textPlayerDialogue));
+        //if (speaker == Speaker.PNJ)
+        //    typingCoroutine = StartCoroutine(TypeTextWithDelay(line, typingSpeed, delay, textDialogue));
+        //else
+        //    typingCoroutine = StartCoroutine(TypeTextWithDelay(line, typingSpeed, delay, textPlayerDialogue));
+        typingCoroutine = StartCoroutine(TypeTextWithDelay(line, typingSpeed, delay, textDialogue));
     }
 
     private IEnumerator TypeTextWithDelay(string line, float typingSpeed, float delay, TextMeshProUGUI textField)
@@ -106,10 +104,11 @@ public class DialogueManager : MonoBehaviour
         if (isTyping)
         {
             StopCoroutine(typingCoroutine);
-            if (speaker == Speaker.PNJ)
-                textDialogue.text = currentText;
-            else
-                textPlayerDialogue.text = currentText;
+            //if (speaker == Speaker.PNJ)
+            //    textDialogue.text = currentText;
+            //else
+            //    textPlayerDialogue.text = currentText;
+            textDialogue.text = currentText;
             isTyping = false;
             return true; 
         }
@@ -121,7 +120,7 @@ public class DialogueManager : MonoBehaviour
         Debug.Log("Toggling dialogue panel. Current state: " + animator.GetBool("PanelIsOpen"));
         bool isOpen = animator.GetBool("PanelIsOpen");
         animator.SetBool("PanelIsOpen", !isOpen);
-        forUIManager.SetActive(animatorDialoguePanel.GetBool("PanelIsOpen") || animatorDialoguePlayerPanel.GetBool("PanelIsOpen"));
+        forUIManager.SetActive(animatorDialoguePanel.GetBool("PanelIsOpen"));
     }
 
     public void CloseDialoguePanel()
@@ -130,8 +129,11 @@ public class DialogueManager : MonoBehaviour
         textName.text = "";
     }
 
-    public void ClosePlayerPanel()
+    public void SetSpeakerName(Speaker speaker, string name, string nickName = "")
     {
-        textPlayerDialogue.text = "";
+        textName.text = name;
+        if (!string.IsNullOrEmpty(nickName))
+            textNickname.text = nickName;
+        playerIcone.SetActive(speaker == Speaker.Player);
     }
 }

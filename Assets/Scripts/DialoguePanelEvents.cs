@@ -7,8 +7,4 @@ public class DialoguePanelEvents : MonoBehaviour
         DialogueManager.instance.CloseDialoguePanel();
     }
 
-    public void ClosePlayerPanel()
-    {
-        DialogueManager.instance.ClosePlayerPanel();
-    }
 }

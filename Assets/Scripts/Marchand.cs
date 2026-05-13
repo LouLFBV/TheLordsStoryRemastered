@@ -18,12 +18,12 @@ public class Marchand : InteractableBase
 
     [Header("PNJ")]
     public string namePNJ;
+    public string nicknamePNJ;
     public DialogueResponse[] sentences;
     public bool isOnDial;
     private int index = 0;
     private int sentenceIndex = 0;
     private DialogueResponse[] currentDialogue; // tableau actif
-    private bool firstDialoguePlayerDone = false, firstDialoguePnjDone = false;
     private Transform playerTransform;
     private PlayerController player;
     private bool isPlayerInZone;
@@ -81,7 +81,7 @@ public class Marchand : InteractableBase
             player.RequestedPanelType = UIPanelType.Dialogue;
             player.StateMachine.ChangeState(PlayerStateType.UI);
 
-            DialogueManager.instance.textName.text = namePNJ;
+            DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePanel);
 
             index = 0;
             dialogueStartTime = Time.time; // Enregistrer le temps de début du dialogue
@@ -100,30 +100,19 @@ public class Marchand : InteractableBase
         // Affiche le dialogue PNJ ou la réponse du joueur selon l'index
         if (sentenceIndex < dialogueGroup.pnjDialogues.Length)
         {
-            if (!firstDialoguePnjDone)
-            {
-                DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ, 0.75f);
-                firstDialoguePnjDone = true;
-                DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePanel);
-            }
-            else
-                DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ);
-            animator.SetBool("isTalking", true);
             currentSpeaker = DialogueManager.Speaker.PNJ;
+
+            DialogueManager.instance.SetSpeakerName(DialogueManager.Speaker.PNJ, namePNJ, nicknamePNJ);
+            DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ);
+            animator.SetBool("isTalking", true);
         }
         else
         {
-            int playerIndex = sentenceIndex - dialogueGroup.pnjDialogues.Length;
-            if (!firstDialoguePlayerDone)
-            {
-                DialogueManager.instance.ShowLine(dialogueGroup.playerResponses[playerIndex], DialogueManager.Speaker.Player, 0.75f);
-                firstDialoguePlayerDone = true;
-                DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePlayerPanel);
-            }
-            else
-                DialogueManager.instance.ShowLine(dialogueGroup.playerResponses[sentenceIndex], DialogueManager.Speaker.Player);
-            animator.SetBool("isTalking", false);
             currentSpeaker = DialogueManager.Speaker.Player;
+            DialogueManager.instance.SetSpeakerName(DialogueManager.Speaker.Player, "Vous");
+            int playerIndex = sentenceIndex - dialogueGroup.pnjDialogues.Length;
+            DialogueManager.instance.ShowLine(dialogueGroup.playerResponses[playerIndex], DialogueManager.Speaker.Player);
+            animator.SetBool("isTalking", false);
         }
         sentenceIndex++;
 
@@ -151,17 +140,12 @@ public class Marchand : InteractableBase
     public void EndDiscussion()
     {
         Debug.Log("EndDiscussion Marchand");
-        firstDialoguePnjDone = false;
-        firstDialoguePlayerDone = false;
         animator.SetBool("isTalking", false);
         dialogueEndTime = Time.time;
         index = 0;
 
         if (DialogueManager.instance.dialoguePanel.transform.localScale.y > 0)
             DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePanel);
-
-        if (DialogueManager.instance.dialoguePlayerPanel.transform.localScale.y > 0)
-            DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePlayerPanel);
     }
 
     public void OpenProduitsPanel()

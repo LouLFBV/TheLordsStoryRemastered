@@ -13,6 +13,7 @@ public class PNJParent : InteractableBase
 
     [Header("PNJ")]
     public string namePNJ;
+    public string nicknamePNJ;
     public List<DialogueResponse> sentences;
     public bool isOnDial;
     protected int index = 0;
@@ -23,7 +24,6 @@ public class PNJParent : InteractableBase
     private float vitesseDeRotation = 0.15f;
     protected int sentenceIndex = 0;
     protected List<DialogueResponse> currentDialogue; // tableau actif
-    protected bool firstDialoguePlayerDone = false, firstDialoguePnjDone = false;
     protected DialogueManager.Speaker currentSpeaker;
 
     protected int leghthSentences;
@@ -58,8 +58,6 @@ public class PNJParent : InteractableBase
             Debug.Log("[PNJParent] EndDiscussion() - No items, just ending dialogue");
             isOnDial = false;
         }
-        firstDialoguePnjDone = false;
-        firstDialoguePlayerDone = false;
         animator.SetBool("isTalking", false);
         dialogueEndTime = Time.time;
         index = 0;
@@ -67,9 +65,6 @@ public class PNJParent : InteractableBase
 
         if (DialogueManager.instance.dialoguePanel.transform.localScale.y > 0)
             DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePanel);
-
-        if (DialogueManager.instance.dialoguePlayerPanel.transform.localScale.y > 0)
-            DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePlayerPanel);
 
     }
     protected IEnumerator RotateTowardsPlayer()
