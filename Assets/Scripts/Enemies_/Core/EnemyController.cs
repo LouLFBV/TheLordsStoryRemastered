@@ -99,11 +99,11 @@ public class EnemyController : MonoBehaviour, ICombatant
                 if (!_attackToWeaponMap.ContainsKey(attack))
                 {
                     _attackToWeaponMap.Add(attack, setup);
-                    Debug.Log($"[EnemyController] Mapping attack {attack.animationName} to weapon {setup.weaponData.itemName}.");
+                   // Debug.Log($"[EnemyController] Mapping attack {attack.animationName} to weapon {setup.weaponData.itemName}.");
                 }
                 else
                 {
-                    Debug.LogWarning($"[EnemyController] Duplicate attack {attack.animationName} found in weapon setups. Only the first mapping will be used.");
+                   // Debug.LogWarning($"[EnemyController] Duplicate attack {attack.animationName} found in weapon setups. Only the first mapping will be used.");
                 }
             }
         }

@@ -4,11 +4,13 @@ public class TransitionPanel : MonoBehaviour
 {
     public static TransitionPanel Instance;
     [SerializeField] private Animator animator;
+    [SerializeField] private GameObject iconeLoading;
 
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
+            Debug.LogWarning("Multiple instances of TransitionPanel detected. Destroying duplicate.");
             Destroy(gameObject);
             return;
         }
@@ -38,5 +40,10 @@ public class TransitionPanel : MonoBehaviour
             animator = GetComponent<Animator>();
         }
         animator.SetTrigger("Close");
+    }
+
+    public void SetLoadingIconVisible(int visible)
+    {
+        animator.SetBool("Icone", visible == 1);
     }
 }

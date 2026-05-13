@@ -15,7 +15,7 @@ public class ButtonIconSet : ScriptableObject
 
     public Sprite GetIcon(string path)
     {
-        Debug.Log($"Recherche de l'icône pour le path : {path}");
+        //Debug.Log($"Recherche de l'icône pour le path : {path}");
         foreach (var entry in icons)
         {
             if (path.Contains(entry.controlPath))

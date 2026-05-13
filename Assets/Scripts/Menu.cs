@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -42,11 +43,17 @@ public class Menu : MonoBehaviour
     [SerializeField] private Slider gamepadSensitivitySlider;
     [SerializeField] private Slider deadzoneSlider;
 
+    [Header("UI for Menu")]
+    [SerializeField] private Image iconeLoadGameKeyboard;
+    [SerializeField] private Image iconeDeleteGameKeyboard;
+    [SerializeField] private Image iconeLoadGameGamepad;
+    [SerializeField] private Image iconeDeleteGameGamepad;
+
 
     static private int pendingSlot;
     private bool isNewGame;
     private bool isTransitioning = false;
-    private bool _backToMenu = false;
+    private static bool _backToMenu = false;
 
 
     public static Menu Instance;
@@ -145,6 +152,44 @@ public class Menu : MonoBehaviour
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
+
+    private void Update()
+    {
+        // 1. Quitter le jeu sur MainMenu
+        if (SceneManager.GetActiveScene().name == "MainMenu")
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                Quit(); // Utilise ta fonction Quit() déjà existante
+            }
+
+            // 2. Vérification des boutons de sauvegarde
+            // On vérifie si le panel des parties est ouvert et si un slot est sélectionné (boutons interactables)
+            if (partiesPanel.activeInHierarchy && clearSavedDataButton.interactable && loadGameButton.interactable)
+            {
+                HandleSaveInput();
+            }
+        }
+    }
+
+    private void HandleSaveInput()
+    {
+        //if (playerInput == null) return;
+
+        //// Utilisation du Input System pour détecter l'appui unique ce frame
+        //if (playerInput.actions["EquipAction"].WasPressedThisFrame())
+        //{
+        //    Debug.Log("Input: Delete Slot");
+        //    OnDeleteSlot();
+        //}
+        //else if (playerInput.actions["UseAction"].WasPressedThisFrame())
+        //{
+        //    Debug.Log("Input: Continue/Load Slot");
+        //    // On utilise LoadGame avec le pendingSlot actuel
+        //    LoadGame(pendingSlot);
+        //}
+    }
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (scene.name != "Bootstrap")
@@ -162,8 +207,15 @@ public class Menu : MonoBehaviour
     {
         _backToMenu = true;
         if (TransitionPanel.Instance != null)
+        {
+            Debug.Log("Menu: PlayTransitionOut");
             TransitionPanel.Instance.PlayTransitionOut();
-        else SceneManager.LoadScene("MainMenu");
+        }
+        else
+        {
+            Debug.LogWarning("Menu: TransitionPanel.Instance is null, loading MainMenu directly");
+            SceneManager.LoadScene("MainMenu");
+        }
     }
     public void Quit()
     {
@@ -237,17 +289,21 @@ public class Menu : MonoBehaviour
     //  Appelé par l'Animation Event
     public void OnOpenAnimationFinished()
     {
+        Debug.Log($"SceneManager.GetActiveScene().name : {SceneManager.GetActiveScene().name}, _backToMenu : {_backToMenu} ");
         if (SceneManager.GetActiveScene().name != "MainMenu" && _backToMenu)
         {
+            Debug.Log("Menu: Transition in finished, loading MainMenu");
             SceneManager.LoadScene("MainMenu");
         }
         else if (isNewGame)
         {
+            Debug.Log($"Menu: Transition in finished, starting new game in slot {pendingSlot}");
             SaveManager.Instance.SetCurrentSlot(pendingSlot);
             SceneManager.LoadScene("Donjon");
         }
         else
         {
+            Debug.Log($"Menu: Transition in finished, loading game from slot {pendingSlot}");
             SaveManager.Instance.LoadGame(pendingSlot);
         }
         _backToMenu = false;
@@ -263,7 +319,7 @@ public class Menu : MonoBehaviour
     public void SelectSlot(int slot)
     {
         pendingSlot = slot;
-        DisableSlotUI(true);
+        DisableSlotUI(SaveManager.Instance.HasSave(slot));
     }
 
     private void DisableSlotUI(bool actived)
