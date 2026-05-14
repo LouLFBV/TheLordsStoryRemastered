@@ -314,7 +314,8 @@ public class PNJ : InteractableBase
 
         if (currentQuestSO.questName == NewQuestLog.instance.QuestActiveText.text)
         {
-            NewQuestLog.instance.QuestActiveText.gameObject.SetActive(false);
+            if (UIManagerSystem.Instance != null)
+                UIManagerSystem.Instance.hudElements.Remove(NewQuestLog.instance.panelQuestActive);
             //NewQuestLog.instance.questToggle.isOn = false;
         }
 

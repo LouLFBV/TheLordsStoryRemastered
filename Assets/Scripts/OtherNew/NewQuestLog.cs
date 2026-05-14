@@ -24,9 +24,6 @@ public class NewQuestLog : MonoBehaviour
     [SerializeField] private GameObject panelDescriptionQuest;
     [SerializeField] private Transform questsFirstList;
     [SerializeField] private Transform questsSecondList;
-
-
-    [SerializeField] private Transform objectifsList;
     [SerializeField] private Transform rewardsList;
 
     [Header("Prefabs")]
@@ -46,17 +43,10 @@ public class NewQuestLog : MonoBehaviour
         if (instance == null) instance = this;
         else Destroy(gameObject);
     }
-    private void Start()
-    {
-
-        if (UIManagerSystem.Instance != null)
-            UIManagerSystem.Instance.hudElements.Add(QuestActiveText.gameObject);
-    }
     private void ShowQuest(QuestInstance quest/*, bool isActive*/)
     {
         if (quest == null) return;
 
-        ClearChildren(objectifsList);
         ClearChildren(rewardsList);
 
         questNameText.text = quest.data.questName;
@@ -136,7 +126,8 @@ public class NewQuestLog : MonoBehaviour
         QuestActiveText.text = questSO.questName;
         objectifQuestActiveText.text = questSO.objectif;
         panelQuestActive.gameObject.SetActive(true);
-
+        if (UIManagerSystem.Instance != null)
+            UIManagerSystem.Instance.hudElements.Add(panelQuestActive);
     }
 
     //public void OnAffichage()
