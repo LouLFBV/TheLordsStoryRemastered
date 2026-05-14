@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections;
-public class PopupDescription : MonoBehaviour
+public class PopupDescription : WorldDisappearOnCollected
 {
     [SerializeField] private GameObject popupDescriptionPanel;
     [SerializeField] private TextMeshProUGUI descriptionText;
@@ -14,12 +14,12 @@ public class PopupDescription : MonoBehaviour
     [SerializeField] private float displayDuration = 5f;
 
     private bool _isUsed = false;
-    private void OnEnable()
+    protected override void OnEnable()
     {
         PopupEvent.OnPopupRequested += ShowDescriptionPanel;
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
         PopupEvent.OnPopupRequested -= ShowDescriptionPanel;
     }
@@ -30,6 +30,11 @@ public class PopupDescription : MonoBehaviour
         {
             ShowDescriptionPanel(description);
             _isUsed = true;
+            if (worldID != null)
+            {
+                WorldStateManager.Instance.RegisterCollectedObject(worldID.UniqueID);
+                Debug.LogWarning($"<color=purple>[{name}] registered as collected in WorldStateManager, with ID : {worldID.UniqueID}.</color>");
+            }
         }
     }
     private void ShowDescriptionPanel(string desc)

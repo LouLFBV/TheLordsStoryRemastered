@@ -16,17 +16,22 @@ public class BlockCamera : MonoBehaviour
 
         if (cam == null) return;
 
-        if (cam.IsLocked)
-        {
-            cam.UnlockCamera();
-        }
-        else
-        {
-            // On applique la rotation immédiatement
-            cam.SetRotation(defaultRotation.x, defaultRotation.y);
-            // On verrouille après un léger délai pour éviter les micro-saccades
-            StartCoroutine(LockAfterDelay(cam, 0.05f));
-        }
+        // On applique la rotation immédiatement
+        cam.SetRotation(defaultRotation.x, defaultRotation.y);
+        // On verrouille après un léger délai pour éviter les micro-saccades
+        StartCoroutine(LockAfterDelay(cam, 0.05f));
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        if (!other.CompareTag("Player"))
+            return;
+
+        // On accède directement à la caméra via son Instance
+        var cam = ThirdPersonCameraController.Instance;
+
+        if (cam == null) return;
+
+        cam.UnlockCamera();
     }
 
     private IEnumerator LockAfterDelay(ThirdPersonCameraController cam, float delay)
