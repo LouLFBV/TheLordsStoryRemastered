@@ -137,8 +137,6 @@ public class Door : InteractableBase
             else
             {
                 unlockFailSound.PlayOneShot(unlockFailSound.clip);
-                if (PlayerStats.instance.reputationData.reputationPoints > -10)
-                    PlayerStats.instance.reputationData.reputationPoints -= 1;
             }
             ConsommerCle(key);
         }

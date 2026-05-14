@@ -9,7 +9,7 @@ public class QuestSO : ScriptableObject
     public string questID;
     public string questName;
     [TextArea] public string description;
-    public string[] objectifs;
+    public string objectif;
 
 
     [Header("Dialogues")]

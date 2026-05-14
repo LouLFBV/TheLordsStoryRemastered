@@ -46,7 +46,7 @@ public class ChestInventory : MonoBehaviour
             SlotChest currentSlot = inventoryChestSlotsParent.GetChild(i).GetComponent<SlotChest>();
 
             currentSlot.item = null;
-            currentSlot.itemVisual.sprite = Inventory.instance.emptySlotVisual;
+            currentSlot.itemVisual.sprite = InventorySystem.instance.emptySlotVisual;
             currentSlot.countTexte.enabled = false;
             currentSlot.desequipButton.gameObject.SetActive(false);
         }
@@ -71,14 +71,14 @@ public class ChestInventory : MonoBehaviour
 
     public void RefreshContentInventory()
     {
-        content = Inventory.instance.GetContent();
+        content = InventorySystem.instance.GetContent();
         //On vide tous les slots / visuels
         for (int i = 0; i < inventoryPlayerSlotsParent.childCount; i++)
         {
             SlotChest currentSlot = inventoryPlayerSlotsParent.GetChild(i).GetComponent<SlotChest>();
 
             currentSlot.item = null;
-            currentSlot.itemVisual.sprite = Inventory.instance.emptySlotVisual;
+            currentSlot.itemVisual.sprite = InventorySystem.instance.emptySlotVisual;
             currentSlot.countTexte.enabled = false;
             currentSlot.desequipButton.gameObject.SetActive(false);
         }
@@ -106,7 +106,7 @@ public class ChestInventory : MonoBehaviour
         currentSlot.desequipButton.onClick.RemoveAllListeners();
         currentSlot.desequipButton.onClick.AddListener(delegate
         {
-            Inventory.instance.AddItem(currentSlot.item);
+            InventorySystem.instance.AddItem(currentSlot.item);
             RemoveFromChest(index);
         });
     }

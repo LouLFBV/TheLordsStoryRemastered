@@ -7,13 +7,20 @@ public class NewQuestLog : MonoBehaviour
 {
     public static NewQuestLog instance;
 
-    [Header("UI Texte")]
+    [Header("UI Active Quest Texte")]
     public TextMeshProUGUI QuestActiveText;
-    [SerializeField] private Transform transforChildQuest;
+    public TextMeshProUGUI objectifQuestActiveText;
+    public Toggle questActiveToggle;
+    public GameObject panelQuestActive;
+
+
+    [Header("UI Menu Panel Info")]
     [SerializeField] private TextMeshProUGUI questNameText;
     [SerializeField] private TextMeshProUGUI questDescriptionText;
+    [SerializeField] private TextMeshProUGUI questObjectifText;
+    [SerializeField] private Toggle questToggle;
 
-    [Header("UI Panels")]
+    [Header("UI Menu Panel List Quests")]
     [SerializeField] private GameObject panelDescriptionQuest;
     [SerializeField] private Transform questsFirstList;
     [SerializeField] private Transform questsSecondList;
@@ -54,12 +61,7 @@ public class NewQuestLog : MonoBehaviour
 
         questNameText.text = quest.data.questName;
         questDescriptionText.text = quest.data.description;
-        foreach (var objetif in quest.data.objectifs)
-        {
-            GameObject obj = Instantiate(objectifQuestPrefab, objectifsList);
-            TextMeshProUGUI text = obj.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
-            text.text = $"- {objetif}";
-        }
+        questObjectifText.text = quest.data.objectif;
         foreach (string reward in quest.data.rewardsText)
         {
             GameObject obj = Instantiate(rewardQuestPrefab, rewardsList);
@@ -132,15 +134,9 @@ public class NewQuestLog : MonoBehaviour
     public void ActiveDesactiveQuestText(QuestSO questSO)
     {
         QuestActiveText.text = questSO.questName;
-        QuestActiveText.gameObject.SetActive(true);
+        objectifQuestActiveText.text = questSO.objectif;
+        panelQuestActive.gameObject.SetActive(true);
 
-        ClearChildren(transforChildQuest);
-
-        foreach (var objetif in questSO.objectifs)
-        {
-            GameObject obj = Instantiate(objectifOnScreenPrefab, transforChildQuest);
-            obj.transform.GetComponent<TextMeshProUGUI>().text = $"- {objetif}";
-        }
     }
 
     //public void OnAffichage()
@@ -155,24 +151,25 @@ public class NewQuestLog : MonoBehaviour
     {
         return new QuestLogSaveData
         {
-            activeQuestName = QuestActiveText.gameObject.activeSelf
+            activeQuestText = QuestActiveText.gameObject.activeSelf
                 ? QuestActiveText.text
                 : string.Empty,
-            //isQuestToggleOn = questToggle != null && questToggle.isOn
+            isQuestToggleOn = questActiveToggle != null && questActiveToggle.isOn
         };
     }
 
     public void LoadSaveData(QuestLogSaveData data)
     {
-        if (data == null || string.IsNullOrEmpty(data.activeQuestName))
+        if (data == null || string.IsNullOrEmpty(data.activeQuestText))
         {
             QuestActiveText.gameObject.SetActive(false);
             return;
         }
 
         //  Texte
-        QuestActiveText.text = data.activeQuestName;
-        QuestActiveText.gameObject.SetActive(true);
+        QuestActiveText.text = data.activeQuestText;
+        objectifQuestActiveText.text = data.activeObjectifQuestText;
+        panelQuestActive.gameObject.SetActive(true);
 
         //  Toggle (sans déclencher l’event)
         //if (questToggle != null)
@@ -195,7 +192,8 @@ public class NewQuestLog : MonoBehaviour
 [System.Serializable]
 public class QuestLogSaveData
 {
-    public string activeQuestName;
+    public string activeQuestText;
+    public string activeObjectifQuestText;
     public bool isQuestToggleOn;
 }
 

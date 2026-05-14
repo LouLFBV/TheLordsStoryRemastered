@@ -401,15 +401,15 @@ public class EquipmentSystem : MonoBehaviour
     }
 }
 
-//[System.Serializable]
-//public class EquipmentSaveData
-//{
-//    public string headID;
-//    public string chestID;
-//    public string handsID;
-//    public string legsID;
-//    public string feetID;
+[System.Serializable]
+public class EquipmentSaveData
+{
+    public string headID;
+    public string chestID;
+    public string handsID;
+    public string legsID;
+    public string feetID;
 
-//    public string arrowID;
-//    public int arrowCount;
-//}
+    public string arrowID;
+    public int arrowCount;
+}

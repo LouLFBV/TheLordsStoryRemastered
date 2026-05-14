@@ -107,8 +107,8 @@ public class PersonalChest : InteractableBase
         chestInventory.content = chestInventory.RefreshItems(chestInventory.content);
         chestInventory.contentChest = chestInventory.RefreshItems(chestInventory.contentChest);
 
-        Inventory.instance.SetContent(chestInventory.content);
-        Inventory.instance.RefreshContent();
+        //InventorySystem.instance.SetContent(chestInventory.content);
+        InventorySystem.instance.RefreshContent();
 
         while (Quaternion.Angle(topChest.transform.rotation, closedRotation) > 0.1f)
         {

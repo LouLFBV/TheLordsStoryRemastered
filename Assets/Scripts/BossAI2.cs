@@ -160,7 +160,7 @@ public class BossAI2 : EnemyParent
             colliderOfDeath.SetActive(true);
         basicCollider.enabled = false;
         agent.isStopped = true;
-        QuestManager.instance.UpdateQuestProgress(enemyData.enemyType.ToString(), 1);
+        NewQuestManager.instance.UpdateQuestProgress(enemyData.enemyType.ToString(), 1);
     }
 
     private void FacePlayer()
