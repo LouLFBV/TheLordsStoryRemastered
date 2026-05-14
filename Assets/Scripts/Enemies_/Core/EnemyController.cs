@@ -48,6 +48,7 @@ public class EnemyController : WorldDisappearOnCollected, ICombatant
     public EnemyDeathState DeathState { get; private set; }
 
     [Header("Other")]
+    [SerializeField] private GameObject itemToDrop;
     private WorldObjectID _worldID;
 
     protected override void Awake()
@@ -114,6 +115,8 @@ public class EnemyController : WorldDisappearOnCollected, ICombatant
         }
 
         _worldID = GetComponent<WorldObjectID>();
+        if(itemToDrop != null)
+            itemToDrop.SetActive(false); 
     }
 
     private void Start()
@@ -304,6 +307,11 @@ public class EnemyController : WorldDisappearOnCollected, ICombatant
         {
             Debug.Log("Raising the combat barrier.");
             UpAllBarriere();
+        }
+        if (itemToDrop != null)
+        {
+            itemToDrop.SetActive(true);
+            Debug.Log($"Activating item drop: {itemToDrop.name}");
         }
     }
 
