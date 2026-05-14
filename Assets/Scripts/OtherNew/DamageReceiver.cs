@@ -5,7 +5,7 @@ public class DamageReceiver : MonoBehaviour, IDamageable
     private HealthSystem _health;
     private PoiseSystem _poise;
     private PlayerController _player; // Pour le joueur
-    private EnemyParent _enemy;      // Pour l'IA (si tu as une classe de base IA)
+    private EnemyController _enemy;      // Pour l'IA (si tu as une classe de base IA)
     private ArmorSystem _armor;
 
     private void Awake()
@@ -13,7 +13,7 @@ public class DamageReceiver : MonoBehaviour, IDamageable
         _health = GetComponent<HealthSystem>();
         _poise = GetComponent<PoiseSystem>();
         _player = GetComponent<PlayerController>();
-        _enemy = GetComponent<EnemyParent>();
+        _enemy = GetComponent<EnemyController>();
         _armor = GetComponent<ArmorSystem>();
     }
 
@@ -50,7 +50,7 @@ public class DamageReceiver : MonoBehaviour, IDamageable
         }
 
         // Si c'est une IA, on lui dit aussi de changer d'état
-        //if (_enemy != null)
-        //   _enemy.StateMachine.ChangeState(EnemyStateType.Hit);
+        if (_enemy != null)
+           _enemy.StateMachine.ChangeState(EnemyStateType.Hit);
     }
 }

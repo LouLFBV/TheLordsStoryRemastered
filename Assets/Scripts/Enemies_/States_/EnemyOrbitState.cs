@@ -6,7 +6,7 @@ public class EnemyOrbitState : EnemyState
     private int _orbitDirection = 1; // 1 pour droite, -1 pour gauche
     private float _attackTimer = 3f;
 
-    public EnemyOrbitState(EnemyController enemy) : base(enemy) { }
+    public EnemyOrbitState(EnemyControllerBase enemy) : base(enemy) { }
 
     public override void Enter()
     {

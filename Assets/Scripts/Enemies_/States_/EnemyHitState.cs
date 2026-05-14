@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class EnemyHitState : EnemyState
 {
-    public EnemyHitState(EnemyController enemy) : base(enemy) { }
+    public EnemyHitState(EnemyControllerBase enemy) : base(enemy) { }
     public override void Enter()
     {
         // 1. On arrête les mouvements

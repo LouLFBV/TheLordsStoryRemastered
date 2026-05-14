@@ -1,6 +1,6 @@
 public class EnemyIdleState : EnemyState
 {
-    public EnemyIdleState(EnemyController enemy) : base(enemy) { }
+    public EnemyIdleState(EnemyControllerBase enemy) : base(enemy) { }
 
     public override void Enter()
     {

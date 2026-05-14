@@ -1,7 +1,7 @@
 using UnityEngine;
 public class EnemyDeathState : EnemyState
 {
-    public EnemyDeathState(EnemyController enemy) : base(enemy) { }
+    public EnemyDeathState(EnemyControllerBase enemy) : base(enemy) { }
 
     public override void Enter()
     {

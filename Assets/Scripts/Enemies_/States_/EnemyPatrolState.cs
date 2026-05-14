@@ -8,7 +8,7 @@ public class EnemyPatrolState : EnemyState
     private bool isWaiting;
 
 
-    public EnemyPatrolState(EnemyController enemy) : base(enemy) { }
+    public EnemyPatrolState(EnemyControllerBase enemy) : base(enemy) { }
 
     public override void Enter()
     {

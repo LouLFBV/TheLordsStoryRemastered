@@ -4,7 +4,7 @@ public class EnemyStunnedState : EnemyState
 {
     private float stunDuration = 2f; // Durée de l'étourdissement
     private float stunTimer;
-    public EnemyStunnedState(EnemyController enemy) : base(enemy) { }
+    public EnemyStunnedState(EnemyControllerBase enemy) : base(enemy) { }
     public override void Enter()
     {
         // 1. On arrête les mouvements

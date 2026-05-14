@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class EnemyFollowState : EnemyState
 {
-    public EnemyFollowState(EnemyController enemy) : base(enemy) { }
+    public EnemyFollowState(EnemyControllerBase enemy) : base(enemy) { }
 
     public override void Enter()
     {

@@ -2,12 +2,12 @@ using UnityEngine;
 
 public class AIManager : MonoBehaviour
 {
-    private EnemyController _enemy;
+    private EnemyControllerBase _enemy;
     [SerializeField] private NewEnemySO enemyData; // Ta base de données
     private float _orbitCooldownTimer;
     [SerializeField] private float defaultCooldown = 5f; // Temps entre deux orbites
 
-    public void Initialize(EnemyController owner)
+    public void Initialize(EnemyControllerBase owner)
     {
         _enemy = owner;
     }

@@ -7,7 +7,7 @@ public class EnemyAttackState : EnemyState
     private float _currentPostAttackDelay; // Délai dynamique récupéré de l'AttackSO
     private AttackSO _currentAttack;
 
-    public EnemyAttackState(EnemyController enemy) : base(enemy) { }
+    public EnemyAttackState(EnemyControllerBase enemy) : base(enemy) { }
 
 
     public override void Enter()

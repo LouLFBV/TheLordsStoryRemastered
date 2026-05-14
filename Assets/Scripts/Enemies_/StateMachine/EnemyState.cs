@@ -1,9 +1,9 @@
 public abstract class EnemyState : State
 {
-    protected EnemyController enemy;
+    protected EnemyControllerBase enemy;
     protected UnityEngine.AI.NavMeshAgent agent; // Petit bonus confort
 
-    protected EnemyState(EnemyController enemy)
+    protected EnemyState(EnemyControllerBase enemy)
     {
         this.enemy = enemy;
         this.agent = enemy.Agent;
