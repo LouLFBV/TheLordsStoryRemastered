@@ -6,7 +6,7 @@ public class LockOnSystem : MonoBehaviour
     [SerializeField] private float lockRadius = 15f;
     [SerializeField] private LayerMask enemyLayer;
     [SerializeField] private float maxLockDistance = 20f; // Distance de rupture
-    private EnemyController currentTarget;
+    private EnemyControllerBase currentTarget;
     public Transform CurrentTarget { get; private set; }
     public bool IsLocked => CurrentTarget != null;
 
@@ -22,7 +22,7 @@ public class LockOnSystem : MonoBehaviour
             .First();
 
         // 2. On tente de récupérer le script EnemyController sur ce collider
-        if (closestHit.TryGetComponent<EnemyController>(out var enemy))
+        if (closestHit.TryGetComponent<EnemyControllerBase>(out var enemy))
         {
             // On éteint l'ancienne marque visuelle si on change de cible
             if (currentTarget != null) currentTarget.SetLockOnIndicator(false);

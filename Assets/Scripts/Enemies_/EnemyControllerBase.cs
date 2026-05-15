@@ -15,7 +15,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     [SerializeField] private List<EnemyWeaponSetup> weaponSetups;
     private Dictionary<AttackSO, EnemyWeaponSetup> _attackToWeaponMap;
     public Dictionary<AttackSO, WeaponDamageDetector> weaponDict;
-    [SerializeField] private List<AttackSO> availableAttacks;
+    [SerializeField] protected List<AttackSO> availableAttacks;
     public ItemData PendingWeaponItem { get; set; }
     private AttackSO _lastPerformedAttack; // On stocke la dernière attaque
     public float lastAttackExitTime { get; set; }
@@ -118,7 +118,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
             itemToDrop.SetActive(false);
     }
 
-    private void Start()
+    protected virtual void Start()
     {
         // 1. Recherche du joueur
         if (target == null && PlayerController.Instance != null)
@@ -136,7 +136,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
 
     }
 
-    private void Update()
+    protected virtual void Update()
     {
         StateMachine.Update();
 
