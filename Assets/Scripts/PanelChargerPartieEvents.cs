@@ -15,4 +15,7 @@ public class PanelChargerPartieEvents : MonoBehaviour
     {
         TransitionPanel.Instance.SetLoadingIconVisible(0);
     }
+
+
+    public void AE_SetToUIState() => PlayerController.Instance.StateMachine.ChangeState(PlayerStateType.UI);
 }

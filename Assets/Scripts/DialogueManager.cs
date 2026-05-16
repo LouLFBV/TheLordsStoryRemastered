@@ -133,7 +133,9 @@ public class DialogueManager : MonoBehaviour
     {
         textName.text = name;
         if (!string.IsNullOrEmpty(nickName))
-            textNickname.text = nickName;
+            textNickname.text = " - " + nickName;
+        else
+            textNickname.text = "";
         playerIcone.SetActive(speaker == Speaker.Player);
     }
 }

@@ -245,6 +245,7 @@ public class PlayerController : MonoBehaviour, ICombatant
     public void AE_PlayHarvestingSoundEffectFromInteractBehaviour() => interactSystem.PlayHarvestingSoundEffect();
 
     public void AE_BreakHarvestableFromInteractBehaviour() => StartCoroutine(interactSystem.BreakHarvestable());
+
     #endregion
     public void PrepareEquip(ItemData data)
     {
