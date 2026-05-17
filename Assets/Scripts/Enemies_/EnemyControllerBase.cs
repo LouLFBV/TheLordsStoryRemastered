@@ -46,6 +46,10 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     public EnemyStunnedState StunnedState { get; private set; }
     public EnemyDeathState DeathState { get; private set; }
 
+    [Header("Patrol Settings")]
+    public Transform patrolCenterPoint;
+
+
     [Header("Other")]
     [SerializeField] private GameObject itemToDrop;
     private WorldObjectID _worldID;
@@ -391,6 +395,15 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
 
             }
         }
+
+        // 3. Dessin de la patrouille (Fonctionne maintenant hors-jeu !)
+        if (enemyData != null)
+        {
+            Gizmos.color = new Color(0.5f, 0f, 0.5f, 0.6f); // Violet plus visible
+            Vector3 center = patrolCenterPoint != null ? patrolCenterPoint.position : transform.position;
+
+            Gizmos.DrawWireSphere(center, enemyData.patrolRadius);
+        }
     }
 #endif
     private void OnDrawGizmosSelected()
@@ -401,7 +414,6 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
             Gizmos.color = new Color(1, 1, 0, 0.2f); // Jaune transparent
             Gizmos.DrawWireSphere(transform.position, enemyData.visionRange);
         }
-
 
     }
 

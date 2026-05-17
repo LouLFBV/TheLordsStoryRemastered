@@ -7,6 +7,9 @@ public class EnemyPatrolState : EnemyState
     private float waitTimer;
     private bool isWaiting;
 
+    // L'ancre de patrouille fixe par défaut
+    private Vector3 spawnPosition;
+    private bool hasSpawnPosition = false;
 
     public EnemyPatrolState(EnemyControllerBase enemy) : base(enemy) { }
 
@@ -14,7 +17,15 @@ public class EnemyPatrolState : EnemyState
     {
         agent.speed = enemy.enemyData.walkSpeed;
         agent.isStopped = false;
-        isWaiting = false; // Reset important
+        isWaiting = false;
+
+        // On mémorise sa position de départ UNIQUE une bonne fois pour toutes
+        if (!hasSpawnPosition)
+        {
+            spawnPosition = enemy.transform.position;
+            hasSpawnPosition = true;
+        }
+
         FindNewDestination();
     }
 
@@ -31,49 +42,47 @@ public class EnemyPatrolState : EnemyState
             return;
         }
 
-        // Condition d'arrivée robuste
-        // On vérifie si la distance restante est faible (0.5f est une bonne marge)
         if (!agent.pathPending)
         {
             if (agent.remainingDistance <= agent.stoppingDistance + 0.5f)
             {
-                // Debug.Log("Destination atteinte, début de l'attente.");
                 StartWaiting();
             }
         }
 
-        // Mise à jour de l'animation avec la vélocité réelle
-        // On utilise Mathf.Lerp pour éviter que l'anim ne saute
         float currentSpeed = agent.velocity.magnitude / agent.speed;
         enemy.Animator.SetFloat("Speed", currentSpeed, 0.1f, Time.deltaTime);
     }
 
     private void FindNewDestination()
     {
-        // On essaie de trouver un point valide jusqu'à 5 fois si nécessaire
         for (int i = 0; i < 5; i++)
         {
+            // 1. On génère le décalage aléatoire
             Vector3 randomDirection = Random.insideUnitSphere * enemy.enemyData.patrolRadius;
+            randomDirection.y = 0; // On force sur un plan horizontal pour le NavMesh
 
-            // On s'assure d'une distance minimale pour éviter le surplace
+            // Sécurité anti-surplace
             if (randomDirection.magnitude < 3f)
                 randomDirection = randomDirection.normalized * 3f;
 
-            randomDirection += enemy.transform.position;
+            // 2. LOGIQUE DE CENTRE UNIQUE : 
+            // Si tu as mis un point précis dans l'inspecteur (patrolCenterPoint), on l'utilise.
+            // Sinon, on utilise la position où il a spawn (spawnPosition).
+            Vector3 finalCenter = enemy.patrolCenterPoint != null ? enemy.patrolCenterPoint.position : spawnPosition;
 
-            // On utilise un rayon de recherche un peu plus large (2f au lieu de patrolRadius) 
-            // pour SamplePosition pour être sûr de trouver le sol
+            // 3. On applique le centre choisi
+            randomDirection += finalCenter;
+
+            // 4. Test sur le NavMesh
             if (NavMesh.SamplePosition(randomDirection, out NavMeshHit hit, 5f, NavMesh.AllAreas))
             {
                 agent.isStopped = false;
                 agent.SetDestination(hit.position);
-                // Debug.Log("Nouveau point trouvé à l'essai n°" + (i + 1));
                 return;
             }
         }
 
-        // Si après 5 essais rien n'est trouvé, on attend un peu et on recommence
-        // Debug.LogWarning("Aucun point NavMesh trouvé, l'ours attend.");
         StartWaiting();
     }
 

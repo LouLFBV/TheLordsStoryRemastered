@@ -7,7 +7,6 @@ using TMPro;
 public class BossController : EnemyControllerBase
 {
     [Header("Boss UI & Audio")]
-    [SerializeField] private TextMeshProUGUI currentHealthText;
     [SerializeField] private AudioSource bossAudioSource;
     [SerializeField] private float musicFadeDuration = 1.5f;
 
@@ -25,14 +24,12 @@ public class BossController : EnemyControllerBase
     protected override void Start()
     {
         base.Start();
-        UpdateBossUI();
         PlayPhaseMusic(0);
     }
 
     protected override void Update()
     {
         base.Update();
-        UpdateBossUI();
         CheckPhaseTransitions();
     }
 
@@ -75,11 +72,6 @@ public class BossController : EnemyControllerBase
         BoostBossStats(newPhase);
     }
 
-    private void UpdateBossUI()
-    {
-        if (currentHealthText != null)
-            currentHealthText.text = $"{Health.CurrentHealth} / {Health.MaxHealth}";
-    }
 
     // On override CheckForPlayer pour utiliser ta distance spécifique
     protected override void CheckForPlayer()
