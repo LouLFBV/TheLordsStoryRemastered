@@ -7,6 +7,7 @@ public class CanHarvest : MonoBehaviour
     [SerializeField] private bool isAxe = false;
 
     [SerializeField] private bool isPickaxe = false;
+    [SerializeField] private bool isSuperPickaxe = false;
 
     private void OnEnable()
     {
@@ -15,9 +16,13 @@ public class CanHarvest : MonoBehaviour
         {
             interactBehaviour.canAxe = true;
         }
-        else if (isPickaxe)
+        if (isPickaxe)
         {
             interactBehaviour.canPickaxe = true;
+        }
+        if (isSuperPickaxe)
+        {
+            interactBehaviour.canSuperPickaxe = true;
         }
     }
     private void OnDisable()
@@ -26,9 +31,13 @@ public class CanHarvest : MonoBehaviour
         {
             interactBehaviour.canAxe = false;
         }
-        else if (isPickaxe)
+        if (isPickaxe)
         {
-            interactBehaviour.canPickaxe = false;
+            interactBehaviour.canSuperPickaxe = false;
+        }
+        if (isSuperPickaxe)
+        {
+            interactBehaviour.canSuperPickaxe = false;
         }
     }
 }

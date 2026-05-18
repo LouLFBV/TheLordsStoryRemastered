@@ -246,6 +246,11 @@ public class PlayerController : MonoBehaviour, ICombatant
 
     public void AE_BreakHarvestableFromInteractBehaviour() => StartCoroutine(interactSystem.BreakHarvestable());
 
+
+    public void AE_StopBusyState()
+    {
+        interactSystem.isBusy = false;
+    }
     #endregion
     public void PrepareEquip(ItemData data)
     {

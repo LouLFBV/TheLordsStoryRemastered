@@ -20,6 +20,7 @@ public class InteractSystem : MonoBehaviour
     public bool canAxe = false;
     [SerializeField] private AudioClip axeSound;
     public bool canPickaxe = false;
+    public bool canSuperPickaxe = false;
 
 
     [Header("Other")]
@@ -104,6 +105,7 @@ public class InteractSystem : MonoBehaviour
         EnableToolSound(currentTool);
         currentHarvestable = harvestable;
 
+        Debug.Log($"Starting harvest on {harvestable.name} with tool {currentTool}. canAxe: {canAxe}, canPickaxe: {canPickaxe}, canSuperPickaxe: {canSuperPickaxe}");
         player.Animator.SetTrigger("Harvest");
         // On bloque le mouvement via la StateMachine si possible, ou via canMove
         // player.StateMachine.ChangeState(PlayerStateType.Busy); 
@@ -118,10 +120,6 @@ public class InteractSystem : MonoBehaviour
         }
     }
 
-    public void ReEnablePlayerMouvement()
-    {
-        isBusy = false;
-    }
 
     private void RespawnObject(Transform objectToRespawn)
     {

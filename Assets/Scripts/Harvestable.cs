@@ -23,5 +23,6 @@ public class Ressource
 public enum Tool
 {   
     Pickaxe,
+    SuperPickaxe,
     Axe
 }

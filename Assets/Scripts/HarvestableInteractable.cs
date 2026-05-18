@@ -16,14 +16,34 @@ public class HarvestableInteractable : InteractableBase
 
         if (interactBehaviour == null || harvestable == null)
         {
-
             Debug.Log("Cannot harvest: missing InteractBehaviour or Harvestable component.");
             return;
         }
 
         // Vérification outil
-        if ((harvestable.tool == Tool.Axe && !interactBehaviour.canAxe) ||
-            (harvestable.tool == Tool.Pickaxe && !interactBehaviour.canPickaxe))
+        bool canHarvest = false;
+        switch (harvestable.tool)
+        {
+            case Tool.Axe:
+                canHarvest = interactBehaviour.canAxe;
+                Debug.Log($"Harvestable requires Axe. Player canAxe: {interactBehaviour.canAxe}");
+                break;
+            case Tool.Pickaxe:
+                // Pickaxe peut être détruit avec canPickaxe OU canSuperPickaxe
+                canHarvest = interactBehaviour.canPickaxe || interactBehaviour.canSuperPickaxe;
+                Debug.Log($"Harvestable requires Pickaxe. Player canPickaxe: {interactBehaviour.canPickaxe}, canSuperPickaxe: {interactBehaviour.canSuperPickaxe}");
+                break;
+            case Tool.SuperPickaxe:
+                canHarvest = interactBehaviour.canSuperPickaxe;
+                Debug.Log($"Harvestable requires Super Pickaxe. Player canSuperPickaxe: {interactBehaviour.canSuperPickaxe}");
+                break;
+            default:
+                canHarvest = false;
+                Debug.Log("Harvestable has unknown tool requirement.");
+                break;
+        }
+
+        if (!canHarvest)
         {
             Debug.Log("Cannot harvest: incorrect tool.");
             return;
