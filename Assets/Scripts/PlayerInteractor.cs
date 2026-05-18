@@ -29,7 +29,7 @@ public class PlayerInteractor : MonoBehaviour
 
     private void DetectInteractable()
     {
-        if (Physics.SphereCast(transform.position, interactRadius, transform.forward, out RaycastHit hit, interactRange, interactableMask/*, QueryTriggerInteraction.Ignore)*/))
+        if (Physics.SphereCast(transform.position, interactRadius, transform.forward, out RaycastHit hit, interactRange, interactableMask, QueryTriggerInteraction.Ignore))
         {
             var interactable = hit.collider.GetComponent<IInteractable>();
             if (interactable != currentTarget)
