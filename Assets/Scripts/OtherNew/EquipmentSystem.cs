@@ -70,11 +70,7 @@ public class EquipmentSystem : MonoBehaviour
 
         if (equipmentLibraryItem != null)
         {
-            for (int i = 0; i < equipmentLibraryItem.elementsToDisable.Length; i++)
-            {
-                equipmentLibraryItem.elementsToDisable[i].SetActive(true);
-            }
-            equipmentLibraryItem.itemPrefab.SetActive(false);
+            ActiveItemVisuel(equipmentLibraryItem, false);
         }
         player.Armor.UpdateArmor(itemToDisable.armorType, itemToDisable.armorPoints, false);
         if (itemToDisable.equipmentType == EquipmentType.Arrow)
@@ -153,17 +149,7 @@ public class EquipmentSystem : MonoBehaviour
 
         if (equipmentLibraryItem != null)
         {
-            foreach (GameObject element in equipmentLibraryItem.elementsToDisable)
-            {
-                element.SetActive(true);
-            }
-            equipmentLibraryItem.itemPrefab.SetActive(false);
-
-            foreach (GameObject element in equipmentLibraryItem.elementsToDisableEquipment)
-            {
-                element.SetActive(true);
-            }
-            equipmentLibraryItem.itemPrefabEquipment.SetActive(false);
+            ActiveItemVisuel(equipmentLibraryItem, false);
         }
         if (currentItem)
         {
@@ -381,23 +367,23 @@ public class EquipmentSystem : MonoBehaviour
         }
     }
     #endregion
-    private void ActiveItemVisuel(EquipmentLibraryItem equipmentLibraryItem)
+    private void ActiveItemVisuel(EquipmentLibraryItem equipmentLibraryItem, bool actived = true)
     {
         foreach (GameObject element in equipmentLibraryItem.elementsToDisable)
         {
-            element.SetActive(false);
+            element.SetActive(!actived);
         }
-        equipmentLibraryItem.itemPrefab.SetActive(true);
+        equipmentLibraryItem.itemPrefab.SetActive(actived);
 
-        ActiveItemVisuelInEquipment(equipmentLibraryItem);
+        ActiveItemVisuelInEquipment(equipmentLibraryItem, actived);
     }
-    private void ActiveItemVisuelInEquipment(EquipmentLibraryItem equipmentLibraryItem)
+    private void ActiveItemVisuelInEquipment(EquipmentLibraryItem equipmentLibraryItem, bool actived)
     {
         foreach (GameObject element in equipmentLibraryItem.elementsToDisableEquipment)
         {
-            element.SetActive(false);
+            element.SetActive(!actived);
         }
-        equipmentLibraryItem.itemPrefabEquipment.SetActive(true);
+        equipmentLibraryItem.itemPrefabEquipment.SetActive(actived);
     }
 }
 
