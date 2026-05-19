@@ -22,6 +22,7 @@ public class CombatSystem : MonoBehaviour
 
         _animator.applyRootMotion = true;
         _animator.Play(attack.AnimationHash, attack.animatorLayer, 0f);
+        Debug.Log($"AnimationHase : {attack.animationName}");
     }
 
     public void InterruptAttack()

@@ -1,8 +1,6 @@
 using UnityEngine;
-using UnityEngine.AI;
 using System.Collections.Generic;
 using System.Collections;
-using TMPro;
 
 public class BossController : EnemyControllerBase
 {
@@ -15,9 +13,17 @@ public class BossController : EnemyControllerBase
     private int currentPhaseIndex = 0;
     private float baseMusicVolume;
 
+    [Header("States")]
+    public BossAttackState AttackState { get; private set; }
+
     protected override void Awake()
     {
         base.Awake();
+        // Dans BossController.cs (au moment d'écraser ou de setup le dictionnaire de la State Machine) :
+        AttackState = new BossAttackState(this); // Si ta variable AttackState est protected/public dans la base
+
+        // Et dans ton dictionnaire d'états du Boss, assure-toi d'associer :
+        StateMachine.AddState(EnemyStateType.Attack, new BossAttackState(this));
         baseMusicVolume = bossAudioSource.volume;
     }
 
@@ -125,6 +131,9 @@ public class BossController : EnemyControllerBase
         // On peut aussi booster les dégâts via un multiplicateur global si tu en as un
         Debug.Log($"Stats boosted for {phase.phaseName}: Speed is now {Agent.speed}");
     }
+
+
+    public void AE_OnAttackFinished() => (StateMachine.CurrentState as BossAttackState)?.OnAnimationFinished();
 
     #region Audio Fading
     private IEnumerator FadeMusicSequence(AudioClip newClip)

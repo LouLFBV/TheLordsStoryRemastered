@@ -41,7 +41,6 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     public EnemyPatrolState PatrolState { get; private set; }
     public EnemyFollowState FollowState { get; private set; }
     public EnemyOrbitState OrbitState { get; private set; }
-    public EnemyAttackState AttackState { get; private set; }
     public EnemyHitState HitState { get; private set; }
     public EnemyStunnedState StunnedState { get; private set; }
     public EnemyDeathState DeathState { get; private set; }
@@ -74,7 +73,6 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         IdleState = new EnemyIdleState(this);
         FollowState = new EnemyFollowState(this);
         OrbitState = new EnemyOrbitState(this);
-        AttackState = new EnemyAttackState(this);
         PatrolState = new EnemyPatrolState(this); // On le fera juste après
         HitState = new EnemyHitState(this);
         StunnedState = new EnemyStunnedState(this);
@@ -86,7 +84,6 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
             { EnemyStateType.Idle, IdleState },
             { EnemyStateType.Follow, FollowState },
             { EnemyStateType.Orbit, OrbitState },
-            { EnemyStateType.Attack, AttackState },
             { EnemyStateType.Patrol, PatrolState },
             { EnemyStateType.Hit, HitState },
             { EnemyStateType.Stunned, StunnedState },
@@ -241,7 +238,6 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     public void AE_HitboxOpen() => Combat.AE_HitboxOpen();
     public void AE_HitboxClose() => Combat.AE_HitboxClose();
     // --- Animation Events (Même logique que le joueur) ---
-    public void AE_OnAttackFinished() => (StateMachine.CurrentState as EnemyAttackState)?.OnAnimationFinished();
 
     public void EquipWeapon(AttackSO weapon)
     {
