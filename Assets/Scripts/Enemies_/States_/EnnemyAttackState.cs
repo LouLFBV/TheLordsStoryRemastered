@@ -60,26 +60,29 @@ public class EnemyAttackState : EnemyState
 
     private void DetermineNextState()
     {
-        AttackSO nextPotentialAttack = enemy.PeekBestAttack();
-
-        if (nextPotentialAttack != null)
+        // FIX COMPORTEMENT : On vérifie si l'attaque qui vient de se terminer possède une suite officielle (Combo)
+        if (_currentAttack != null && _currentAttack.nextAttack != null)
         {
-            Debug.Log($"<color=orange>[COMBO]</color> Enchaînement vers : {nextPotentialAttack.animationName}");
+            // On vérifie si cette suite spécifique est prête (cooldown/distance requis)
+            // Pour être sûr, on demande à Peek de valider si un combo est possible
+            AttackSO nextPotentialAttack = enemy.PeekBestAttack();
 
-            // CORRECTION : On réinitialise manuellement l'état d'attaque 
-            // au lieu de juste appeler ChangeState qui peut être ignoré
-            this.Enter();
+            // Si l'IA valide qu'elle peut attaquer ET que le choix se porte sur la suite logique
+            if (nextPotentialAttack == _currentAttack.nextAttack)
+            {
+                Debug.Log($"<color=orange>[COMBO TRUQUÉ]</color> Enchaînement fluide vers le combo officiel : {nextPotentialAttack.animationName}");
+                this.Enter(); // On enchaîne sans repasser par l'état Follow
+                return; // On s'arrête là !
+            }
         }
+
+        float distance = Vector3.Distance(enemy.transform.position, enemy.target.position);
+        Debug.Log($"[ATTACK] Fin de l'attaque. Pas de combo. Distance: {distance:F2}. Application du repos.");
+
+        if (distance <= 4f && enemy.AIManager.HasPermission(EnemyStateType.Orbit))
+            enemy.StateMachine.ChangeState(EnemyStateType.Orbit);
         else
-        {
-            float distance = Vector3.Distance(enemy.transform.position, enemy.target.position);
-            Debug.Log($"[ATTACK] Fin d'enchaînement. Distance: {distance:F2}. Go Orbit/Follow.");
-
-            if (distance <= 4f && enemy.AIManager.HasPermission(EnemyStateType.Orbit)) // On augmente un peu la zone pour forcer l'orbite
-                enemy.StateMachine.ChangeState(EnemyStateType.Orbit);
-            else
-                enemy.StateMachine.ChangeState(EnemyStateType.Follow);
-        }
+            enemy.StateMachine.ChangeState(EnemyStateType.Follow);
     }
 
     private void FaceTarget()

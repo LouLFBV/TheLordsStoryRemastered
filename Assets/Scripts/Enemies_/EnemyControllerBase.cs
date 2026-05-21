@@ -1,6 +1,7 @@
 ﻿using UnityEngine.AI;
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.LowLevel;
 
 public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatant
 {
@@ -255,14 +256,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
             PendingWeaponItem = setup.weaponData;
             Combat.UpdateWeaponDetector(setup.detector);
 
-            // Audio (comme dans ton BossAI)
-            if (attack.attackSound != null)
-            {
-                // On peut utiliser une AudioSource fixe sur l'ennemi pour plus de contrôle
-                AudioSource source = GetComponent<AudioSource>();
-                if (source != null) source.PlayOneShot(attack.attackSound);
-                else AudioSource.PlayClipAtPoint(attack.attackSound, transform.position);
-            }
+            PlayLocalSound(attack.attackSound);
         }
         else
         {
@@ -270,7 +264,41 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         }
     }
 
+    #region Sound
+    public void PlayLocalSound(AudioClip clip)
+    {
+        if (clip == null) return;
 
+        AudioSource source = GetComponent<AudioSource>();
+        if (source != null)
+        {
+            source.PlayOneShot(clip);
+        }
+        else
+        {
+            // Secours si tu as oublié de mettre une AudioSource sur l'ennemi
+            AudioSource.PlayClipAtPoint(clip, transform.position);
+        }
+    }
+    public void ChangeLoopingSound(AudioClip newClip)
+    {
+        AudioSource source = GetComponent<AudioSource>();
+        if (source == null) return;
+
+        // Si le clip demandé est déjà en train de jouer, on ne fait rien
+        if (source.clip == newClip && source.isPlaying) return;
+
+        // On arrête proprement le son précédent
+        source.Stop();
+
+        if (newClip != null)
+        {
+            source.clip = newClip;
+            source.loop = true; // On force la boucle par code
+            source.Play();
+        }
+    }
+    #endregion
     protected override void OnEnable()
     {
         base.OnEnable();

@@ -27,6 +27,14 @@ public class NewEnemySO : ScriptableObject
     public float patrolRadius = 8f;
     public float waitTimeMin = 1f;
     public float waitTimeMax = 2f;
+
+    [Header("Audio Settings")]
+    public AudioClip idleSound;
+    public AudioClip walkSound;     // Joué quand il passe en Follow State
+    public AudioClip runSound;     // Joué quand il passe en Follow State
+    public AudioClip orbitSound;     // Joué quand il passe en Follow State
+    public AudioClip hitSound;     // Joué quand il encaisse un coup
+    public AudioClip deathSound;   // Joué à sa mort
 }
 
 

@@ -60,18 +60,21 @@ public class NewItemActionsSystem : MonoBehaviour
         if (player.Input.UseActionPressed && useItemButton.gameObject.activeInHierarchy)
         {
             UseActionButton();
+            player.Input.UseUseActionInput(); // On consomme l'input pour éviter les actions répétées
         }
 
         // Équiper
         else if (player.Input.EquipActionPressed && equipmentItemButton.gameObject.activeInHierarchy)
         {
             EquipActionButton();
+            player.Input.UseEquipActionInput(); // On consomme l'input pour éviter les actions répétées
         }
 
         // Jeter
         else if (player.Input.DropActionPressed && dropItemButton.gameObject.activeInHierarchy)
         {
             DropActionButton();
+            player.Input.UseDropActionInput(); // On consomme l'input pour éviter les actions répétées
         }
 
         // Détruire
@@ -84,6 +87,7 @@ public class NewItemActionsSystem : MonoBehaviour
         else if (player.Input.UnequipActionPressed && desequipmentItemButton.gameObject.activeInHierarchy)
         {
             DesequipActionButton();
+            player.Input.UseUnequipAction(); // On consomme l'input pour éviter les actions répétées
         }
 
         // Fermer le panel avec "Cancel" (souvent la touche Echap ou B sur manette)
@@ -201,7 +205,8 @@ public class NewItemActionsSystem : MonoBehaviour
         Debug.Log("Using item: " + itemCurrentlySelected.itemName);
         player.Health.Heal(itemCurrentlySelected.healthEffect);
         InventorySystem.instance.RemoveItem(itemCurrentlySelected);
-        CloseActionPanel();
+        if(InventorySystem.instance.GetItemCount(itemCurrentlySelected) <= 0)
+            CloseActionPanel();
     }
 
     public void EquipActionButton()
@@ -223,7 +228,8 @@ public class NewItemActionsSystem : MonoBehaviour
     public void DestroyActionButton()
     {
         InventorySystem.instance.RemoveItem(itemCurrentlySelected);
-        CloseActionPanel();
+        if (InventorySystem.instance.GetItemCount(itemCurrentlySelected) <= 0)
+            CloseActionPanel();
         InventorySystem.instance.RefreshContent();
     }
 
@@ -254,6 +260,6 @@ public class NewItemActionsSystem : MonoBehaviour
         else
             equipment.DesequipEquipment(itemCurrentlySelected.equipmentType);
 
-        CloseActionPanel();
+        //CloseActionPanel();
     }
 }

@@ -24,6 +24,11 @@ public class EnemyPatrolState : EnemyState
             hasSpawnPosition = true;
         }
 
+        if (enemy.enemyData != null && enemy.enemyData.walkSound != null)
+        {
+            enemy.ChangeLoopingSound(enemy.enemyData.walkSound);
+        }
+
         FindNewDestination();
     }
 

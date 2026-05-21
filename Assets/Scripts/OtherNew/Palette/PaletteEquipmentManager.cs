@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class PaletteEquipmentManager : MonoBehaviour
 {
+    [SerializeField] private NewItemActionsSystem newItemActionsSystem;
     [SerializeField] private EquipmentLibrary equipmentLibrary;
     [SerializeField] private InteractSystem interactSystem;
     [SerializeField] private PaletteSlotManager slotManager;
@@ -115,6 +116,7 @@ public class PaletteEquipmentManager : MonoBehaviour
         RemoveWeapon(numberOfWeapon);
         slotManager.RefreshAffichage();
         slotManager.UpdateImageSeleted();
+        newItemActionsSystem.CloseActionPanel();
     }
 
 
@@ -285,6 +287,7 @@ public class PaletteEquipmentManager : MonoBehaviour
 
                 slotManager.objectSlots[0].slotInEquipment.item = null;
                 slotManager.objectSlots[0].slotInEquipment.countTexte.text = "";
+                newItemActionsSystem.CloseActionPanel();
             }
         }
         else
@@ -302,6 +305,7 @@ public class PaletteEquipmentManager : MonoBehaviour
                 slotManager.objectSlots[1].slotItemData = null;
                 slotManager.objectSlots[1].slotInEquipment.item = null;
                 slotManager.objectSlots[1].slotInEquipment.countTexte.text = "";
+                newItemActionsSystem.CloseActionPanel();
             }
         }
         slotManager.RefreshAffichage();

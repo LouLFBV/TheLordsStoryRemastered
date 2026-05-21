@@ -123,18 +123,30 @@ public class BossAttackState : EnemyState
 
     private void DetermineNextState()
     {
-        AttackSO nextPotentialAttack = enemy.PeekBestAttack();
-
-        if (nextPotentialAttack != null)
-            this.Enter();
-        else
+        // FIX COMPORTEMENT : On autorise le réenchaînement (combo) UNIQUEMENT si l'attaque actuelle l'exige
+        if (_currentAttack != null && _currentAttack.nextAttack != null)
         {
-            float distance = Vector3.Distance(enemy.transform.position, enemy.target.position);
-            if (distance <= 5f)
-                enemy.StateMachine.ChangeState(EnemyStateType.Orbit);
-            else
-                enemy.StateMachine.ChangeState(EnemyStateType.Follow);
+            // On vérifie si l'IA valide les conditions (distance, cooldown) pour cette suite précise
+            AttackSO nextPotentialAttack = enemy.PeekBestAttack();
+
+            if (nextPotentialAttack == _currentAttack.nextAttack)
+            {
+                Debug.Log($"<color=darkred>[BOSS COMBO]</color> Enchaînement vers : {nextPotentialAttack.animationName}");
+                this.Enter(); // On relance proprement l'état avec la nouvelle attaque du combo
+                return; // On stoppe l'exécution ici
+            }
         }
+
+        // --- SI PAS DE COMBO OFFICIEL ---
+        // Le boss doit obligatoirement faire une pause et changer d'état, 
+        // ce qui va déclencher Exit() et enregistrer son 'lastAttackExitTime'
+        float distance = Vector3.Distance(enemy.transform.position, enemy.target.position);
+        Debug.Log($"[BOSS ATTACK] Fin des enchaînements. Distance joueur : {distance:F2}m. Retrait.");
+
+        if (distance <= 5f)
+            enemy.StateMachine.ChangeState(EnemyStateType.Orbit);
+        else
+            enemy.StateMachine.ChangeState(EnemyStateType.Follow);
     }
 
     private void FaceTarget()

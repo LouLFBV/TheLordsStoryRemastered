@@ -20,6 +20,14 @@ public class EnemyDeathState : EnemyState
         enemy.SetLockOnIndicator(false);
 
         Debug.Log($"{enemy.gameObject.name} est mort.");
+
+        AudioSource source = enemy.GetComponent<AudioSource>();
+        if (source != null && enemy.enemyData != null)
+        {
+            source.Stop(); // On coupe définitivement les boucles
+            source.loop = false;
+            source.PlayOneShot(enemy.enemyData.deathSound); // Dernier râle
+        }
     }
 
     public override void Update() { }

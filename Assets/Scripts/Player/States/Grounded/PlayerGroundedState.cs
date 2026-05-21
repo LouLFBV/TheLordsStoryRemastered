@@ -16,6 +16,7 @@ public class PlayerGroundedState : PlayerState
 
     public override void Update()
     {
+        if (player.IsDead) return;
         base.Update();
 
         // 1. PRIORITÉ : La Chute

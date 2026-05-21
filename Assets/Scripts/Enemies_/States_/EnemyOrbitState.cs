@@ -20,6 +20,11 @@ public class EnemyOrbitState : EnemyState
         agent.updateRotation = false;
         _attackTimer = Random.Range(2f, 5f);
         _directionTimer = Random.Range(2f, 4f);
+
+        if (enemy.enemyData != null && enemy.enemyData.orbitSound != null)
+        {
+            enemy.ChangeLoopingSound(enemy.enemyData.orbitSound);
+        }
     }
 
     public override void Update()

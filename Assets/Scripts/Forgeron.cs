@@ -9,7 +9,7 @@ public class Forgeron : PNJParent
     public override void OnInteract(PlayerInteractor player)
     {
         if (forgeronUI.isOpen) return;
-        if (isOnDial && Time.time - dialogueStartTime > inputCooldown && !animatorPanelProduits.GetBool("PanelIsOpen"))
+        if (isOnDial && Time.time - dialogueStartTime > inputCooldown /*&& !animatorPanelProduits.GetBool("PanelIsOpen")*/)
         {
             if (!DialogueManager.instance.SkipOrFinish(currentSpeaker) && !DialogueManager.instance.inDelay)
                 StartDialogue(sentences);
@@ -84,7 +84,7 @@ public class Forgeron : PNJParent
             dialogueStartTime = Time.time; // Enregistrer le temps de début du dialogue
             currentDialogue = sentence;
         }
-        if (index >= currentDialogue.Count && !animatorPanelProduits.GetBool("PanelIsOpen"))
+        if (index >= currentDialogue.Count /*&& !animatorPanelProduits.GetBool("PanelIsOpen")*/)
         {
             if (!VerifIfEmpty())
             {

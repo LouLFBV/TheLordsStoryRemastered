@@ -46,7 +46,8 @@ public class PNJParent : InteractableBase
         isOnDial = false;
         player.StateMachine.ChangeState(PlayerStateType.Idle);
         dialogueEndTime = Time.time;
-        animatorPanelProduits.SetBool("PanelIsOpen", false);
+        if (animatorPanelProduits!= null ) 
+            animatorPanelProduits.SetBool("PanelIsOpen", false);
         isActive.SetActive(false);
         animator.SetBool("isTalking", false);
     }

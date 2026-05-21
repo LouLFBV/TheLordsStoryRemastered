@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 
 public class PlayerInputHandler : MonoBehaviour
 {
@@ -221,4 +222,5 @@ public class PlayerInputHandler : MonoBehaviour
     public void UseDropActionInput() => DropActionPressed = false;
     public void UseEquipActionInput() => EquipActionPressed = false;
     public void UseUseActionInput() => UseActionPressed = false;
+    public void UseUnequipAction() => UnequipActionPressed = false;
 }

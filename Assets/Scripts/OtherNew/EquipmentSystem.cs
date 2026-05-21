@@ -185,6 +185,8 @@ public class EquipmentSystem : MonoBehaviour
     {
 
         ItemData itemToEquip = equipment ? equipment : itemActionsSystem.itemCurrentlySelected;
+        if (InventorySystem.instance.GetItemCount(itemToEquip) <= 0)
+            itemActionsSystem.CloseActionPanel();
         print("Equip item : " + itemToEquip.name);
 
         EquipmentLibraryItem equipmentLibraryItem = equipmentLibrary.Get(itemToEquip);
@@ -280,7 +282,6 @@ public class EquipmentSystem : MonoBehaviour
             Debug.LogWarning("Item not found in equipment library: " + itemToEquip.name);
         }
 
-        itemActionsSystem.CloseActionPanel();
         //UpdateEquipmentsDesequipButtons();
     }
 

@@ -9,6 +9,10 @@ public class EnemyFollowState : EnemyState
         agent.speed = enemy.enemyData.chaseSpeed;
         agent.isStopped = false;
 
+        if (enemy.enemyData != null && enemy.enemyData.runSound != null)
+        {
+            enemy.ChangeLoopingSound(enemy.enemyData.runSound);
+        }
     }
 
     public override void Update()
