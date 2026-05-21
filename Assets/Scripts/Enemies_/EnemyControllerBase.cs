@@ -1,7 +1,6 @@
 ﻿using UnityEngine.AI;
 using UnityEngine;
 using System.Collections.Generic;
-using UnityEngine.LowLevel;
 
 public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatant
 {
@@ -53,6 +52,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     [Header("Other")]
     [SerializeField] private GameObject itemToDrop;
     private WorldObjectID _worldID;
+    private Dictionary<AttackSO, float> _attackCooldownTimers = new Dictionary<AttackSO, float>();
 
     protected override void Awake()
     {
@@ -110,10 +110,6 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
             }
         }
 
-        foreach (var cooldown in availableAttacks)
-        {
-            cooldown.nextAttackTime = 0f; // S'assure que toutes les attaques sont prêtes au départ
-        }
 
         _worldID = GetComponent<WorldObjectID>();
         if (itemToDrop != null)
@@ -170,38 +166,38 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         }
 
         // 2. Si je suis en Idle trop longtemps -> Patrouille (Optionnel)
-        if (StateMachine.CurrentState == IdleState)
-        {
-            // Tu peux ajouter un petit timer ici pour passer en Patrol automatiquement
-            StateMachine.ChangeState(EnemyStateType.Patrol);
-        }
+        //if (StateMachine.CurrentState == IdleState)
+        //{
+        //    // Tu peux ajouter un petit timer ici pour passer en Patrol automatiquement
+        //    StateMachine.ChangeState(EnemyStateType.Patrol);
+        //}
     }
 
     public AttackSO PeekBestAttack()
     {
         if (target == null) return null;
+
+        // Délai global entre deux attaques de n'importe quel type
         if (Time.time < lastAttackExitTime + 1.5f) return null;
 
         float distance = Vector3.Distance(transform.position, target.position);
-
-        // 1. On crée une liste temporaire des attaques actuellement possibles
         List<AttackSO> potentialAttacks = new List<AttackSO>();
 
         foreach (var attack in availableAttacks)
         {
-            bool cooldownTermine = Time.time >= attack.nextAttackTime;
+            // 1. On lit le temps de recharge dans le dictionnaire de l'ennemi (s'il n'existe pas, readyTime vaudra 0)
+            _attackCooldownTimers.TryGetValue(attack, out float readyTime);
+            bool cooldownTermine = Time.time >= readyTime;
+
             bool distanceOK = distance >= attack.minDistance && distance <= attack.maxDistance;
 
             if (distanceOK && cooldownTermine)
             {
-                // On évite toujours la toute dernière attaque pour la variété
                 if (attack == _lastPerformedAttack && availableAttacks.Count > 1) continue;
-
                 potentialAttacks.Add(attack);
             }
         }
 
-        // 2. Si on a plusieurs choix, on en prend un au hasard !
         if (potentialAttacks.Count > 0)
         {
             int randomIndex = Random.Range(0, potentialAttacks.Count);
@@ -213,16 +209,16 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
 
     public AttackSO GetBestAttack()
     {
-        AttackSO attack = PeekBestAttack(); // On cherche l'attaque
+        AttackSO attack = PeekBestAttack();
 
         if (attack != null)
         {
-            // FORCE le cooldown ici pour que PeekBestAttack() 
-            // renvoie NULL à la frame suivante !
-            attack.nextAttackTime = Time.time + attack.attackCooldown;
-            _lastPerformedAttack = attack;
+            // 2. On enregistre le cooldown UNIQUEMENT pour cet ennemi
+            float finalCooldownTime = Time.time + attack.attackCooldown;
+            _attackCooldownTimers[attack] = finalCooldownTime;
 
-            Debug.Log($"<color=cyan>[CORE]</color> Cooldown activé pour {attack.animationName}. Prochaine dispo dans {attack.attackCooldown}s");
+            _lastPerformedAttack = attack;
+            Debug.Log($"<color=cyan>[CORE]</color> Cooldown local activé pour {attack.animationName}. Prochaine dispo dans {attack.attackCooldown}s");
             return attack;
         }
         return null;

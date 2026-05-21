@@ -94,10 +94,16 @@ public class BossAttackState : EnemyState
         // Logique de rotation et de transition
         if (!isAnimationFinished)
         {
-            // On empêche le boss de pivoter sur lui-même s'il est en plein saut/fente rapide
-            if (!_isApplyingMovement)
+            // Au lieu de bloquer complètement la rotation, on ajuste sa vitesse !
+            if (_isApplyingMovement)
             {
-                FaceTarget();
+                // Pendant qu'il fonce/saute, il tourne plus lentement pour "ajuster" sa cible de manière réaliste
+                FaceTargetWithSpeed(2f);
+            }
+            else
+            {
+                // En dehors du déplacement pur, il se tourne normalement et rapidement
+                FaceTargetWithSpeed(5f);
             }
         }
         else
@@ -108,6 +114,22 @@ public class BossAttackState : EnemyState
                 isAnimationFinished = false;
                 DetermineNextState();
             }
+        }
+    }
+
+    private void FaceTargetWithSpeed(float rotationSpeed)
+    {
+        if (enemy.target == null) return;
+
+        // On calcule la direction vers le joueur
+        Vector3 direction = (enemy.target.position - enemy.transform.position).normalized;
+        direction.y = 0; // On reste sur un plan horizontal pour éviter que le boss ne penche en avant/arrière
+
+        if (direction != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            // On applique un Slerp avec la vitesse passée en paramètre
+            enemy.transform.rotation = Quaternion.Slerp(enemy.transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
         }
     }
 
@@ -123,30 +145,22 @@ public class BossAttackState : EnemyState
 
     private void DetermineNextState()
     {
-        // FIX COMPORTEMENT : On autorise le réenchaînement (combo) UNIQUEMENT si l'attaque actuelle l'exige
+        // 1. Logique de Combo
         if (_currentAttack != null && _currentAttack.nextAttack != null)
         {
-            // On vérifie si l'IA valide les conditions (distance, cooldown) pour cette suite précise
             AttackSO nextPotentialAttack = enemy.PeekBestAttack();
 
             if (nextPotentialAttack == _currentAttack.nextAttack)
             {
                 Debug.Log($"<color=darkred>[BOSS COMBO]</color> Enchaînement vers : {nextPotentialAttack.animationName}");
-                this.Enter(); // On relance proprement l'état avec la nouvelle attaque du combo
-                return; // On stoppe l'exécution ici
+                this.Enter();
+                return;
             }
         }
 
-        // --- SI PAS DE COMBO OFFICIEL ---
-        // Le boss doit obligatoirement faire une pause et changer d'état, 
-        // ce qui va déclencher Exit() et enregistrer son 'lastAttackExitTime'
-        float distance = Vector3.Distance(enemy.transform.position, enemy.target.position);
-        Debug.Log($"[BOSS ATTACK] Fin des enchaînements. Distance joueur : {distance:F2}m. Retrait.");
-
-        if (distance <= 5f)
-            enemy.StateMachine.ChangeState(EnemyStateType.Orbit);
-        else
-            enemy.StateMachine.ChangeState(EnemyStateType.Follow);
+        // 2. --- SI PAS DE COMBO OFFICIEL ---
+        // On repasse en Follow DANS TOUS LES CAS pour que l'IA reprenne sa marche/poursuite/sélection d'attaque
+        enemy.StateMachine.ChangeState(EnemyStateType.Follow);
     }
 
     private void FaceTarget()
@@ -189,7 +203,5 @@ public class BossAttackState : EnemyState
         }
 
         enemy.lastAttackExitTime = Time.time;
-        if (enemy.AIManager != null)
-            enemy.AIManager.StartOrbitCooldown(1.5f);
     }
 }

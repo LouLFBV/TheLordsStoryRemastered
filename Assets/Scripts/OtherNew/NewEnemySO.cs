@@ -12,6 +12,9 @@ public class NewEnemySO : ScriptableObject
     public bool isAggressive = true; // Fonce directement ou non
     public bool canBlock = false;
 
+    [Header("LockOn Settings")]
+    public float lockOnHeightOffset = 0.5f; 
+
     [Header("Orbit Settings")]
     public float idealOrbitDistance = 4f;
     public float orbitSpeedMultiplier = 1f;

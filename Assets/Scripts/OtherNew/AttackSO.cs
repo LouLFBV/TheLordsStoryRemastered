@@ -36,5 +36,5 @@ public class AttackSO : ScriptableObject
     [Header("Audio")]
     public AudioClip attackSound;
 
-    [HideInInspector] public float nextAttackTime; 
+    //[HideInInspector] public float nextAttackTime; 
 }
