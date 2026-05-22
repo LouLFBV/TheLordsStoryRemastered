@@ -29,6 +29,12 @@ public class PlayerInteractor : MonoBehaviour
 
     private void DetectInteractable()
     {
+        if (player.StateMachine.CurrentState == player.RollState)
+        {
+            currentTarget?.SetTargeted(false, player.transform);
+            currentTarget = null;
+            return;
+        }
         if (Physics.SphereCast(transform.position, interactRadius, transform.forward, out RaycastHit hit, interactRange, interactableMask, QueryTriggerInteraction.Ignore))
         {
             var interactable = hit.collider.GetComponent<IInteractable>();

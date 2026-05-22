@@ -25,13 +25,11 @@ public class Chest : InteractableBase
     [SerializeField] private Vector3 openEulerAngles = new Vector3(0, 0, 90);
     [SerializeField] private bool isLocked = false;
     [SerializeField] private ItemData keyItem;
-    [SerializeField] private int niveauDeVerrouillage = 0;
 
     [Header("Audio")]
     [SerializeField] private AudioSource openSound;
     [SerializeField] private AudioSource lockedSound;
     [SerializeField] private AudioSource unlockSound;
-    [SerializeField] private AudioSource unlockFailSound;
 
     [Header("Reward")]
     [SerializeField] private ItemData rewardItem;
@@ -143,24 +141,6 @@ public class Chest : InteractableBase
             InventorySystem.instance.RemoveItem(key);
             StartCoroutine(OpenChest());
             return;
-        }
-        // Cas 2 : tentative de crochetage avec une clé "improvisée"
-        else if (key.attackPoints > 0)
-        {
-            float chanceDeReussite = Mathf.Clamp01((float)key.attackPoints / (niveauDeVerrouillage + 1));
-            float tirage = Random.value;
-
-            Debug.Log($"Chance de réussite : {chanceDeReussite}, tirage : {tirage}");
-
-            if (tirage <= chanceDeReussite)
-            {
-                StartCoroutine(OpenChest());
-            }
-            else
-            {
-                unlockFailSound.PlayOneShot(unlockFailSound.clip);
-            }
-            InventorySystem.instance.RemoveItem(key);
         }
         else
         {

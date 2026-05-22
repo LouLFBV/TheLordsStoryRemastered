@@ -17,12 +17,17 @@ public class PlayerGroundedState : PlayerState
     public override void Update()
     {
         if (player.IsDead) return;
-        base.Update();
 
         // 1. PRIORITÉ : La Chute
         if (!player.Motor.IsGrounded())
         {
             player.StateMachine.ChangeState(PlayerStateType.Fall);
+            return;
+        }
+
+        if (player.StateMachine.CurrentState is PlayerEquipState ||
+                player.StateMachine.CurrentState is PlayerUnequipState)
+        {
             return;
         }
 
@@ -33,13 +38,6 @@ public class PlayerGroundedState : PlayerState
             if (Time.time < player.lastJumpTime + player.jumpCooldown)
             {
                 return; // Trop tôt, on ignore l'input
-            }
-
-            // On empêche le saut pendant les transitions d'équipement
-            if (player.StateMachine.CurrentState is PlayerEquipState ||
-                player.StateMachine.CurrentState is PlayerUnequipState)
-            {
-                return;
             }
 
             // Si on arrive ici, le saut est autorisé
@@ -54,13 +52,8 @@ public class PlayerGroundedState : PlayerState
             if (player.PendingLibraryItem.itemPrefab != null)
                 hasWeapon = player.PendingLibraryItem.itemPrefab.activeSelf;
         // 3. PRIORITÉ : L'Attaque ou l'Arc
-        if (player.Input.AttackPressed && hasWeapon/*&& player.Stamina.HasStamina()*/)
+        if (player.Input.AttackPressed && hasWeapon)
         {
-            if (player.StateMachine.CurrentState is PlayerEquipState ||
-                player.StateMachine.CurrentState is PlayerUnequipState)
-            {
-                return;
-            }
             HandleAttackInput();
             return;
         }
