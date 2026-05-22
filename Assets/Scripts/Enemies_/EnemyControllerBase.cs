@@ -166,11 +166,11 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         }
 
         // 2. Si je suis en Idle trop longtemps -> Patrouille (Optionnel)
-        //if (StateMachine.CurrentState == IdleState)
-        //{
-        //    // Tu peux ajouter un petit timer ici pour passer en Patrol automatiquement
-        //    StateMachine.ChangeState(EnemyStateType.Patrol);
-        //}
+        if (StateMachine.CurrentState == IdleState)
+        {
+            // Tu peux ajouter un petit timer ici pour passer en Patrol automatiquement
+            StateMachine.ChangeState(EnemyStateType.Patrol);
+        }
     }
 
     public AttackSO PeekBestAttack()
