@@ -135,22 +135,3 @@ public abstract class EnemyParent : WorldDisappearOnCollected, IDamageable
 
 
 
-[System.Serializable]
-public class BossAttack
-{
-    public GameObject gameObjectAttack;
-    public HitBoxAttack hitBoxAttack;
-    public int damage;
-    public int boostDamage;
-    public string animTriggerName;
-    public float distanceMin, distanceMax;
-    public float timeBetweenAttacks = 3f;
-    [HideInInspector] public float nextAttackTime;
-    public DamageType damageType;
-    public bool isFireBreath = false;
-
-    [Header("Fire Ball")]
-    public GameObject fireBallPrefab;
-    public Transform firePoint;
-    public float fireBallSpeed = 10f;
-}

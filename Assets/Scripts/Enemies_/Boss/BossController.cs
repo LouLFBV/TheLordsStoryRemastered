@@ -16,6 +16,10 @@ public class BossController : EnemyControllerBase
     [Header("States")]
     public BossAttackState AttackState { get; private set; }
 
+
+    [Header("VFX / Attack GameObjects")]
+    private GameObject _currentActiveVisual;
+
     protected override void Awake()
     {
         base.Awake();
@@ -57,6 +61,11 @@ public class BossController : EnemyControllerBase
         currentPhaseIndex++;
         BossPhase newPhase = phases[currentPhaseIndex];
 
+        if (newPhase.gameObjectEvent != null)
+        {
+            newPhase.gameObjectEvent.SetActive(true);
+            Debug.Log($"GameObject event triggered for phase: {newPhase.phaseName}");
+        }
         // 1. Animation & Son de cri
         Animator.SetTrigger(newPhase.screamAnimationTrigger);
 
@@ -133,6 +142,46 @@ public class BossController : EnemyControllerBase
     }
 
 
+    // Call cette fonction au début du souffle/vfx dans l'animator
+    public void AE_ActivateAttackVisual()
+    {
+        // On récupère l'attaque en cours d'exécution depuis l'état d'attaque
+        BossAttackState attackState = StateMachine.CurrentState as BossAttackState;
+        if (attackState == null || attackState.CurrentAttack == null) return;
+
+        // On cherche le setup correspondant à cette attaque
+        if (attackToWeaponMap.TryGetValue(attackState.CurrentAttack, out var setup))
+        {
+            if (setup.attackVisualObject != null)
+            {
+                setup.attackVisualObject.SetActive(true);
+                _currentActiveVisual = setup.attackVisualObject; // On garde une référence pour le couper plus tard
+                Debug.Log($"[Boss VFX] Activé : {setup.attackVisualObject.name}");
+            }
+        }
+    }
+
+    // Call cette fonction à la fin du souffle/vfx dans l'animator
+    public void AE_DeactivateAttackVisual()
+    {
+        if (_currentActiveVisual != null)
+        {
+            _currentActiveVisual.SetActive(false);
+            Debug.Log($"[Boss VFX] Désactivé : {_currentActiveVisual.name}");
+            _currentActiveVisual = null;
+        }
+    }
+
+    // Sécurité : Si le boss prend un coup ou change d'état brusquement, on coupe le VFX
+    public void ForceDisableActiveVisual()
+    {
+        if (_currentActiveVisual != null)
+        {
+            _currentActiveVisual.SetActive(false);
+            _currentActiveVisual = null;
+        }
+    }
+
     public void AE_OnAttackFinished() => (StateMachine.CurrentState as BossAttackState)?.OnAnimationFinished();
 
     #region Audio Fading
@@ -167,4 +216,25 @@ public class BossPhase
     public float damageBoost;
     public List<AttackSO> newAttacks; // Attaques ajoutées à cette phase
     public string screamAnimationTrigger = "Scream";
+    public GameObject gameObjectEvent;
+}
+
+[System.Serializable]
+public class BossAttack
+{
+    public GameObject gameObjectAttack;
+    public HitBoxAttack hitBoxAttack;
+    public int damage;
+    public int boostDamage;
+    public string animTriggerName;
+    public float distanceMin, distanceMax;
+    public float timeBetweenAttacks = 3f;
+    [HideInInspector] public float nextAttackTime;
+    public DamageType damageType;
+    public bool isFireBreath = false;
+
+    [Header("Fire Ball")]
+    public GameObject fireBallPrefab;
+    public Transform firePoint;
+    public float fireBallSpeed = 10f;
 }

@@ -11,6 +11,8 @@ public class BossAttackState : EnemyState
     private float _movementTimer;
     private bool _isApplyingMovement;
     private float _startY; // Pour savoir où le boss doit atterrir
+    
+    public AttackSO CurrentAttack => _currentAttack;
 
     public BossAttackState(EnemyControllerBase enemy) : base(enemy) { }
 
@@ -189,6 +191,8 @@ public class BossAttackState : EnemyState
     public override void Exit()
     {
         Debug.Log($"<color=red>[BOSS ATTACK]</color> Exit State. Restauration du NavMeshAgent.");
+
+        (enemy as BossController)?.ForceDisableActiveVisual();
 
         SnapToFloor();
 

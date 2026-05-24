@@ -12,6 +12,10 @@ public class WeaponDamageDetector : MonoBehaviour
     private Collider myCollider;
     private List<GameObject> alreadyHit = new List<GameObject>();
 
+    [Header("If is object with collider (like arrow)")]
+    [SerializeField] private bool hasDamageCollider = false;
+    [SerializeField] private float colliderDamage = 10f;
+
     private void Awake()
     {
         myCollider = GetComponent<Collider>();
@@ -47,7 +51,10 @@ public class WeaponDamageDetector : MonoBehaviour
     private void ExecuteHitLogic(Collider other, IDamageable target)
     {
         // 1. Dégâts de base calculés par le CombatSystem
-        target.TakeDamage(damageForThisFrame, itemData.poiseDamage, itemData.damageType);
+        if (hasDamageCollider)
+            target.TakeDamage(colliderDamage, itemData.poiseDamage, itemData.damageType);
+        else
+            target.TakeDamage(damageForThisFrame, itemData.poiseDamage, itemData.damageType);
 
         // 2. Camera Shake (Game Feel)
         CameraEvents.OnCameraShake?.Invoke(itemData.cameraShakeIntensity, itemData.cameraShakeDuration);

@@ -185,8 +185,6 @@ public class EquipmentSystem : MonoBehaviour
     {
 
         ItemData itemToEquip = equipment ? equipment : itemActionsSystem.itemCurrentlySelected;
-        if (InventorySystem.instance.GetItemCount(itemToEquip) <= 0)
-            itemActionsSystem.CloseActionPanel();
         print("Equip item : " + itemToEquip.name);
 
         EquipmentLibraryItem equipmentLibraryItem = equipmentLibrary.Get(itemToEquip);
@@ -272,10 +270,14 @@ public class EquipmentSystem : MonoBehaviour
                 palette.slotManager.AddObject(itemToEquip);
             }
 
+
             if (!isLoading && itemToEquip.equipmentType != EquipmentType.Arrow)
                 InventorySystem.instance.RemoveItem(itemToEquip);
             if (!isLoading)
                 audioSource.PlayOneShot(equipSound);
+
+            if (InventorySystem.instance.GetItemCount(itemToEquip) <= 0)
+                itemActionsSystem.CloseActionPanel();
         }
         else
         {

@@ -13,7 +13,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
 
     [Header("Combat Settings")]
     [SerializeField] private List<EnemyWeaponSetup> weaponSetups;
-    private Dictionary<AttackSO, EnemyWeaponSetup> _attackToWeaponMap;
+    protected Dictionary<AttackSO, EnemyWeaponSetup> attackToWeaponMap;
     public Dictionary<AttackSO, WeaponDamageDetector> weaponDict;
     [SerializeField] protected List<AttackSO> availableAttacks;
     public ItemData PendingWeaponItem { get; set; }
@@ -93,14 +93,14 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
 
         StateMachine = new EnemyStateMachine(states);
 
-        _attackToWeaponMap = new Dictionary<AttackSO, EnemyWeaponSetup>();
+        attackToWeaponMap = new Dictionary<AttackSO, EnemyWeaponSetup>();
         foreach (var setup in weaponSetups)
         {
             foreach (var attack in setup.usableAttacks)
             {
-                if (!_attackToWeaponMap.ContainsKey(attack))
+                if (!attackToWeaponMap.ContainsKey(attack))
                 {
-                    _attackToWeaponMap.Add(attack, setup);
+                    attackToWeaponMap.Add(attack, setup);
                     // Debug.Log($"[EnemyController] Mapping attack {attack.animationName} to weapon {setup.weaponData.itemName}.");
                 }
                 else
@@ -247,7 +247,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     }
     public void PrepareAttack(AttackSO attack)
     {
-        if (_attackToWeaponMap.TryGetValue(attack, out var setup))
+        if (attackToWeaponMap.TryGetValue(attack, out var setup))
         {
             PendingWeaponItem = setup.weaponData;
             Combat.UpdateWeaponDetector(setup.detector);
@@ -451,4 +451,14 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
             lastPoint = nextPoint;
         }
     }
+}
+
+[System.Serializable]
+public class EnemyWeaponSetup
+{
+    public ItemData weaponData;          // Contient les points d'attaque (ex: 15)
+    public WeaponDamageDetector detector; // Le script sur l'objet physique
+    public List<AttackSO> usableAttacks;  // Les attaques que CETTE arme peut faire
+
+    public GameObject attackVisualObject;
 }
