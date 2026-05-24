@@ -36,7 +36,7 @@ public class NewEnemySO : ScriptableObject
     public AudioClip walkSound;     // Joué quand il passe en Follow State
     public AudioClip runSound;     // Joué quand il passe en Follow State
     public AudioClip orbitSound;     // Joué quand il passe en Follow State
-    public AudioClip hitSound;     // Joué quand il encaisse un coup
+    public AudioClip[] hitSound;     // Joué quand il encaisse un coup
     public AudioClip deathSound;   // Joué à sa mort
 }
 

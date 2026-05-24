@@ -21,9 +21,6 @@ public class Menu : MonoBehaviour
     private Dropdown qualitiesDropdown;
 
     [SerializeField]
-    private AudioMixer audioMixer;
-
-    [SerializeField]
     private Slider volumeSlider;
 
     [SerializeField]
@@ -81,9 +78,6 @@ public class Menu : MonoBehaviour
             OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
             return;
         }
-        // Initialisation du slider de volume
-        audioMixer.GetFloat("Volume", out float soundValueForSlider);
-        volumeSlider.value = soundValueForSlider;
 
 
 
@@ -263,10 +257,6 @@ private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         Screen.fullScreen = isFullScreen;
     }
 
-    public void SetVolume(float volume)
-    {
-        audioMixer.SetFloat("Volume", volume);
-    }
 
 
 
