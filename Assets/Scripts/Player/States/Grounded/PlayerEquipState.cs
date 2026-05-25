@@ -69,4 +69,13 @@ public class PlayerEquipState : PlayerGroundedState
                 ? PlayerStateType.Move : PlayerStateType.Idle);
         }
     }
+
+    public override void Exit()
+    {
+        base.Exit();
+        if (!player.PendingLibraryItem.itemPrefab.activeSelf)
+        {
+            player.PendingLibraryItem.itemPrefab.SetActive(true);
+        }
+    }
 }

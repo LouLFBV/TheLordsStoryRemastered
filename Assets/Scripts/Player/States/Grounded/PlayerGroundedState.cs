@@ -47,6 +47,14 @@ public class PlayerGroundedState : PlayerState
             return;
         }
 
+        if (player.Input.AttackPressed && CanEat())
+        {
+            Debug.Log("Consume Pressed");
+            player.Input.UseAttackInput(); // Consomme l'input
+            player.StateMachine.ChangeState(PlayerStateType.Consume);
+            return;
+        }
+
         bool hasWeapon = false;
         if (player.PendingLibraryItem != null)
             if (player.PendingLibraryItem.itemPrefab != null)
@@ -85,8 +93,7 @@ public class PlayerGroundedState : PlayerState
             return;
         }
 
-        // 6. PRIORITÉ : Le Crouch
-        //HandleCrouchInput();
+        
 
         // 7. PRIORITÉ : Le LockOn
         if (player.Input.LockOnPressed)
@@ -136,5 +143,13 @@ public class PlayerGroundedState : PlayerState
             player.Input.UseCrouchInput();
             player.StateMachine.ChangeState(PlayerStateType.Crouch);
         }
+    }
+    private bool CanEat()
+    {
+        Debug.Log("Checking if player can consume...");
+        var palette = PaletteSystem.instance;
+        if (palette == null) return false;
+
+        return palette.slotManager.objectSlots[0].isEquipped  || palette.slotManager.objectSlots[1].isEquipped ;
     }
 }

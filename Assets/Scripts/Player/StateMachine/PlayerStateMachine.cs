@@ -21,5 +21,6 @@ public enum PlayerStateType
     BowCharge,
     Crouch,
     Death,
-    UI
+    UI,
+    Consume
 }

@@ -28,6 +28,7 @@ public class PlayerController : MonoBehaviour, ICombatant
     public PlayerCrouchState CrouchState { get; private set; }
     public PlayerDeathState DeathState { get; private set; }
     public PlayerUIState UIState { get; private set; }
+    public PlayerConsumeState ConsumeState { get; private set; }
 
 
     [Header("Systems")]
@@ -106,6 +107,7 @@ public class PlayerController : MonoBehaviour, ICombatant
         UnequipState = new PlayerUnequipState(this);
         BowChargeState = new PlayerBowChargeState(this);
         UIState = new PlayerUIState(this);
+        ConsumeState = new PlayerConsumeState(this);
 
         StateMachine = new PlayerStateMachine(
             new System.Collections.Generic.Dictionary<PlayerStateType, PlayerState>
@@ -124,7 +126,8 @@ public class PlayerController : MonoBehaviour, ICombatant
                 { PlayerStateType.Unequip, UnequipState},
                 { PlayerStateType.Crouch, CrouchState},
                 { PlayerStateType.UI, UIState},
-                { PlayerStateType.BowCharge, BowChargeState}
+                { PlayerStateType.BowCharge, BowChargeState},
+                { PlayerStateType.Consume, ConsumeState}
             }
         );
     }
@@ -251,6 +254,7 @@ public class PlayerController : MonoBehaviour, ICombatant
     {
         interactSystem.isBusy = false;
     }
+
     #endregion
     public void PrepareEquip(ItemData data)
     {

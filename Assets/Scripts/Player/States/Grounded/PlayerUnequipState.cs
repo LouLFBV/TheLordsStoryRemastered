@@ -75,4 +75,13 @@ public class PlayerUnequipState : PlayerGroundedState
             player.StateMachine.ChangeState(PlayerStateType.Idle);
         }
     }
+
+    public override void Exit()
+    {
+        base.Exit();
+        if (player.PendingLibraryItem.itemPrefab.activeSelf)
+        {
+            player.PendingLibraryItem.itemPrefab.SetActive(false);
+        }
+    }
 }
