@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 38af5eff6a9fd4543a4d3425c8246b61
+guid: 10983dd93c6199846a8f3ae0a16d42b7
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - 1470Jenson
+  - 1543HumaneJenson
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0
