@@ -21,7 +21,7 @@ public class PlayerRollState : PlayerGroundedState
         player.Motor.SetFriction(false); // Utilise ton SlipperyMaterial à 0 friction
         player.Animator.applyRootMotion = false;
 
-        player.Stamina.Spend(20f); 
+        player.Stamina.Spend(30f); 
         player.Animator.SetTrigger(AnimatorHashes.rollTrigger);
         player.Motor.StartRollCollider();
         player.Health.SetInvulnerable(true);

@@ -61,5 +61,9 @@ public class HealthSystem : MonoBehaviour
         // Optionnel : Changer la couleur ou ajouter un effet de transparence
     }
 
-    public void SetHealth(float newHealth) { CurrentHealth = newHealth; }
+    public void SetHealth(float newHealth) 
+    {
+        CurrentHealth = newHealth;
+        OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
+    }
 }

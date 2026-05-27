@@ -27,7 +27,8 @@ public class EnemyHealthUI : MonoBehaviour
         uiContainer.SetActive(true); // On affiche dès qu'il prend un coup
         healthBarFill.fillAmount = current / max;
         // Optionnel : Changer la couleur selon la vie (ton ancien Lerp)
-        healthBarFill.color = Color.Lerp(Color.red, Color.yellow, current / max);
+        if (!isBoss)
+            healthBarFill.color = Color.Lerp(Color.red, Color.yellow, current / max);
 
         if (current <= 0 && !isBoss) uiContainer.SetActive(false);
     }

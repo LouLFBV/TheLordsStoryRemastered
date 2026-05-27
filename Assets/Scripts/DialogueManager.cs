@@ -76,22 +76,55 @@ public class DialogueManager : MonoBehaviour
         typingCoroutine = StartCoroutine(TypeTextWithDelay(line, typingSpeed, delay, textDialogue));
     }
 
+    //private IEnumerator TypeTextWithDelay(string line, float typingSpeed, float delay, TextMeshProUGUI textField)
+    //{
+    //    inDelay = true;
+    //    if (delay > 0f)
+    //        yield return new WaitForSeconds(delay);
+    //    inDelay = false;
+
+    //    isTyping = true;
+    //    currentText = line;
+    //    textField.text = "";
+
+    //    foreach (char c in line)
+    //    {
+    //        textField.text += c;
+    //        if(audioSource.clip != null)
+    //            audioSource.PlayOneShot(audioSource.clip);
+    //        yield return new WaitForSeconds(typingSpeed);
+    //    }
+
+    //    isTyping = false;
+    //}
+
     private IEnumerator TypeTextWithDelay(string line, float typingSpeed, float delay, TextMeshProUGUI textField)
     {
         inDelay = true;
+
         if (delay > 0f)
             yield return new WaitForSeconds(delay);
+
         inDelay = false;
 
         isTyping = true;
         currentText = line;
         textField.text = "";
 
+        int charIndex = 0;
+
         foreach (char c in line)
         {
             textField.text += c;
-            if(audioSource.clip != null)
+
+            // Joue le son une fois sur deux caractères
+            if (charIndex % 2 == 0 && audioSource.clip != null)
+            {
                 audioSource.PlayOneShot(audioSource.clip);
+            }
+
+            charIndex++;
+
             yield return new WaitForSeconds(typingSpeed);
         }
 

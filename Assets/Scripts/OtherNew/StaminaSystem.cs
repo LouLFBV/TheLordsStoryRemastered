@@ -13,7 +13,6 @@ public class StaminaSystem : MonoBehaviour
     public float consommationRate = 1f;
     private float _regenTimer;
     private bool _isExhausted;
-    private bool _feedbackSent;
 
     public event Action<float, float> OnStaminaChanged;
     public event Action OnStaminaEmpty;
