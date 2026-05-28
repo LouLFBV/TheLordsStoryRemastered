@@ -1,49 +1,54 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class Tooltip : MonoBehaviour
 {
-    [SerializeField]
-    private Text headerField;
+    [SerializeField] private GameObject tooltipPanel;
+    [SerializeField] private TextMeshProUGUI itemName, itemDescription, itemStock;
+    [SerializeField] private Vector3 offset = new Vector3(80, -80, 0); // Ajuste l'offset selon la taille de tes slots
 
-    [SerializeField]
-    private Text contentField;
+    private RectTransform _rectTransform;
+    public static Tooltip Instance;
 
-    [SerializeField]
-    private LayoutElement layoutElement;
-
-    [SerializeField]
-    private int maxCharacter;
-
-
-    [SerializeField]
-    private RectTransform rectTransform;
-    private void Update()
+    private void Awake()
     {
-        Vector2 mousePosition = Input.mousePosition;
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
 
-        float pivotX = mousePosition.x / Screen.width;
-        float pivotY = mousePosition.y / Screen.height;
-        rectTransform.pivot = new Vector2(pivotX, pivotY);
-
-        transform.position = mousePosition;
+        // On récupère le RectTransform pour manipuler la position UI proprement
+        _rectTransform = GetComponent<RectTransform>();
     }
-    public void SetText(string content, string header = "")
+
+    public void Show(ItemData itemData, int stock)
     {
-        if (header == "")
-        {
-            headerField.gameObject.SetActive(false);
-        }
-        else
-        {
-            headerField.gameObject.SetActive(true);
-            headerField.text = header;
-        }
-        contentField.text = content;
+        SetText(itemData, stock);
+        tooltipPanel.SetActive(true);
+    }
 
-        int headerLength = headerField.text.Length;
-        int contentLength = contentField.text.Length;
+    public void Hide()
+    {
+        tooltipPanel.SetActive(false);
+    }
 
-        layoutElement.enabled = (headerLength > maxCharacter || contentLength > maxCharacter);
+    public void SetText(ItemData itemData, int stock)
+    {
+        if (itemData != null)
+        {
+            itemName.text = itemData.itemName;
+            itemDescription.text = itemData.description;
+            itemStock.text = $"Stock : {stock}/{itemData.maxStack}";
+        }
+    }
+
+    public void UpdateTooltipPosition(Vector3 slotPosition)
+    {
+        if (_rectTransform != null)
+        {
+            _rectTransform.position = slotPosition + offset;
+        }
     }
 }

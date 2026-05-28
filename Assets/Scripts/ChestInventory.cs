@@ -1,319 +1,310 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+
 public class ChestInventory : MonoBehaviour
 {
     public static ChestInventory Instance;
-    
-    [Header ("Chest inventory")]
 
-    public Transform inventoryChestSlotsParent;
+    [Header("Chest Inventory (Data Arrays & UI Parents)")]
+    public Transform inventoryChestSlotsRessourecesParent;
+    public ItemInInventory[] contentRessourcesChest = new ItemInInventory[32];
 
-    public List<ItemInInventory> contentChest = new List<ItemInInventory>();
+    public Transform inventoryChestSlotsCraftParent;
+    public ItemInInventory[] contentCraftChest = new ItemInInventory[32];
 
-    [Header("Player Inventory")]
+    [Header("Player Inventory (Data Arrays & UI Parents)")]
+    public Transform inventoryPlayerSlotsRessourcesParent;
+    public ItemInInventory[] contentRessourcePlayer = new ItemInInventory[20];
 
-    public Transform inventoryPlayerSlotsParent;
-
-    public List<ItemInInventory> content = new List<ItemInInventory>();
-
+    public Transform inventoryPlayerSlotsCraftParent;
+    public ItemInInventory[] contentCraftPlayer = new ItemInInventory[20];
 
     [Header("Others")]
-
     [SerializeField] private GameObject objectsToDisable;
 
     private void Awake()
     {
-        if (Instance == null)
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
+
+    public void OnEnable()
+    {
+        if (objectsToDisable != null) objectsToDisable.SetActive(false);
+
+        FetchAndSyncPlayerInventory();
+
+        RefreshContentChestInventory();
+        RefreshContentPlayerInventory();
+    }
+
+    // --- ASPIRATION ET CONVERSION DES LISTES JOUEUR EN TABLEAUX FIXES ---
+    public void FetchAndSyncPlayerInventory()
+    {
+        if (InventorySystem.instance == null) return;
+
+        List<ItemInInventory> playerRessources = InventorySystem.instance.GetPlayerRessourcesList();
+        List<ItemInInventory> playerCraft = InventorySystem.instance.GetPlayerCraftList();
+
+        System.Array.Clear(contentRessourcePlayer, 0, contentRessourcePlayer.Length);
+        System.Array.Clear(contentCraftPlayer, 0, contentCraftPlayer.Length);
+
+        int ressourcesToCopy = Mathf.Min(playerRessources.Count, contentRessourcePlayer.Length);
+        for (int i = 0; i < ressourcesToCopy; i++)
         {
-            Instance = this;
+            contentRessourcePlayer[i] = playerRessources[i];
+        }
+
+        int craftToCopy = Mathf.Min(playerCraft.Count, contentCraftPlayer.Length);
+        for (int i = 0; i < craftToCopy; i++)
+        {
+            contentCraftPlayer[i] = playerCraft[i];
+        }
+    }
+
+    // --- REFRESH DE TOUT L'INVENTAIRE JOUEUR DANS L'UI DU COFFRE ---
+    public void RefreshContentPlayerInventory()
+    {
+        if (InventorySystem.instance == null) return;
+        Sprite emptySprite = InventorySystem.instance.emptySlotVisual;
+
+        // On synchronise les données depuis la source réelle (Le joueur)
+        FetchAndSyncPlayerInventory();
+
+        RefreshGrid(inventoryPlayerSlotsRessourcesParent, contentRessourcePlayer, emptySprite, false, true);
+        RefreshGrid(inventoryPlayerSlotsCraftParent, contentCraftPlayer, emptySprite, false, false);
+    }
+
+    // --- REFRESH DE TOUT LE COFFRE ---
+    public void RefreshContentChestInventory()
+    {
+        if (InventorySystem.instance == null) return;
+        Sprite emptySprite = InventorySystem.instance.emptySlotVisual;
+
+        RefreshGrid(inventoryChestSlotsRessourecesParent, contentRessourcesChest, emptySprite, true, true);
+        RefreshGrid(inventoryChestSlotsCraftParent, contentCraftChest, emptySprite, true, false);
+    }
+
+    // --- MÉTHODE GÉNÉRIQUE POUR METTRE À JOUR L'UI ---
+    private void RefreshGrid(Transform slotsParent, ItemInInventory[] dataArray, Sprite emptySprite, bool isChest, bool isResource)
+    {
+        if (slotsParent == null) return;
+
+        int childCount = slotsParent.childCount;
+        int iterations = Mathf.Min(dataArray.Length, childCount);
+
+        for (int i = 0; i < iterations; i++)
+        {
+            SlotChest currentSlot = slotsParent.GetChild(i).GetComponent<SlotChest>();
+            if (currentSlot == null) continue;
+
+            currentSlot.button.onClick.RemoveAllListeners();
+
+            ItemInInventory itemInInv = dataArray[i];
+
+            if (itemInInv == null || itemInInv.itemData == null)
+            {
+                currentSlot.item = null;
+                currentSlot.itemVisual.sprite = emptySprite;
+                currentSlot.countTexte.enabled = false;
+                currentSlot.count = 0;
+                currentSlot.SetSlotState(false);
+            }
+            else
+            {
+                currentSlot.item = itemInInv.itemData;
+                currentSlot.itemVisual.sprite = itemInInv.itemData.visual;
+
+                if (currentSlot.item.stackable)
+                {
+                    currentSlot.countTexte.text = itemInInv.count.ToString();
+                    currentSlot.count = itemInInv.count;
+                    currentSlot.countTexte.enabled = true;
+                }
+                else
+                {
+                    currentSlot.countTexte.enabled = false;
+                }
+
+                currentSlot.SetSlotState(true);
+
+                int index = i;
+                currentSlot.button.onClick.AddListener(() => HandleSlotClick(index, isChest, isResource));
+            }
+        }
+    }
+
+    // --- GESTION UNIQUE DES TRANSFERTS DIRECTS CORRIGÉE ---
+    private void HandleSlotClick(int arrayIndex, bool sourceIsChest, bool sourceIsResource)
+    {
+        if (InventorySystem.instance == null) return;
+
+        // Détermination du tableau source
+        ItemInInventory[] sourceArray = sourceIsChest
+            ? (sourceIsResource ? contentRessourcesChest : contentCraftChest)
+            : (sourceIsResource ? contentRessourcePlayer : contentCraftPlayer);
+
+        if (sourceArray == null || arrayIndex >= sourceArray.Length) return;
+
+        ItemInInventory itemToTransfer = sourceArray[arrayIndex];
+        if (itemToTransfer == null || itemToTransfer.itemData == null) return;
+
+        if (sourceIsChest)
+        {
+            // --- TRIPLE ACTION : COFFRE -> JOUEUR ---
+            // 1. On vérifie d'abord si l'inventaire du joueur a de la place
+            bool isFull = itemToTransfer.itemData.itemType == ItemType.Ressource
+                ? InventorySystem.instance.IsFullRessources()
+                : InventorySystem.instance.IsFullCraft();
+
+            if (isFull)
+            {
+                Debug.LogWarning("L'inventaire du joueur est plein !");
+                return;
+            }
+
+            // 2. On l'ajoute directement au vrai système du joueur
+            InventorySystem.instance.AddItem(itemToTransfer.itemData);
+
+            // 3. On le retire du tableau fixe du coffre
+            if (itemToTransfer.count > 1)
+            {
+                itemToTransfer.count--;
+            }
+            else
+            {
+                sourceArray[arrayIndex] = null;
+            }
         }
         else
         {
-            Destroy(gameObject);
-        }
-    }
-    public void OnEnable()
-    {
-        objectsToDisable.SetActive(false);
-    }
+            // --- TRIPLE ACTION : JOUEUR -> COFFRE ---
+            // 1. On tente de l'ajouter dans le tableau fixe du coffre
+            bool success = AddToChestArray(itemToTransfer.itemData, 1);
 
-    public void RefreshContentChestInventory()
-    {
-        //On vide tous les slots / visuels
-        for (int i = 0; i < inventoryChestSlotsParent.childCount; i++)
-        {
-            SlotChest currentSlot = inventoryChestSlotsParent.GetChild(i).GetComponent<SlotChest>();
-
-            currentSlot.item = null;
-            currentSlot.itemVisual.sprite = InventorySystem.instance.emptySlotVisual;
-            currentSlot.countTexte.enabled = false;
-            currentSlot.desequipButton.gameObject.SetActive(false);
-        }
-
-        //On peuple le visuel des slots selon le contenu de l'inventaire
-        for (int i = 0; i < contentChest.Count; i++)
-        {
-            SlotChest currentSlot = inventoryChestSlotsParent.GetChild(i).GetComponent<SlotChest>();
-            currentSlot.item = contentChest[i].itemData;
-            currentSlot.itemVisual.sprite = contentChest[i].itemData.visual;
-            currentSlot.desequipButton.gameObject.SetActive(content.Count != inventoryPlayerSlotsParent.childCount);
-
-            DesequipButtonInventoryChest(currentSlot, i);
-
-            if (currentSlot.item.stackable)
+            if (success)
             {
-                currentSlot.countTexte.text = contentChest[i].count.ToString();
-                currentSlot.countTexte.enabled = true;
+                // 2. On l'enlève de la liste réelle du joueur via sa propre méthode native
+                InventorySystem.instance.RemoveItem(itemToTransfer.itemData);
             }
         }
+
+        // Rafraîchissement global des deux entités
+        InventorySystem.instance.RefreshContent();
+        RefreshContentChestInventory();
+        RefreshContentPlayerInventory();
     }
 
-    public void RefreshContentInventory()
+    // --- LOGIQUE D'AJOUT DANS LE COFFRE ---
+    private bool AddToChestArray(ItemData data, int amount)
     {
-        content = InventorySystem.instance.GetContent();
-        //On vide tous les slots / visuels
-        for (int i = 0; i < inventoryPlayerSlotsParent.childCount; i++)
+        ItemInInventory[] targetArray = (data.itemType == ItemType.Ressource) ? contentRessourcesChest : contentCraftChest;
+
+        if (data.stackable)
         {
-            SlotChest currentSlot = inventoryPlayerSlotsParent.GetChild(i).GetComponent<SlotChest>();
-
-            currentSlot.item = null;
-            currentSlot.itemVisual.sprite = InventorySystem.instance.emptySlotVisual;
-            currentSlot.countTexte.enabled = false;
-            currentSlot.desequipButton.gameObject.SetActive(false);
-        }
-
-        //On peuple le visuel des slots selon le contenu de l'inventaire
-        for (int i = 0; i < content.Count; i++)
-        {
-            SlotChest currentSlot = inventoryPlayerSlotsParent.GetChild(i).GetComponent<SlotChest>();
-            currentSlot.item = content[i].itemData;
-            currentSlot.itemVisual.sprite = content[i].itemData.visual;
-            currentSlot.desequipButton.gameObject.SetActive(contentChest.Count != inventoryChestSlotsParent.childCount);
-
-            DesepquipButtonInventoryPlayer(currentSlot, i);
-
-            if (currentSlot.item.stackable)
+            for (int i = 0; i < targetArray.Length; i++)
             {
-                currentSlot.countTexte.text = content[i].count.ToString();
-                currentSlot.countTexte.enabled = true;
-            }
-        }
-    }
-
-    private void DesequipButtonInventoryChest(SlotChest currentSlot, int index)
-    {
-        currentSlot.desequipButton.onClick.RemoveAllListeners();
-        currentSlot.desequipButton.onClick.AddListener(delegate
-        {
-            InventorySystem.instance.AddItem(currentSlot.item);
-            RemoveFromChest(index);
-        });
-    }
-    
-    private void DesepquipButtonInventoryPlayer(SlotChest currentSlot, int index)
-    {
-        currentSlot.desequipButton.onClick.RemoveAllListeners();
-        ItemInInventory item =
-                    new ItemInInventory
-                    {
-                        itemData = currentSlot.item,
-                        count = 1
-                    };
-        currentSlot.desequipButton.onClick.AddListener(delegate
-        {
-            RemoveFromInventory(index);
-            AddToChest(item);
-        });
-    }
-    private void AddToChest(ItemInInventory itemToAdd)
-    {
-        ItemInInventory[] itemInInventory = contentChest.Where(i => i.itemData == itemToAdd.itemData).ToArray();
-
-        bool itemAdded = false;
-
-        if (itemInInventory.Length > 0 && itemToAdd.itemData.stackable)
-        {
-            for (int i = 0; i < itemInInventory.Length; i++)
-            {
-                if (itemInInventory[i].count < itemToAdd.itemData.maxStack)
+                if (targetArray[i] != null && targetArray[i].itemData == data && targetArray[i].count < data.maxStack)
                 {
-                    itemAdded = true;
-                    itemInInventory[i].count++;
+                    int spaceLeft = data.maxStack - targetArray[i].count;
+                    int amountToAdd = Mathf.Min(spaceLeft, amount);
+
+                    targetArray[i].count += amountToAdd;
+                    amount -= amountToAdd;
+
+                    if (amount <= 0) return true;
+                }
+            }
+        }
+
+        while (amount > 0)
+        {
+            int emptyIndex = -1;
+            for (int i = 0; i < targetArray.Length; i++)
+            {
+                if (targetArray[i] == null)
+                {
+                    emptyIndex = i;
                     break;
                 }
             }
 
-            if (!itemAdded)
-            {
-                contentChest.Add(
-                    new ItemInInventory
-                    {
-                        itemData = itemToAdd.itemData,
-                        count = 1
-                    }
-                );
-            }
-        }
-        else
-        {
-            contentChest.Add(
-                    new ItemInInventory
-                    {
-                        itemData = itemToAdd.itemData,
-                        count = 1
-                    }
-                );
-        }
-        RefreshContentChestInventory();
-        RefreshContentInventory();
-    }
-    private void RemoveFromChest(int index)
-    {
-        ItemInInventory itemInInventory = contentChest[index];
+            if (emptyIndex == -1) return false;
 
-        if (itemInInventory != null && itemInInventory.count > 1)
-        {
-            itemInInventory.count--;
+            int currentStackCount = data.stackable ? Mathf.Min(data.maxStack, amount) : 1;
+            targetArray[emptyIndex] = new ItemInInventory { itemData = data, count = currentStackCount };
+            amount -= currentStackCount;
         }
-        else
-        {
-            contentChest.Remove(itemInInventory);
-        }
-        RefreshContentChestInventory();
-        RefreshContentInventory();
+
+        return true;
     }
 
-    private void RemoveFromInventory(int index)
-    {
-        ItemInInventory itemInInventory = content[index];
-        if (itemInInventory != null && itemInInventory.count > 1)
-        {
-            itemInInventory.count--;
-        }
-        else
-        {
-            content.Remove(itemInInventory);
-        }
-        RefreshContentChestInventory();
-        RefreshContentInventory();
-    }
-
-    public List<ItemInInventory> RefreshItems(List<ItemInInventory> content)
-    {
-        List<ItemInInventory> refreshedContent = new List<ItemInInventory>();
-
-        foreach (var item in content)
-        {
-            AddToList(item, refreshedContent);
-        }
-
-        return refreshedContent;
-    }
-
-    private void AddToList(ItemInInventory itemToAdd, List<ItemInInventory> list)
-    {
-        if (itemToAdd.itemData.stackable)
-        {
-            int toAdd = itemToAdd.count;
-
-            foreach (var existing in list.Where(i => i.itemData == itemToAdd.itemData))
-            {
-                int space = itemToAdd.itemData.maxStack - existing.count;
-                int amount = Mathf.Min(space, toAdd);
-                existing.count += amount;
-                toAdd -= amount;
-
-                if (toAdd <= 0)
-                    break;
-            }
-
-            while (toAdd > 0)
-            {
-                int amount = Mathf.Min(itemToAdd.itemData.maxStack, toAdd);
-                list.Add(new ItemInInventory
-                {
-                    itemData = itemToAdd.itemData,
-                    count = amount
-                });
-                toAdd -= amount;
-            }
-        }
-        else
-        {
-            for (int i = 0; i < itemToAdd.count; i++)
-            {
-                list.Add(new ItemInInventory
-                {
-                    itemData = itemToAdd.itemData,
-                    count = 1
-                });
-            }
-        }
-    }
-
-
+    #region Save System
     public ChestInventoryData GetSaveData()
     {
-        Debug.Log("<color=blue>[ChestInventory] Saving chest content</color>");
-
         ChestInventoryData data = new ChestInventoryData();
-        data.items = new List<ItemInInventorySave>();
+        data.ressourcesItems = new List<ItemInInventorySave>();
+        data.craftItems = new List<ItemInInventorySave>();
 
-        foreach (var item in contentChest) 
+        for (int i = 0; i < contentRessourcesChest.Length; i++)
         {
-            Debug.Log($"<color=cyan>Saving {item.itemData.itemName} x{item.count}</color>");
+            if (contentRessourcesChest[i] == null || contentRessourcesChest[i].itemData == null) continue;
 
-            data.items.Add(new ItemInInventorySave
+            data.ressourcesItems.Add(new ItemInInventorySave
             {
-                itemID = item.itemData.itemID,
-                count = item.count
+                itemID = contentRessourcesChest[i].itemData.itemID,
+                count = contentRessourcesChest[i].count
             });
         }
 
-        Debug.Log($"<color=green>[ChestInventory] Saved {data.items.Count} items</color>");
+        for (int i = 0; i < contentCraftChest.Length; i++)
+        {
+            if (contentCraftChest[i] == null || contentCraftChest[i].itemData == null) continue;
+
+            data.craftItems.Add(new ItemInInventorySave
+            {
+                itemID = contentCraftChest[i].itemData.itemID,
+                count = contentCraftChest[i].count
+            });
+        }
         return data;
     }
 
-
-
     public void LoadSaveData(ChestInventoryData data)
     {
-        Debug.Log("<color=blue>[ChestInventory] Loading chest content</color>");
+        if (data == null) return;
 
-        if (data == null || data.items == null)
+        System.Array.Clear(contentRessourcesChest, 0, contentRessourcesChest.Length);
+        System.Array.Clear(contentCraftChest, 0, contentCraftChest.Length);
+
+        if (data.ressourcesItems != null)
         {
-            Debug.LogWarning("[ChestInventory] No data to load");
-            return;
-        }
-
-        contentChest.Clear();
-
-        foreach (var savedItem in data.items)
-        {
-            ItemData itemData = ItemDataDatabase.Instance.GetItemByID(savedItem.itemID);
-            if (itemData == null)
+            for (int i = 0; i < Mathf.Min(data.ressourcesItems.Count, contentRessourcesChest.Length); i++)
             {
-                Debug.LogWarning($"Item ID not found: {savedItem.itemID}");
-                continue;
+                ItemData itemData = ItemDataDatabase.Instance.GetItemByID(data.ressourcesItems[i].itemID);
+                if (itemData == null) continue;
+
+                contentRessourcesChest[i] = new ItemInInventory { itemData = itemData, count = data.ressourcesItems[i].count };
             }
-
-            contentChest.Add(new ItemInInventory
-            {
-                itemData = itemData,
-                count = savedItem.count
-            });
-
-            Debug.Log($"<color=cyan>Loaded {itemData.itemName} x{savedItem.count}</color>");
         }
 
-        Debug.Log($"<color=green>[ChestInventory] Loaded {contentChest.Count} items</color>");
+        if (data.craftItems != null)
+        {
+            for (int i = 0; i < Mathf.Min(data.craftItems.Count, contentCraftChest.Length); i++)
+            {
+                ItemData itemData = ItemDataDatabase.Instance.GetItemByID(data.craftItems[i].itemID);
+                if (itemData == null) continue;
+
+                contentCraftChest[i] = new ItemInInventory { itemData = itemData, count = data.craftItems[i].count };
+            }
+        }
     }
-
+    #endregion
 }
-
 [System.Serializable]
 public class ChestInventoryData
 {
-    public List<ItemInInventorySave> items = new List<ItemInInventorySave>();
+    // Séparation des données de sauvegarde pour reconstruire les listes fidèlement au chargement
+    public List<ItemInInventorySave> ressourcesItems = new List<ItemInInventorySave>();
+    public List<ItemInInventorySave> craftItems = new List<ItemInInventorySave>();
 }

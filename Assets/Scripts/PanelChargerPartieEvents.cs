@@ -1,7 +1,14 @@
 using UnityEngine;
-
+using UnityEngine.UI;
 public class PanelChargerPartieEvents : MonoBehaviour
 {
+    [SerializeField] Button buttonMenu, buttonLoadSave;
+
+    private void Awake()
+    {
+        buttonMenu.image.raycastTarget = false;
+        buttonLoadSave.image.raycastTarget = false;
+    }
     public void OnOpenAnimationFinished()
     {
         Menu.Instance.OnOpenAnimationFinished();
@@ -17,5 +24,10 @@ public class PanelChargerPartieEvents : MonoBehaviour
     }
 
 
-    public void AE_SetToUIState() => PlayerController.Instance.StateMachine.ChangeState(PlayerStateType.UI);
+    public void AE_SetToUIState()
+    {
+        PlayerController.Instance.StateMachine.ChangeState(PlayerStateType.UI);
+        buttonLoadSave.image.raycastTarget = true;
+        buttonMenu.image.raycastTarget = true;
+    }
 }

@@ -230,6 +230,15 @@ public class InventorySystem : MonoBehaviour
         return contentEquipment;
     }
 
+    public List<ItemInInventory> GetPlayerRessourcesList()
+    {
+        return contentRessources;
+    }
+
+    public List<ItemInInventory> GetPlayerCraftList()
+    {
+        return contentCraft;
+    }
     public int GetItemCount(ItemData item)
     {
         if (item == null) return 0;
