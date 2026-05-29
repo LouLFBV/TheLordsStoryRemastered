@@ -14,7 +14,7 @@ public class CraftingSystem : MonoBehaviour
     public GameObject craftPanel;
     public GameObject textIsRecipeListEmpty;
 
-    public UINavigationManager uiNavigationManager;
+    //public UINavigationManager uiNavigationManager;
     void Start()
     {
         UpdateDisplayRecipes();
@@ -31,9 +31,9 @@ public class CraftingSystem : MonoBehaviour
             Recipe recipe = currentRecipe.GetComponent<Recipe>();
             recipe.Configure(availableRecipes[i]);
             recipe.craftingSystem = this;
-            uiNavigationManager.elements.Clear();
-            uiNavigationManager.elements.Add(recipe.craftableItemImageGO);
-            uiNavigationManager.elements.Add(recipe.craftButtonGO);
+            //uiNavigationManager.elements.Clear();
+            //uiNavigationManager.elements.Add(recipe.craftableItemImageGO);
+            //uiNavigationManager.elements.Add(recipe.craftButtonGO);
         }
     }
 
@@ -41,9 +41,9 @@ public class CraftingSystem : MonoBehaviour
     {
         //TooltipSystem.instance.Hide();
         craftPanel.SetActive(false);
-        if (uiNavigationManager != null)
-        {
-            uiNavigationManager.onCancel = null;
-        }
+        //if (uiNavigationManager != null)
+        //{
+        //    uiNavigationManager.onCancel = null;
+        //}
     }
 }

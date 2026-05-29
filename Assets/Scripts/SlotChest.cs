@@ -11,7 +11,9 @@ public class SlotChest : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     public TextMeshProUGUI countTexte;
     [HideInInspector] public int count;
     [HideInInspector] public Button button;
-    private bool _toolipVisible;
+    public bool isInChest;  
+    public bool isResource; 
+    public int arrayIndex;  
 
     private void Awake()
     {
@@ -29,20 +31,21 @@ public class SlotChest : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        _toolipVisible = true;
         if (item != null)
         {
             Tooltip.Instance.Show(item, count);
             Tooltip.Instance.UpdateTooltipPosition(transform.position);
+            ChestInventory.Instance.SetCurrentSlot(this);
         }
-
-        //itemActionsSystem.OpenActionPanel(item);
+        else
+            Tooltip.Instance.Hide();
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        _toolipVisible = false;
         Tooltip.Instance.Hide();
+        ChestInventory.Instance.SetCurrentSlot(null);
+
         //itemActionsSystem.CloseActionPanel();
     }
 

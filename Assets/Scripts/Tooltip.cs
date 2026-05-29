@@ -20,7 +20,7 @@ public class Tooltip : MonoBehaviour
         Instance = this;
 
         // On récupère le RectTransform pour manipuler la position UI proprement
-        _rectTransform = GetComponent<RectTransform>();
+        _rectTransform = tooltipPanel.GetComponent<RectTransform>();
     }
 
     public void Show(ItemData itemData, int stock)
