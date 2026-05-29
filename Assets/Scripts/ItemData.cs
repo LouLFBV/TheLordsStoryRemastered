@@ -47,7 +47,30 @@ public class ItemData : ScriptableObject
     [Header("Camera Shake")]
     public float cameraShakeIntensity = 0.15f;
     public float cameraShakeDuration = 0.2f;
+
+    private void OnValidate()
+    {
+        // Si l'ID est vide, null ou composé uniquement d'espaces
+        if (string.IsNullOrWhiteSpace(itemID))
+        {
+            GenerateUniqueID();
+        }
+    }
+
+    [ContextMenu("Forcer la génération d'un nouvel ID")]
+    public void GenerateUniqueID()
+    {
+        // Crée un identifiant unique universel (ex: "f7b3a21a-614d-4e93-b26a-9b769f3a9d9c")
+        itemID = System.Guid.NewGuid().ToString();
+
+#if UNITY_EDITOR
+        // Force Unity à enregistrer la modification du fichier ScriptableObject sur le disque
+        UnityEditor.EditorUtility.SetDirty(this);
+#endif
+    }
+
 }
+
 
 public enum ItemType
 {

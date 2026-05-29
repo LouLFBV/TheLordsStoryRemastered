@@ -11,6 +11,7 @@ public class VolumeSettings : MonoBehaviour
     [SerializeField] private Slider masterVolumeSlider;
     [SerializeField] private Slider musicVolumeSlider; // Correction typo "musiv" -> music
     [SerializeField] private Slider sfxVolumeSlider;
+    [SerializeField] private Slider pasVolumeSlider;
 
     private void Start()
     {
@@ -18,16 +19,19 @@ public class VolumeSettings : MonoBehaviour
         InitSliderValue("Master", masterVolumeSlider);
         InitSliderValue("MusicVolume", musicVolumeSlider);
         InitSliderValue("SFXVolume", sfxVolumeSlider);
+        InitSliderValue("PasVolume", sfxVolumeSlider);
 
         // 2. On écoute les changements de valeur des sliders en temps réel
         masterVolumeSlider.onValueChanged.AddListener(SetMasterVolume);
         musicVolumeSlider.onValueChanged.AddListener(SetMusicVolume);
         sfxVolumeSlider.onValueChanged.AddListener(SetSFXVolume);
+        sfxVolumeSlider.onValueChanged.AddListener(SetPasVolume);
     }
 
     public void SetMasterVolume(float value) => UpdateMixerVolume("Master", value);
     public void SetMusicVolume(float value) => UpdateMixerVolume("MusicVolume", value);
     public void SetSFXVolume(float value) => UpdateMixerVolume("SFXVolume", value);
+    public void SetPasVolume(float value) => UpdateMixerVolume("PasVolume", value);
 
     private void UpdateMixerVolume(string parameterName, float sliderValue)
     {
@@ -57,5 +61,6 @@ public class VolumeSettings : MonoBehaviour
         masterVolumeSlider.onValueChanged.RemoveListener(SetMasterVolume);
         musicVolumeSlider.onValueChanged.RemoveListener(SetMusicVolume);
         sfxVolumeSlider.onValueChanged.RemoveListener(SetSFXVolume);
+        pasVolumeSlider.onValueChanged.RemoveListener(SetPasVolume);
     }
 }
