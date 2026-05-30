@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections;
 
 public class UIManagerSystem : MonoBehaviour
 {
@@ -169,6 +170,46 @@ public class UIManagerSystem : MonoBehaviour
         {
             crosshair.SetActive(show);
         }
+    }
+
+    // À AJOUTER DANS UIMANAGERSYSTEM.CS
+    public void TriggerRecipeFade(GameObject canvas, CanvasGroup canvasGroup, string itemName, Sprite icon, float fadeDuration, float displayDuration)
+    {
+        // On s'assure d'arrêter une éventuelle ancienne animation sur ce manager si besoin
+        StartCoroutine(GlobalFadeRoutine(canvas, canvasGroup, itemName, icon, fadeDuration, displayDuration));
+    }
+
+    private IEnumerator GlobalFadeRoutine(GameObject canvas, CanvasGroup canvasGroup, string itemName, Sprite icon, float fade, float display)
+    {
+        canvas.SetActive(true);
+        canvasGroup.alpha = 0;
+
+        // --- FADE IN ---
+        float t = 0;
+        while (t < fade)
+        {
+            t += Time.deltaTime;
+            canvasGroup.alpha = t / fade;
+            yield return null;
+        }
+        canvasGroup.alpha = 1;
+
+        // --- ATTENTE ---
+        yield return new WaitForSeconds(display);
+
+        // --- FADE OUT ---
+        t = 0;
+        while (t < fade)
+        {
+            t += Time.deltaTime;
+            canvasGroup.alpha = 1 - (t / fade);
+            yield return null;
+        }
+        canvasGroup.alpha = 0;
+        canvas.SetActive(false);
+
+        // Optionnel : Détruire le canvas ici si c'était un duplicata temporaire
+        // Destroy(canvas); 
     }
 
     #region --- Méthodes d'ouverture spécifiques pour les boutons de l'UI ---
