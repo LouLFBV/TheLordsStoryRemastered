@@ -11,7 +11,6 @@ public class PlayerRollState : PlayerGroundedState
     {
         base.Enter();
         isRollFinished = false;
-
         // --- RESET TOTAL ---
         player.Rigidbody.isKinematic = true;  // On "éteint" la physique
         player.Rigidbody.isKinematic = false; // On la rallume immédiatement

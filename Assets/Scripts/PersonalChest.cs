@@ -43,18 +43,20 @@ public class PersonalChest : InteractableBase
         {
             OpenChestSequence();
         }
-        else
-        {
-            CloseChestButton();
-        }
     }
 
     private void Update()
     {
-        if (PlayerController.Instance.Input.CloseMenuPressed && isOpen)
+        if (chestPanel != null && chestPanel.activeInHierarchy)
         {
-            CloseChestButton();
-            PlayerController.Instance.Input.UseCloseMenuInput();
+            if (PlayerController.Instance != null && PlayerController.Instance.Input != null)
+            {
+                if (PlayerController.Instance.Input.CloseMenuPressed || PlayerController.Instance.Input.MenuPressed)
+                {
+                    CloseChestButton();
+                    PlayerController.Instance.Input.UseCloseMenuInput();
+                }
+            }
         }
     }
 

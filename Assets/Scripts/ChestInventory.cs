@@ -21,8 +21,6 @@ public class ChestInventory : MonoBehaviour
     public Transform inventoryPlayerSlotsCraftParent;
     public ItemInInventory[] contentCraftPlayer = new ItemInInventory[20];
 
-    [Header("Others")]
-    [SerializeField] private GameObject objectsToDisable;
 
     private SlotChest _currentSlotChest;
 
@@ -34,8 +32,6 @@ public class ChestInventory : MonoBehaviour
 
     public void OnEnable()
     {
-        if (objectsToDisable != null) objectsToDisable.SetActive(false);
-
         FetchAndSyncPlayerInventory();
 
         RefreshContentChestInventory();

@@ -70,6 +70,12 @@ public class StaminaSystem : MonoBehaviour
         OnStaminaChanged?.Invoke(CurrentStamina, maxStamina);
     }
 
+    public bool CanSpend(float amount)
+    {
+        if (amount <= 0) return true; // On considère que dépenser 0 ou moins est toujours possible
+        if (_isExhausted || CurrentStamina <= 0) return false; // Si on est à sec, on ne peut rien dépenser
+        return CurrentStamina >= amount; // Sinon, on vérifie si on a assez de stamina
+    }
     public bool HasStamina() => !_isExhausted && CurrentStamina > 0;
 
     public void RequestEmptyFeedback()

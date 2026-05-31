@@ -86,7 +86,7 @@ public class PlayerGroundedState : PlayerState
         }
 
         // 5. PRIORITÉ : La Roulade
-        if (player.Input.RollPressed && player.Stamina.HasStamina())
+        if (player.Input.RollPressed && player.Stamina.CanSpend(30f))
         {
             player.Input.UseRollInput();
             player.StateMachine.ChangeState(PlayerStateType.Roll);
