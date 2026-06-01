@@ -47,6 +47,7 @@ public class PanneauDeConstruction : InteractableBase
     {
         if (craftPanel != null && !craftPanel.activeInHierarchy)
         {
+            RefreshRecipeRequirements();
             craftPanel.SetActive(true);
 
             if (PlayerController.Instance != null)
@@ -54,7 +55,6 @@ public class PanneauDeConstruction : InteractableBase
                 SetTargeted(false, PlayerController.Instance.transform);
             }
 
-            RefreshRecipeRequirements();
         }
     }
 

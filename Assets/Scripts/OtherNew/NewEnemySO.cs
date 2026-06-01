@@ -13,7 +13,8 @@ public class NewEnemySO : ScriptableObject
     public bool canBlock = false;
 
     [Header("LockOn Settings")]
-    public float lockOnHeightOffset = 0.5f; 
+    public float lockOnHeightOffset = 0.5f;
+    public float maxRangeLockOn = 20f;
 
     [Header("Orbit Settings")]
     public float idealOrbitDistance = 4f;

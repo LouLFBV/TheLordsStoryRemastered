@@ -51,14 +51,15 @@ public class InteractSystem : MonoBehaviour
     {
         if (currentItem == null) return;
 
-        // Logique Spécifique (Recettes, Maps, etc.)
         if (currentItem.itemData.itemType == ItemType.Recipe)
         {
             currentItem.GetComponent<BookRecipe>().OpenCanvasRecipeBook();
-            if (currentItem.itemData.recipe.craftableItem.itemType == ItemType.Consumable)
-                allRecipeData.recetteDeLObjectCooking.Add(currentItem.itemData.recipe);
-            else
-                allRecipeData.recetteDeLObjectCrafting.Add(currentItem.itemData.recipe);
+
+            // On ajoute directement à l'unique liste, peu importe ce que c'est !
+            if (!allRecipeData.unlockedRecipes.Contains(currentItem.itemData.recipe))
+            {
+                allRecipeData.unlockedRecipes.Add(currentItem.itemData.recipe);
+            }
         }
         else if (currentItem.itemData.itemType == ItemType.Map)
         {
@@ -189,10 +190,12 @@ public class InteractSystem : MonoBehaviour
         if (currentItem.itemData.itemType == ItemType.Recipe)
         {
             currentItem.GetComponent<BookRecipe>().OpenCanvasRecipeBook();
-            if (currentItem.itemData.recipe.craftableItem.itemType == ItemType.Consumable)
-                allRecipeData.recetteDeLObjectCooking.Add(currentItem.itemData.recipe);
-            else
-                allRecipeData.recetteDeLObjectCrafting.Add(currentItem.itemData.recipe);
+
+            // On ajoute directement à l'unique liste, peu importe ce que c'est !
+            if (!allRecipeData.unlockedRecipes.Contains(currentItem.itemData.recipe))
+            {
+                allRecipeData.unlockedRecipes.Add(currentItem.itemData.recipe);
+            }
         }
         else if (currentItem.itemData.itemType == ItemType.Map)
         {

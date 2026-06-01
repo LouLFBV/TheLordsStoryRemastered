@@ -5,7 +5,6 @@ public class LockOnSystem : MonoBehaviour
 {
     [SerializeField] private float lockRadius = 15f;
     [SerializeField] private LayerMask enemyLayer;
-    [SerializeField] private float maxLockDistance = 20f; // Distance de rupture
     private EnemyControllerBase currentTarget;
     public Transform CurrentTarget { get; private set; }
     public bool IsLocked => CurrentTarget != null;
@@ -57,7 +56,7 @@ public class LockOnSystem : MonoBehaviour
         float distance = Vector3.Distance(transform.position, CurrentTarget.position);
 
         // On vérifie la distance OU si l'ennemi est mort (via son HealthSystem)
-        if (distance > maxLockDistance || (currentTarget != null && currentTarget.Health.IsDead))
+        if (distance > currentTarget.enemyData.maxRangeLockOn || (currentTarget != null && currentTarget.Health.IsDead))
         {
             DeselectTarget();
         }
