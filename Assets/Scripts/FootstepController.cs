@@ -28,7 +28,7 @@ public class FootstepController : MonoBehaviour
     // ?? Appelé UNIQUEMENT par Animation Event
     public void PlayFootstep()
     {
-        if (!IsMoving())
+        if (!IsMoving() || (PlayerController.Instance.StateMachine.CurrentState == PlayerController.Instance.AttackState && PlayerController.Instance.usingSpecialAttack))
             return;
 
         SurfaceType surface = GetSurfaceType();

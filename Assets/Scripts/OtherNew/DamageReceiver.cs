@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections;
 
 public class DamageReceiver : MonoBehaviour, IDamageable
@@ -8,7 +8,9 @@ public class DamageReceiver : MonoBehaviour, IDamageable
     private PlayerController _player;
     private EnemyController _enemy;
     private ArmorSystem _armor;
-    private EnemyParent _enemyParent; // Conservé pour tes méthodes d'IA spécifiques (vitesse, agent)
+
+    // PropriÃ©tÃ© publique pour que l'IA connaisse son ralentissement actuel
+    public float SpeedModifier { get; private set; } = 1f;
 
     private void Awake()
     {
@@ -17,29 +19,23 @@ public class DamageReceiver : MonoBehaviour, IDamageable
         _player = GetComponent<PlayerController>();
         _enemy = GetComponent<EnemyController>();
         _armor = GetComponent<ArmorSystem>();
-        _enemyParent = GetComponent<EnemyParent>();
     }
 
     public void TakeDamage(DamageInfo damageInfo)
     {
-        // 1. Calcul de l'armure (Réduction uniquement sur les dégâts physiques)
         float finalPhysicalDamage = (_armor != null)
             ? _armor.CalculateReducedDamage(damageInfo, out float _)
             : damageInfo.rawPhysicalDamage;
 
-        // 2. Application des dégâts physiques à la vie
-        if (_health != null)
-        {
-            _health.TakeDamage(finalPhysicalDamage);
-        }
+        if (_health != null) _health.TakeDamage(finalPhysicalDamage);
 
-        // 3. Logique de Stun (Poise)
+        // Logique de Poise / Hit classique
         if (_poise != null && _poise.ApplyPoiseDamage(damageInfo.poiseDamage))
         {
             TriggerHitReaction();
         }
 
-        // 4. Application des Effets Élémentaires Bruts (Ils ignorent l'armure !)
+        // Effets Ã©lÃ©mentaires
         if (damageInfo.elementalEffect != Effet.None)
         {
             ApplyElementalEffect(damageInfo);
@@ -48,36 +44,51 @@ public class DamageReceiver : MonoBehaviour, IDamageable
 
     private void ApplyElementalEffect(DamageInfo damageInfo)
     {
-        // Si c'est une IA de type EnemyParent, on applique tes coroutines d'effets spécifiques
-        if (_enemyParent != null)
+        switch (damageInfo.elementalEffect)
         {
-            switch (damageInfo.elementalEffect)
-            {
-                case Effet.Feu:
-                    StartCoroutine(FeuDotCoroutine(damageInfo.rawPhysicalDamage));
-                    break;
+            case Effet.Feu:
+                StartCoroutine(FeuDotCoroutine(damageInfo.rawPhysicalDamage));
+                break;
 
-                case Effet.Glace:
-                    StartCoroutine(GlaceSlowCoroutine());
-                    break;
+            case Effet.Glace:
+                // Pas besoin de toucher Ã  l'agent direct, on lance juste le timer du dÃ©buff
+                StartCoroutine(GlaceSlowCoroutine());
+                break;
 
-                case Effet.Foudre:
-                    StartCoroutine(FoudreStunCoroutine());
-                    break;
-            }
-        }
-        else
-        {
-            // Logique alternative si le joueur subit l'effet (ex: visuel à l'écran, etc.)
-            Debug.Log($"Le joueur subit l'effet élémentaire : {damageInfo.elementalEffect}");
+            case Effet.Foudre:
+                TriggerStun(1.5f);
+                break;
         }
     }
 
-    // --- COROUTINES DES EFFETS CENTRALISÉES ET SÉCURISÉES ---
+    private void TriggerStun(float duration)
+    {
+        if (_enemy != null)
+        {
+            // On rÃ©cupÃ¨re l'Ã©tat, on lui donne la durÃ©e, et on bascule
+            var stunnedState = _enemy.StateMachine.GetState(EnemyStateType.Stunned) as EnemyStunnedState;
+            if (stunnedState != null && _enemy.AIManager.HasStunnedAnim)
+            {
+                stunnedState.SetDuration(duration);
+                _enemy.StateMachine.ChangeState(EnemyStateType.Stunned);
+            }
+        }
+        if (_player != null)
+        {
+            // Idem pour ton joueur si tu lui crÃ©es un PlayerStunnedState
+            _player.StateMachine.ChangeState(PlayerStateType.Stunned);
+        }
+    }
+
+    private IEnumerator GlaceSlowCoroutine()
+    {
+        SpeedModifier = 0.5f; // On rÃ©duit de moitiÃ©
+        yield return new WaitForSeconds(3f);
+        SpeedModifier = 1f;  // Retour Ã  la normale
+    }
 
     private IEnumerator FeuDotCoroutine(float baseDamage)
     {
-        // Applique des tics de brûlure brute (5 fois, 20% des dégâts de base)
         for (int i = 0; i < 5; i++)
         {
             yield return new WaitForSeconds(1f);
@@ -85,40 +96,21 @@ public class DamageReceiver : MonoBehaviour, IDamageable
         }
     }
 
-    private IEnumerator GlaceSlowCoroutine()
-    {
-        if (_enemyParent == null) yield break;
-
-        _enemyParent.UpdateSpeedWitchCoefficient(0.5f);
-        yield return new WaitForSeconds(3f);
-        _enemyParent.UpdateSpeedWitchCoefficient(2f);
-    }
-
-    private IEnumerator FoudreStunCoroutine()
-    {
-        if (_enemyParent == null || _enemyParent.agent == null) yield break;
-
-        _enemyParent.agent.isStopped = true;
-        yield return new WaitForSeconds(1.5f);
-
-        // Sécurité au cas où l'ennemi meurt pendant le stun
-        if (_enemyParent != null && _enemyParent.agent != null)
-        {
-            _enemyParent.agent.isStopped = false;
-        }
-    }
-
     private void TriggerHitReaction()
     {
+        // On n'interrompt pas si l'ennemi est dÃ©jÃ  paralysÃ© par la foudre
+        if (_enemy != null && _enemy.StateMachine.CurrentState != _enemy.StunnedState && _enemy.AIManager.CanGetHit)
+        {
+            _enemy.StateMachine.ChangeState(EnemyStateType.Hit);
+            // Exemple dans ton IA quand elle est touchÃ©e :
+            _enemy.target = PlayerController.Instance.transform;
+        }
         if (_player != null)
         {
             if (_poise != null && _poise.IsBroken)
                 _player.StateMachine.ChangeState(PlayerStateType.Stunned);
-            else
+            else 
                 _player.StateMachine.ChangeState(PlayerStateType.Hit);
         }
-
-        if (_enemy != null)
-            _enemy.StateMachine.ChangeState(EnemyStateType.Hit);
     }
 }

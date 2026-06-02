@@ -8,9 +8,10 @@ public class NewEnemySO : ScriptableObject
 
     [Header("Permissions")]
     public bool canOrbit = false;
-    public bool canFlank = false;
-    public bool isAggressive = true; // Fonce directement ou non
     public bool canBlock = false;
+    public bool canGetHit = true;
+    public bool hasGetHitAnim = false;
+    public bool hasStunnedAnim = false;
 
     [Header("LockOn Settings")]
     public float lockOnHeightOffset = 0.5f;

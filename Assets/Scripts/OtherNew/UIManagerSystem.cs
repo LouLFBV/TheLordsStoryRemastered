@@ -1,14 +1,16 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.Audio;
 
 public class UIManagerSystem : MonoBehaviour
 {
     public static UIManagerSystem Instance;
 
+    [SerializeField] private AudioMixer audioMixer;
     [SerializeField] private Menu menu;
 
     [SerializeField] private GameObject crosshair;
@@ -40,14 +42,14 @@ public class UIManagerSystem : MonoBehaviour
 
     void Start()
     {
-        ToggleCursor(false); // On commence sans le curseur
+        ToggleCursor(false);
     }
+
     private void Update()
     {
         if (!_isCursorVisible || GamepadDetector.DetectCurrentGamepad() == GamepadType.None) return;
         Vector2 stickValue = PlayerController.Instance.Input.NavigateLook;
 
-        // 1. Déplacement (On garde ton code, il est parfait)
         if (stickValue.magnitude > 0.1f)
         {
             Vector2 currentMousePos = Mouse.current.position.ReadValue();
@@ -57,48 +59,32 @@ public class UIManagerSystem : MonoBehaviour
             Mouse.current.WarpCursorPosition(newMousePos);
         }
 
-
         Vector2 scrollInput = PlayerController.Instance.Input.GamepadScroll;
         if (scrollInput.y != 0)
         {
             SimulateScroll(scrollInput.y * scrollSpeed);
         }
 
-
-        // 2. Clic (Plus permissif)
         if (PlayerController.Instance.Input.SubmitPressed)
         {
-            // On simule le clic systématiquement si le curseur est affiché
-            // (Sauf si tu as un système de navigation par flèches en parallèle 
-            // qui tourne sur un autre script, mais même là, cliquer "là où est la souris" est plus safe)
             SimulateMouseClick();
             Debug.Log("Click");
-
             PlayerController.Instance.Input.UseSubmitInput();
         }
     }
 
     private void SimulateMouseClick()
     {
-        // 1. Créer une donnée d'événement de pointeur
         PointerEventData eventData = new PointerEventData(EventSystem.current);
-
-        // 2. Lui donner la position actuelle de la souris
         eventData.position = Mouse.current.position.ReadValue();
 
-        // 3. Faire un Raycast sur l'UI pour voir ce qu'il y a sous la souris
         List<RaycastResult> results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(eventData, results);
 
         if (results.Count > 0)
         {
-            // On prend le premier objet touché (le plus en avant)
             GameObject clickedObject = results[0].gameObject;
-
-            // 4. Simuler le clic (PointerDown + PointerUp = Click)
             ExecuteEvents.Execute(clickedObject, eventData, ExecuteEvents.pointerClickHandler);
-
-            // Optionnel : Forcer le focus de l'EventSystem sur cet objet
             EventSystem.current.SetSelectedGameObject(clickedObject);
         }
     }
@@ -113,16 +99,13 @@ public class UIManagerSystem : MonoBehaviour
 
         foreach (var result in results)
         {
-            // On cherche un composant ScrollRect dans l'objet touché ou ses parents
             ScrollRect scrollRect = result.gameObject.GetComponentInParent<ScrollRect>();
             if (scrollRect != null)
             {
-                // On applique le scroll
                 float scrollDelta = scrollAmount * scrollSensitivity * Time.unscaledDeltaTime;
-
                 float newPos = scrollRect.verticalNormalizedPosition + scrollDelta;
                 scrollRect.verticalNormalizedPosition = Mathf.Clamp01(newPos);
-                break; // On ne scroll que le premier panneau trouvé
+                break;
             }
         }
     }
@@ -136,8 +119,8 @@ public class UIManagerSystem : MonoBehaviour
 
     public void OpenPanel(UIPanelType type)
     {
-        // Ferme tout d'abord
-        CloseAll();
+        CloseAllPanelsVisuals();
+        MuteSFX(); 
 
         switch (type)
         {
@@ -147,10 +130,23 @@ public class UIManagerSystem : MonoBehaviour
             case UIPanelType.PauseMenu:
                 pauseMenuPanel.SetActive(true);
                 break;
+            // ðŸŸ¢ Ajout des autres types pour harmoniser ton systÃ¨me
+            case UIPanelType.Quests:
+                OpenQuestsAndCloseOthers();
+                break;
+            case UIPanelType.Map:
+                mapPanel.SetActive(true);
+                break;
         }
     }
 
     public void CloseAll()
+    {
+        CloseAllPanelsVisuals();
+        RestoreSFX(); 
+    }
+
+    private void CloseAllPanelsVisuals()
     {
         inventoryPanel.SetActive(false);
         pauseMenuPanel.SetActive(false);
@@ -158,24 +154,44 @@ public class UIManagerSystem : MonoBehaviour
         equipmentPanel.SetActive(false);
         mapPanel.SetActive(false);
         tooltipPanel.SetActive(false);
-        menu.CloseAllSettingsPanel();
-        NewQuestLog.instance.DesactivePanel();
+
+        if (menu != null) menu.CloseAllSettingsPanel();
+        if (NewQuestLog.instance != null) NewQuestLog.instance.DesactivePanel();
+
         ActiveDesactiveHUD(true);
     }
 
-
-    public void ShowCrosshair(bool show)
+    private void MuteSFX()
     {
-        if (crosshair != null)
+        if (audioMixer != null)
         {
-            crosshair.SetActive(show);
+            // On coupe le son instantanÃ©ment
+            audioMixer.SetFloat("SFXVolume", -80f);
         }
     }
 
-    // À AJOUTER DANS UIMANAGERSYSTEM.CS
+    private void RestoreSFX()
+    {
+        if (audioMixer != null)
+        {
+            float savedVolume = PlayerPrefs.GetFloat("SFXVolume", 0.75f);
+
+            // SÃ©curitÃ© : On empÃªche savedVolume de valoir 0 pour Ã©viter le -Infinity
+            if (savedVolume <= 0.001f) savedVolume = 0.0001f;
+
+            float targetdB = Mathf.Log10(savedVolume) * 20;
+            audioMixer.ClearFloat("SFXVolume"); // On rÃ©initialise le canal pour effacer le snapshot de pause
+            audioMixer.SetFloat("SFXVolume", targetdB); // On applique la vraie valeur immÃ©diatement
+        }
+    }
+
+    public void ShowCrosshair(bool show)
+    {
+        if (crosshair != null) crosshair.SetActive(show);
+    }
+
     public void TriggerRecipeFade(GameObject canvas, CanvasGroup canvasGroup, string itemName, Sprite icon, float fadeDuration, float displayDuration)
     {
-        // On s'assure d'arrêter une éventuelle ancienne animation sur ce manager si besoin
         StartCoroutine(GlobalFadeRoutine(canvas, canvasGroup, itemName, icon, fadeDuration, displayDuration));
     }
 
@@ -184,7 +200,6 @@ public class UIManagerSystem : MonoBehaviour
         canvas.SetActive(true);
         canvasGroup.alpha = 0;
 
-        // --- FADE IN ---
         float t = 0;
         while (t < fade)
         {
@@ -194,10 +209,8 @@ public class UIManagerSystem : MonoBehaviour
         }
         canvasGroup.alpha = 1;
 
-        // --- ATTENTE ---
         yield return new WaitForSeconds(display);
 
-        // --- FADE OUT ---
         t = 0;
         while (t < fade)
         {
@@ -207,32 +220,32 @@ public class UIManagerSystem : MonoBehaviour
         }
         canvasGroup.alpha = 0;
         canvas.SetActive(false);
-
-        // Optionnel : Détruire le canvas ici si c'était un duplicata temporaire
-        // Destroy(canvas); 
     }
 
-    #region --- Méthodes d'ouverture spécifiques pour les boutons de l'UI ---
+    #region --- MÃ©thodes d'ouverture spÃ©cifiques (Boutons d'onglets) ---
     public void OpenInventoryAndCloseOthers()
     {
-        CloseAll();
+        CloseAllPanelsVisuals();
         inventoryPanel.SetActive(true);
     }
     public void OpenQuestsAndCloseOthers()
     {
-        CloseAll();
-        NewQuestLog.instance.OnAffichageQuestPanel(NewQuestManager.instance.activeQuests);
+        CloseAllPanelsVisuals();
+        if (NewQuestLog.instance != null && NewQuestManager.instance != null)
+        {
+            NewQuestLog.instance.OnAffichageQuestPanel(NewQuestManager.instance.activeQuests);
+        }
         questsPanel.SetActive(true);
     }
     public void OpenEquipmentAndCloseOthers()
     {
-        CloseAll();
+        CloseAllPanelsVisuals();
         ActiveDesactiveHUD(false);
         equipmentPanel.SetActive(true);
     }
     public void OpenMapAndCloseOthers()
     {
-        CloseAll();
+        CloseAllPanelsVisuals();
         mapPanel.SetActive(true);
     }
 

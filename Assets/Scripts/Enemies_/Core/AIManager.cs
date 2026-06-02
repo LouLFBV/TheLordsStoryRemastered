@@ -14,6 +14,9 @@ public class AIManager : MonoBehaviour
 
     // Système de permission simple
     public bool CanOrbit => enemyData != null && enemyData.canOrbit;
+    public bool CanGetHit => enemyData != null && enemyData.canGetHit;
+    public bool HasGetHitAnim => enemyData != null && enemyData.hasGetHitAnim;
+    public bool HasStunnedAnim => enemyData != null && enemyData.hasStunnedAnim;
 
     // Accès aux réglages du SO pour les états
     public float OrbitDistance => enemyData != null ? enemyData.idealOrbitDistance : 4f;

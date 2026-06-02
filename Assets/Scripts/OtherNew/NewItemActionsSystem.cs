@@ -29,7 +29,7 @@ public class NewItemActionsSystem : MonoBehaviour
     [SerializeField] private Transform dropPoint;
 
 
-    [SerializeField] private Vector2 positionForEquipment, positionInitiale;
+    //[SerializeField] private Vector2 positionForEquipment, positionInitiale;
 
     [HideInInspector] public ItemData itemCurrentlySelected;
 
@@ -40,11 +40,11 @@ public class NewItemActionsSystem : MonoBehaviour
     [SerializeField] private TextMeshProUGUI itemDegatsText;
     [SerializeField] private TextMeshProUGUI itemEffetText;
     [SerializeField] private TextMeshProUGUI itemTypeDeResistanceText;
-    private RectTransform actionPanelRect;
+    //private RectTransform actionPanelRect;
 
     void Awake()
     {
-        actionPanelRect = actionPanel.GetComponent<RectTransform>();
+        //actionPanelRect = actionPanel.GetComponent<RectTransform>();
     }
     void Update()
     {
@@ -119,7 +119,7 @@ public class NewItemActionsSystem : MonoBehaviour
                     equipmentItemButton.gameObject.SetActive(!palette.slotManager.ObjectsAreFull(item));
                     dropItemButton.gameObject.SetActive(true);
                     destroyItemButton.gameObject.SetActive(true);
-                    actionPanelRect.anchoredPosition = positionForEquipment;
+                    //actionPanelRect.anchoredPosition = positionForEquipment;
                     break;
                 case ItemType.Equipment:
                     useItemButton.gameObject.SetActive(false);
@@ -133,14 +133,14 @@ public class NewItemActionsSystem : MonoBehaviour
                     }
                     dropItemButton.gameObject.SetActive(true);
                     destroyItemButton.gameObject.SetActive(true);
-                    actionPanelRect.anchoredPosition = positionForEquipment;
+                    //actionPanelRect.anchoredPosition = positionForEquipment;
                     break;
                 case ItemType.QuestItem:
                     useItemButton.gameObject.SetActive(false);
                     equipmentItemButton.gameObject.SetActive(false);
                     dropItemButton.gameObject.SetActive(false);
                     destroyItemButton.gameObject.SetActive(false);
-                    actionPanel.transform.position = positionInitiale;
+                    //actionPanel.transform.position = positionInitiale;
                     break;
                 case ItemType.Ressource:
                 case ItemType.Craft:
@@ -149,7 +149,7 @@ public class NewItemActionsSystem : MonoBehaviour
                     equipmentItemButton.gameObject.SetActive(false);
                     dropItemButton.gameObject.SetActive(true);
                     destroyItemButton.gameObject.SetActive(false);
-                    actionPanelRect.anchoredPosition = positionInitiale;
+                    //actionPanelRect.anchoredPosition = positionInitiale;
                     break;
             }
             desequipmentItemButton.gameObject.SetActive(false);

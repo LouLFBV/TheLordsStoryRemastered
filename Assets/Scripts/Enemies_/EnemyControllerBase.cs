@@ -47,7 +47,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
 
     [Header("Patrol Settings")]
     public Transform patrolCenterPoint;
-
+    public bool HasAggroedOnce { get; set; } = false;
 
     [Header("Other")]
     [SerializeField] private GameObject itemToDrop;
@@ -147,6 +147,12 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
 
     protected virtual void CheckForPlayer()
     {
+        if (target == null && PlayerController.Instance != null)
+        {
+            target = PlayerController.Instance.transform;
+        }
+
+        // Sécurité au cas où le joueur n'existe pas dans la scène
         if (target == null) return;
 
         float distance = Vector3.Distance(transform.position, target.position);

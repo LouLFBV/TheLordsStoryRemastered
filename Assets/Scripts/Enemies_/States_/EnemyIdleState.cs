@@ -6,6 +6,8 @@ public class EnemyIdleState : EnemyState
     {
         agent.isStopped = true;
         enemy.Animator.SetFloat("Speed", 0);
+        enemy.HasAggroedOnce = false;
+        enemy.target = null;
         if (enemy.enemyData != null && enemy.enemyData.idleSound != null)
         {
             enemy.ChangeLoopingSound(enemy.enemyData.idleSound);
