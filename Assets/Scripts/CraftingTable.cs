@@ -75,6 +75,7 @@ public class CraftingTable : InteractableBase
             if (weaponButton != null)
             {
                 weaponButton.onClick.Invoke();
+                weaponButton.Select(); 
             }
             else
             {

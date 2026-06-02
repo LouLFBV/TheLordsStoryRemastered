@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 public class WeaponDamageDetector : MonoBehaviour
@@ -25,24 +24,20 @@ public class WeaponDamageDetector : MonoBehaviour
 
     public void ToggleCollider(bool state)
     {
-        myCollider.enabled = state;
+        if (myCollider != null) myCollider.enabled = state;
         if (!state) alreadyHit.Clear();
     }
+
     public void DisableDamage() => myCollider.enabled = false;
+
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log($"Collision détectée avec {other.gameObject.name} sur {gameObject.name} (Dégâts: {damageForThisFrame})");
-        // On évite de se frapper soi-même ou de frapper 2x la même cible
+        // Évite de se frapper soi-même ou de frapper 2x la même cible
         if (other.gameObject == transform.root.gameObject || alreadyHit.Contains(other.gameObject))
-        {
-            Debug.Log("Collision ignorée : " + other.gameObject.name);
             return;
-        }
 
-        // On cherche une interface de dégâts (plus propre que Tag "AI")
         if (other.TryGetComponent<IDamageable>(out var target))
         {
-            Debug.Log($"Cible valide touchée : {other.gameObject.name} avec {damageForThisFrame} dégâts.");
             alreadyHit.Add(other.gameObject);
             ExecuteHitLogic(other, target);
         }
@@ -50,21 +45,23 @@ public class WeaponDamageDetector : MonoBehaviour
 
     private void ExecuteHitLogic(Collider other, IDamageable target)
     {
-        // 1. Dégâts de base calculés par le CombatSystem
-        if (hasDamageCollider)
-            target.TakeDamage(colliderDamage, itemData.poiseDamage, itemData.damageType);
-        else
-            target.TakeDamage(damageForThisFrame, itemData.poiseDamage, itemData.damageType);
+        // 1. Détermination des dégâts de cette frame
+        float dmg = hasDamageCollider ? colliderDamage : damageForThisFrame;
 
-        // 2. Camera Shake (Game Feel)
+        // 2. Création du conteneur d'informations dynamique du coup
+        // On passe 'transform.root.gameObject' pour définir l'attaquant (le joueur ou le monstre global)
+        DamageInfo info = new DamageInfo(dmg, itemData.damageType, itemData.effet, itemData.poiseDamage, transform.root.gameObject);
+
+        // 3. Envoi du paquet à la cible
+        target.TakeDamage(info);
+
+        // 4. Camera Shake (Game Feel)
         CameraEvents.OnCameraShake?.Invoke(itemData.cameraShakeIntensity, itemData.cameraShakeDuration);
 
-        // 3. Logique spécifique aux Flèches (Arrow)
+        // 5. Logique physique spécifique aux Flèches (Arrow)
         if (itemData.equipmentType == EquipmentType.Arrow)
         {
             HandleArrowCollision(other);
-            if (other.TryGetComponent<EnemyParent>(out var enemy))
-                StartCoroutine(ApplyArrowEffect(enemy));
         }
         else if (bloodPrefab != null) // Sang pour le corps à corps
         {
@@ -77,46 +74,7 @@ public class WeaponDamageDetector : MonoBehaviour
         if (TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = true;
         transform.position -= transform.forward * 0.1f;
         transform.parent = other.transform;
-        myCollider.enabled = false;
+        if (myCollider != null) myCollider.enabled = false;
         if (bloodPrefab != null) Instantiate(bloodPrefab, transform.position, Quaternion.identity);
-    }
-
-    // On garde ton IEnumerator pour les effets élémentaires (c'est top !)
-    private IEnumerator ApplyArrowEffect(EnemyParent enemyAI)
-    {
-        switch (itemData.damageType)
-        {
-            case DamageType.Feu:
-                enemyAI.TakeDamage(itemData.attackPoints, itemData.poiseDamage, itemData.damageType);
-                for (int i = 0; i < 5; i++)
-                {
-                    enemyAI.TakeDamage(itemData.attackPoints * 0.2f, itemData.poiseDamage, itemData.damageType);
-                    yield return new WaitForSeconds(1f);
-                }
-                break;
-
-            case DamageType.Glace:
-                enemyAI.TakeDamage(itemData.attackPoints, itemData.poiseDamage, itemData.damageType);
-                enemyAI.UpdateSpeedWitchCoefficient(0.5f);
-                yield return new WaitForSeconds(3f);
-                enemyAI.UpdateSpeedWitchCoefficient(2f);
-                break;
-
-            case DamageType.Foudre:
-                enemyAI.TakeDamage(itemData.attackPoints, itemData.poiseDamage, itemData.damageType);
-                if (enemyAI.IsDead) yield break;
-                enemyAI.agent.isStopped = true;
-                yield return new WaitForSeconds(1.5f);
-                enemyAI.agent.isStopped = false;
-                break;
-
-            default:
-                enemyAI.TakeDamage(itemData.attackPoints, itemData.poiseDamage, itemData.damageType);
-                CameraEvents.OnCameraShake?.Invoke(
-                    itemData.cameraShakeIntensity,
-                    itemData.cameraShakeDuration
-                );
-                break;
-        }
     }
 }

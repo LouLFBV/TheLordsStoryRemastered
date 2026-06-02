@@ -1,48 +1,62 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class ArmorSystem : MonoBehaviour
 {
-    [Header("Physical Resistances")]
-    public float armorTranchant = 10f;
+    [Header("Physical Resistances (Points)")]
+    public float armorClassique = 10f;
+    public float armorTranchant = 5f;
     public float armorContendant = 5f;
-    public float armorPercant = 0f; // Pas de résistance pour les dégâts perçants
+    public float armorPercant = 0f; // Pas de réduction pour les dégâts perçants (selon ton com')
 
-    [Header("Elemental Resistances")]
-    public float armorFeu = 0f;
-    public float armorGlace = 0f;
-    public float armorFoudre = 0f;
-
-    public float CalculateReducedDamage(float rawDamage, DamageType type)
+    /// <summary>
+    /// Calcule la réduction des dégâts physiques uniquement.
+    /// Les effets (Feu, Glace...) ignorent cette réduction.
+    /// </summary>
+    public float CalculateReducedDamage(DamageInfo damageInfo, out float physicalReduced)
     {
-        float reduction = 0;
+        float physicalDefensePoints = 0f;
 
-        switch (type)
+        // 1. On récupère la bonne défense selon le type de dégât de l'arme
+        switch (damageInfo.physicalType)
         {
-            case DamageType.Tranchant: reduction = armorTranchant; break;
-            case DamageType.Contendant: reduction = armorContendant; break;
-            case DamageType.Feu: reduction = armorFeu; break;
-            case DamageType.Percant: reduction = 0f; break; // Pas de réduction pour les dégâts perçants
-            case DamageType.Classique: reduction = (armorTranchant + armorContendant) / 2f; break; // Moyenne des deux pour les dégâts classiques
-            case DamageType.Glace: reduction = armorGlace; break;
-            case DamageType.Foudre: reduction = armorFoudre; break;
+            case DamageType.Tranchant: physicalDefensePoints = armorTranchant; break;
+            case DamageType.Contendant: physicalDefensePoints = armorContendant; break;
+            case DamageType.Percant: physicalDefensePoints = armorPercant; break; // Vaut 0
+            case DamageType.Classique: physicalDefensePoints = armorClassique; break;
         }
 
-        // Exemple de calcul : Dégâts - Armure (avec un minimum de 1 dégât)
-        return Mathf.Max(rawDamage - reduction, 1f);
-    }
-    public void UpdateArmor(DamageType type, float amount, bool isAdding)
-    {
-        float modifier = isAdding ? 1f : -1f;
-        float value = amount * modifier;
+        // 2. Application de la formule à rendement décroissant (évite le "0 dégât")
+        float physicalMultiplier = 100f / (100f + physicalDefensePoints);
+        float finalPhysicalDamage = damageInfo.rawPhysicalDamage * physicalMultiplier;
+        physicalReduced = damageInfo.rawPhysicalDamage - finalPhysicalDamage;
 
-        switch (type)
+        // Sécurité : au moins 1 point de dégât physique est infligé
+        return Mathf.Max(finalPhysicalDamage, 1f);
+    }
+
+    /// <summary>
+    /// Recalcule l'armure totale quand le joueur change d'équipement
+    /// </summary>
+    public void RefreshArmorStats(List<ItemData> equippedItems)
+    {
+        // On remet à zéro avant de recalculer
+        armorClassique = 0f; armorTranchant = 0f; armorContendant = 0f; armorPercant = 0f;
+
+        if (equippedItems == null) return;
+
+        foreach (ItemData piece in equippedItems)
         {
-            case DamageType.Tranchant: armorTranchant += value; break;
-            case DamageType.Contendant: armorContendant += value; break;
-            case DamageType.Percant: armorPercant += value; break;
-            case DamageType.Feu: armorFeu += value; break;
-            case DamageType.Glace: armorGlace += value; break;
-            case DamageType.Foudre: armorFoudre += value; break;
+            if (piece == null || piece.itemType != ItemType.Equipment) continue;
+
+            // On cumule les points d'armure selon l'armorType de la pièce d'armure
+            switch (piece.armorType)
+            {
+                case DamageType.Classique: armorClassique += piece.armorPoints; break;
+                case DamageType.Tranchant: armorTranchant += piece.armorPoints; break;
+                case DamageType.Contendant: armorContendant += piece.armorPoints; break;
+                case DamageType.Percant: armorPercant += piece.armorPoints; break;
+            }
         }
     }
 }

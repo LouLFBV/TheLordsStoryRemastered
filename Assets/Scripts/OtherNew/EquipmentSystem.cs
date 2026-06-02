@@ -1,3 +1,4 @@
+ï»¿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -7,34 +8,23 @@ public class EquipmentSystem : MonoBehaviour
     public static EquipmentSystem instance;
 
     [Header("Other Scripts References")]
-
     [SerializeField] private NewItemActionsSystem itemActionsSystem;
-
     [SerializeField] private PlayerController player;
-
     [SerializeField] private PaletteSystem palette;
 
     [Header("Equipment Panel References")]
-
     [SerializeField] private EquipmentLibrary equipmentLibrary;
-
     public Slot headSlot, chestSlot, handsSlot, legsSlot, feetSlot, arrowSlot;
-
     public Slot[] equipmentSlots;
-
     [SerializeField] private GameObject[] quiverArrowsInEquipment = new GameObject[10];
-
 
     [HideInInspector]
     public ItemInInventory arrowItemInInventory;
 
-
     public AudioSource audioSource;
-
     public AudioClip equipSound;
 
     private bool isLoading = false;
-
     #endregion
 
     private void Awake()
@@ -50,6 +40,23 @@ public class EquipmentSystem : MonoBehaviour
 
         equipmentSlots = new Slot[] { headSlot, chestSlot, handsSlot, legsSlot, feetSlot, arrowSlot };
     }
+
+    private void RefreshPlayerArmor()
+    {
+        if (player != null && player.Armor != null)
+        {
+            List<ItemData> equippedArmors = new List<ItemData>();
+
+            if (headSlot.item != null) equippedArmors.Add(headSlot.item);
+            if (chestSlot.item != null) equippedArmors.Add(chestSlot.item);
+            if (handsSlot.item != null) equippedArmors.Add(handsSlot.item);
+            if (legsSlot.item != null) equippedArmors.Add(legsSlot.item);
+            if (feetSlot.item != null) equippedArmors.Add(feetSlot.item);
+
+            player.Armor.RefreshArmorStats(equippedArmors);
+        }
+    }
+
     public bool IsEquipped(ItemData item)
     {
         return headSlot.item == item ||
@@ -59,12 +66,10 @@ public class EquipmentSystem : MonoBehaviour
                feetSlot.item == item ||
                arrowItemInInventory.itemData == item;
     }
+
     private void DisablePreviousEquipedEquipment(ItemData itemToDisable)
     {
-        if (itemToDisable == null)
-        {
-            return;
-        }
+        if (itemToDisable == null) return;
 
         EquipmentLibraryItem equipmentLibraryItem = equipmentLibrary.Get(itemToDisable);
 
@@ -72,7 +77,8 @@ public class EquipmentSystem : MonoBehaviour
         {
             ActiveItemVisuel(equipmentLibraryItem, false);
         }
-        player.Armor.UpdateArmor(itemToDisable.armorType, itemToDisable.armorPoints, false);
+
+
         if (itemToDisable.equipmentType == EquipmentType.Arrow)
         {
             if (arrowItemInInventory.count > 0)
@@ -87,7 +93,9 @@ public class EquipmentSystem : MonoBehaviour
             }
         }
         else
+        {
             InventorySystem.instance.AddItem(itemToDisable);
+        }
     }
 
     public void DesequipEquipment(EquipmentType equipmentType)
@@ -151,13 +159,16 @@ public class EquipmentSystem : MonoBehaviour
         {
             ActiveItemVisuel(equipmentLibraryItem, false);
         }
+
         if (currentItem)
         {
             if (currentItem.handWeaponType == HandWeapon.TwoHanded)
             {
                 player.Animator.SetBool("IsTwoHandedWeapon", false);
             }
-            player.Armor.UpdateArmor(currentItem.armorType, currentItem.armorPoints, false);
+
+            RefreshPlayerArmor();
+
             if (currentItem.equipmentType == EquipmentType.Arrow)
             {
                 if (arrowItemInInventory.count > 0)
@@ -170,8 +181,9 @@ public class EquipmentSystem : MonoBehaviour
                 UpdateArrowsText();
             }
             else
+            {
                 InventorySystem.instance.AddItem(currentItem);
-            //UpdateEquipmentsDesequipButtons();
+            }
         }
     }
 
@@ -183,7 +195,6 @@ public class EquipmentSystem : MonoBehaviour
 
     public void EquipAction(ItemData equipment = null)
     {
-
         ItemData itemToEquip = equipment ? equipment : itemActionsSystem.itemCurrentlySelected;
         print("Equip item : " + itemToEquip.name);
 
@@ -196,7 +207,6 @@ public class EquipmentSystem : MonoBehaviour
                 case EquipmentType.Head:
                     DisablePreviousEquipedEquipment(headSlot.item);
                     headSlot.itemVisual.sprite = itemToEquip.visual;
-                    headSlot.item = itemToEquip;
                     headSlot.item = itemToEquip;
                     headSlot.itemTypeVisual.gameObject.SetActive(false);
                     ActiveItemVisuel(equipmentLibraryItem);
@@ -230,24 +240,7 @@ public class EquipmentSystem : MonoBehaviour
                     ActiveItemVisuel(equipmentLibraryItem);
                     break;
                 case EquipmentType.Weapon:
-                    // 1. On l'ajoute à la palette (logique de données)
                     palette.slotManager.AddWeapon(itemToEquip);
-
-                    //// 2. Si on n'est pas en train de charger une sauvegarde, on déclenche l'animation
-                    //if (!isLoading)
-                    //{
-                    //    // On récupère le PlayerController (via les stats ou un singleton)
-                    //    PlayerController player = playerStats.GetComponent<PlayerController>();
-
-                    //    // On lui donne l'item à équiper pour que l'état sache quoi faire
-                    //    player.PendingWeaponItem = itemToEquip;
-
-                    //    // ON FERME L'INVENTAIRE (pour voir l'animation !)
-                    //    Inventory.instance.CloseInventory();
-
-                    //    // ON CHANGE D'ÉTAT
-                    //    player.StateMachine.ChangeState(PlayerStateType.Equip);
-                    //}
                     break;
                 case EquipmentType.Arrow:
                     DisablePreviousEquipedEquipment(arrowItemInInventory.itemData);
@@ -265,14 +258,17 @@ public class EquipmentSystem : MonoBehaviour
                     BowBehaviour.instance.UpdateQuiverVisual(arrowItemInInventory.count);
                     break;
             }
+
+            RefreshPlayerArmor();
+
             if (itemToEquip.itemType == ItemType.Consumable)
             {
                 palette.slotManager.AddObject(itemToEquip);
             }
 
-
             if (!isLoading && itemToEquip.equipmentType != EquipmentType.Arrow)
                 InventorySystem.instance.RemoveItem(itemToEquip);
+
             if (!isLoading)
                 audioSource.PlayOneShot(equipSound);
 
@@ -283,8 +279,6 @@ public class EquipmentSystem : MonoBehaviour
         {
             Debug.LogWarning("Item not found in equipment library: " + itemToEquip.name);
         }
-
-        //UpdateEquipmentsDesequipButtons();
     }
 
     public void UpdateQuiverVisual(int currentArrowCount)
@@ -305,7 +299,6 @@ public class EquipmentSystem : MonoBehaviour
             handsID = handsSlot.item ? handsSlot.item.itemID : null,
             legsID = legsSlot.item ? legsSlot.item.itemID : null,
             feetID = feetSlot.item ? feetSlot.item.itemID : null,
-
             arrowID = arrowItemInInventory.itemData ? arrowItemInInventory.itemData.itemID : null,
             arrowCount = arrowItemInInventory.count
         };
@@ -315,13 +308,11 @@ public class EquipmentSystem : MonoBehaviour
     {
         isLoading = true;
 
-        // Reset interne SANS toucher l'inventaire
         headSlot.item = null;
         chestSlot.item = null;
         handsSlot.item = null;
         legsSlot.item = null;
         feetSlot.item = null;
-
         arrowItemInInventory.itemData = null;
         arrowItemInInventory.count = 0;
 
@@ -335,6 +326,7 @@ public class EquipmentSystem : MonoBehaviour
         if (data == null)
         {
             isLoading = false;
+            RefreshPlayerArmor();
             return;
         }
 
@@ -356,8 +348,9 @@ public class EquipmentSystem : MonoBehaviour
         }
 
         isLoading = false;
-    }
 
+        RefreshPlayerArmor();
+    }
 
     private void EquipByID(string id)
     {
@@ -370,6 +363,7 @@ public class EquipmentSystem : MonoBehaviour
         }
     }
     #endregion
+
     private void ActiveItemVisuel(EquipmentLibraryItem equipmentLibraryItem, bool actived = true)
     {
         foreach (GameObject element in equipmentLibraryItem.elementsToDisable)
@@ -380,6 +374,7 @@ public class EquipmentSystem : MonoBehaviour
 
         ActiveItemVisuelInEquipment(equipmentLibraryItem, actived);
     }
+
     private void ActiveItemVisuelInEquipment(EquipmentLibraryItem equipmentLibraryItem, bool actived)
     {
         foreach (GameObject element in equipmentLibraryItem.elementsToDisableEquipment)

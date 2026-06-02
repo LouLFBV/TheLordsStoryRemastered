@@ -48,7 +48,8 @@ public class PNJParent : InteractableBase
         dialogueEndTime = Time.time;
         if (animatorPanelProduits!= null ) 
             animatorPanelProduits.SetBool("PanelIsOpen", false);
-        isActive.SetActive(false);
+        if (isActive != null)
+            isActive.SetActive(false);
         animator.SetBool("isTalking", false);
     }
     public void EndDiscussion(bool haveItems = true)

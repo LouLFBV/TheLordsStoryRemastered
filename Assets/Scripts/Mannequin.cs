@@ -22,11 +22,11 @@ public class Mannequin : MonoBehaviour, IDamageable
     }
 
 
-    public void TakeDamage(float damage, float poiseDamage, DamageType damageType)
+    public void TakeDamage(DamageInfo damageInfo)
     {
         barreDeVie.SetActive(true);
 
-        currentHealth = Mathf.Max(currentHealth - damage, 0);
+        currentHealth = Mathf.Max(currentHealth - damageInfo.rawPhysicalDamage, 0);
         animator.SetTrigger("SmallDamage");
         UpdateLife();
 

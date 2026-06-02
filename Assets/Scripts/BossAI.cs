@@ -84,7 +84,7 @@ public class BossAI : EnemyParent
     }
 
 
-    public override void TakeDamage(float damage, float poisedamage, DamageType damageType)
+    public override void TakeDamage(DamageInfo damageInfo)
     {
         if (isDefending || isAttacking || IsDead)
             return;
@@ -93,22 +93,22 @@ public class BossAI : EnemyParent
             playerDetected = true;
         foreach (DamageType type in defensePointFortType)
         {
-            if (type == damageType)
+            if (type == damageInfo.physicalType)
             {
-                damage *= (1f - pourcentageOfResistance);
+                damageInfo.rawPhysicalDamage *= (1f - pourcentageOfResistance);
                 break;
             }
         }
         foreach (DamageType type in defensePointFaibleType)
         {
-            if (type == damageType)
+            if (type == damageInfo.physicalType)
             {
-                damage *= (1f + pourcentageOfResistance);
+                damageInfo.rawPhysicalDamage *= (1f + pourcentageOfResistance);
                 break;
             }
         }
 
-        currentHealth = (int)Mathf.Max(0, currentHealth - damage);
+        currentHealth = (int)Mathf.Max(0, currentHealth - damageInfo.rawPhysicalDamage);
         UpdateLife();
         if (currentHealth <= 0f)
         {

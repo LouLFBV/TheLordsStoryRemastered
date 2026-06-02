@@ -1,3 +1,4 @@
+using NUnit.Framework.Interfaces;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
@@ -153,23 +154,21 @@ public class EnemyAI : EnemyParent
 
         yield return null; // Laisse une frame
 
-        playerStats.DmgReceiver.TakeDamage(damageDealt,0, damageType);
-
+        DamageInfo info = new DamageInfo(10f, damageType, 0f, 0f, transform.root.gameObject);
+        playerStats.DmgReceiver.TakeDamage(info);
         yield return new WaitForSeconds(attackDelay);
-
         if (agent.enabled)
             agent.isStopped = false;
-
         isAttacking = false;
     }
 
 
-    public override void TakeDamage(float damage, float poiseDamage, DamageType damageType)
+    public override void TakeDamage(DamageInfo damageInfo)
     {
         if (IsDead) return;
         vie.SetActive(true);
         beAttacked = true;
-        base.TakeDamage(damage, poiseDamage, damageType);
+        base.TakeDamage(damageInfo);
     }
 
 

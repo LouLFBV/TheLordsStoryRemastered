@@ -60,29 +60,29 @@ public abstract class EnemyParent : WorldDisappearOnCollected, IDamageable
         player = playerStats.transform;
     }
 
-    public virtual void TakeDamage(float damage, float poisedamage, DamageType damageType)
+    public virtual void TakeDamage(DamageInfo damageInfo)
     {
-        Debug.Log($"[{name}] TakeDamage called with damage: {damage}, poiseDamage: {poisedamage}, damageType: {damageType}");
+        Debug.Log($"[{name}] TakeDamage called with damage: {damageInfo.rawPhysicalDamage}, poiseDamage: {damageInfo.poiseDamage}, damageType: {damageInfo.physicalType}");
         if (IsDead) return;
 
         foreach (DamageType type in defensePointFortType)
         {
-            if (type == damageType)
+            if (type == damageInfo.physicalType)
             {
-                damage *= (1f - pourcentageOfResistance);
+                damageInfo.rawPhysicalDamage *= (1f - pourcentageOfResistance);
                 break;
             }
         }
         foreach (DamageType type in defensePointFaibleType)
         {
-            if (type == damageType)
+            if (type == damageInfo.physicalType)
             {
-                damage *= (1f + pourcentageOfResistance);
+                damageInfo.rawPhysicalDamage *= (1f + pourcentageOfResistance);
                 break;
             }
         }
 
-        currentHealth = Mathf.Max(0, currentHealth - damage);
+        currentHealth = Mathf.Max(0, currentHealth - damageInfo.rawPhysicalDamage);
         if (currentHealth < 0.001f)
             currentHealth = 0f;
         UpdateLife();

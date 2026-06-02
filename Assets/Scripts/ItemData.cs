@@ -31,6 +31,7 @@ public class ItemData : ScriptableObject
     public float poiseDamage;
     public HandWeapon handWeaponType;
     public DamageType damageType;
+    public Effet effet;
 
     [Header("Bow Stats")]
     public float rangeMin;
@@ -114,8 +115,12 @@ public enum DamageType
     Percant,
     Contendant,
     Tranchant,
+}
+
+public enum Effet
+{
+    None,
     Feu,
-    Glace,
     Foudre,
-    Magie
+    Glace,
 }

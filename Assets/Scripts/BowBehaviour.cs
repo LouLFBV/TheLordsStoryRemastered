@@ -67,15 +67,15 @@ public class BowBehaviour : MonoBehaviour
         Quaternion flatRotation = Quaternion.Euler(0f, 0f, 0f);
 
         //  On instancie directement sans parent
-        switch (EquipmentSystem.instance.arrowItemInInventory.itemData.damageType)
+        switch (EquipmentSystem.instance.arrowItemInInventory.itemData.effet)
         {
-            case DamageType.Feu:
+            case Effet.Feu:
                 arrow = Instantiate(fireArrowPrefab, arrowSpawnPoint.position, flatRotation, arrowSpawnPoint);
                 break;
-            case DamageType.Foudre:
+            case Effet.Foudre:
                 arrow = Instantiate(electricArrowPrefab, arrowSpawnPoint.position, flatRotation, arrowSpawnPoint);
                 break;
-            case DamageType.Glace:
+            case Effet.Glace:
                 arrow = Instantiate(iceArrowPrefab, arrowSpawnPoint.position, flatRotation, arrowSpawnPoint);
                 break;
             default:

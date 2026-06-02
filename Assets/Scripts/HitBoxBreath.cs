@@ -18,7 +18,8 @@ public class HitBoxAttack : MonoBehaviour
         {
             if (other.TryGetComponent<DamageReceiver>(out var playerHealth))
             {
-                playerHealth.TakeDamage(damageAmount, 20, damageType);
+                DamageInfo info = new DamageInfo(damageAmount, damageType, Effet.Feu, 10f, transform.root.gameObject);
+                playerHealth.TakeDamage(info);
             }
         }
 
