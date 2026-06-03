@@ -183,7 +183,7 @@ public class ForgeronUI : MonoBehaviour
             slot.equipmentIcone.sprite = null;
         }
     }
-    private List<ItemInInventory> GetContentForEquipment(List<ItemInInventory> items, EquipmentType equipmentType)
+    private List<ItemInInventory> GetContentForEquipment(ItemInInventory[] items, EquipmentType equipmentType)
     {
         List<ItemInInventory> filteredItems = new List<ItemInInventory>();
 

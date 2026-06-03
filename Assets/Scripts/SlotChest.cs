@@ -13,7 +13,7 @@ public class SlotChest : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     [HideInInspector] public Button button;
     public bool isInChest;  
     public bool isResource; 
-    public int arrayIndex;  
+    public int arrayIndex;
 
     private void Awake()
     {
@@ -33,7 +33,7 @@ public class SlotChest : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     {
         if (item != null)
         {
-            Tooltip.Instance.Show(item, count);
+            Tooltip.Instance.Show(item, count, true);
             Tooltip.Instance.UpdateTooltipPosition(transform.position);
             ChestInventory.Instance.SetCurrentSlot(this);
         }
@@ -46,11 +46,6 @@ public class SlotChest : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
         Tooltip.Instance.Hide();
         ChestInventory.Instance.SetCurrentSlot(null);
 
-        //itemActionsSystem.CloseActionPanel();
     }
 
-    //public void ClickOnSlot()
-    //{
-    //    itemActionsSystem.OpenActionPanel(item,isEquipmentSlot/*, transform.position - new Vector3(0, 15, 0)*/);
-    //}
 }

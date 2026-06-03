@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.ProBuilder.MeshOperations;
-using UnityEngine.Rendering;
 
 public class ChestInventory : MonoBehaviour
 {
@@ -63,19 +61,19 @@ public class ChestInventory : MonoBehaviour
     {
         if (InventorySystem.instance == null) return;
 
-        List<ItemInInventory> playerRessources = InventorySystem.instance.GetPlayerRessourcesList();
-        List<ItemInInventory> playerCraft = InventorySystem.instance.GetPlayerCraftList();
+        ItemInInventory[] playerRessources = InventorySystem.instance.GetPlayerRessourcesList();
+        ItemInInventory[] playerCraft = InventorySystem.instance.GetPlayerCraftList();
 
         System.Array.Clear(contentRessourcePlayer, 0, contentRessourcePlayer.Length);
         System.Array.Clear(contentCraftPlayer, 0, contentCraftPlayer.Length);
 
-        int ressourcesToCopy = Mathf.Min(playerRessources.Count, contentRessourcePlayer.Length);
+        int ressourcesToCopy = Mathf.Min(playerRessources.Length, contentRessourcePlayer.Length);
         for (int i = 0; i < ressourcesToCopy; i++)
         {
             contentRessourcePlayer[i] = playerRessources[i];
         }
 
-        int craftToCopy = Mathf.Min(playerCraft.Count, contentCraftPlayer.Length);
+        int craftToCopy = Mathf.Min(playerCraft.Length, contentCraftPlayer.Length);
         for (int i = 0; i < craftToCopy; i++)
         {
             contentCraftPlayer[i] = playerCraft[i];

@@ -70,6 +70,8 @@ public class PlayerController : MonoBehaviour, ICombatant
     public ItemData ItemQueuedToEquip;
     public bool IsDead { get; set; }
 
+    public Transform dropPoint;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)

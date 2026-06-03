@@ -1,11 +1,13 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Tooltip : MonoBehaviour
 {
     [SerializeField] private GameObject tooltipPanel;
     [SerializeField] private TextMeshProUGUI itemName, itemDescription, itemStock;
     [SerializeField] private Vector3 offset = new Vector3(80, -80, 0); // Ajuste l'offset selon la taille de tes slots
+    [SerializeField] private GameObject chestButton, inventoryButton;
 
     private RectTransform _rectTransform;
     public static Tooltip Instance;
@@ -23,10 +25,12 @@ public class Tooltip : MonoBehaviour
         _rectTransform = tooltipPanel.GetComponent<RectTransform>();
     }
 
-    public void Show(ItemData itemData, int stock)
+    public void Show(ItemData itemData, int stock, bool isInChest)
     {
         SetText(itemData, stock);
         tooltipPanel.SetActive(true);
+        chestButton.SetActive(isInChest);
+        inventoryButton.SetActive(!isInChest);
     }
 
     public void Hide()

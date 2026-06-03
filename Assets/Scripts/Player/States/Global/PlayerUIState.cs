@@ -44,6 +44,7 @@ public class PlayerUIState : PlayerState
         player.Input.SwitchActionMap("Player");
         player.OnOpenUIEvent(false);
         UIManagerSystem.Instance.ToggleCursor(false);
+        Tooltip.Instance.Hide();
         InventorySystem.instance.itemActionsSystem.CloseActionPanel();
     }
 }

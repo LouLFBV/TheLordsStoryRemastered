@@ -1,36 +1,34 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
 public class InventorySystem : MonoBehaviour
 {
-
     public static InventorySystem instance;
 
     public ItemDataDatabase itemDatabase;
-
 
     [Header("Other scripts References")]
     [SerializeField] private EquipmentSystem equipment;
     public NewItemActionsSystem itemActionsSystem;
     [SerializeField] private PlayerController player;
 
-    [Header("Inventory System Variables")]
-
+    [Header("Inventory System Variables (Fixed Arrays)")]
+    // 🔴 On utilise désormais des tableaux de taille fixe au lieu de listes dynamiques
     [SerializeField] private Transform inventoryRessourcesSlotsParent;
-    [SerializeField] private List<ItemInInventory> contentRessources = new List<ItemInInventory>();
+    [SerializeField] private ItemInInventory[] contentRessources;
 
     [SerializeField] private Transform inventoryEquipmentSlotsParent;
-    [SerializeField] private List<ItemInInventory> contentEquipment = new List<ItemInInventory>();
+    [SerializeField] private ItemInInventory[] contentEquipment;
 
     [SerializeField] private Transform inventoryCraftSlotsParent;
-    [SerializeField] private List<ItemInInventory> contentCraft = new List<ItemInInventory>();
+    [SerializeField] private ItemInInventory[] contentCraft;
 
     public Sprite emptySlotVisual;
 
     [SerializeField] private UINavigationManager navManager;
 
-
+    // Constantes de tailles
     const int InventoryRessourcesCraftSize = 20;
     const int EquipmentSize = 18;
 
@@ -44,94 +42,43 @@ public class InventorySystem : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        // Initialisation des tableaux avec leurs tailles fixes si ce n'est pas déjà fait dans l'inspecteur
+        if (contentRessources == null || contentRessources.Length != InventoryRessourcesCraftSize)
+            contentRessources = new ItemInInventory[InventoryRessourcesCraftSize];
+
+        if (contentCraft == null || contentCraft.Length != InventoryRessourcesCraftSize)
+            contentCraft = new ItemInInventory[InventoryRessourcesCraftSize];
+
+        if (contentEquipment == null || contentEquipment.Length != EquipmentSize)
+            contentEquipment = new ItemInInventory[EquipmentSize];
+
+        // Sécurité : On s'assure que chaque case du tableau contient bien une instance de classe (vide au début)
+        InitializeArraySlots(contentRessources);
+        InitializeArraySlots(contentCraft);
+        InitializeArraySlots(contentEquipment);
+    }
+
+    private void InitializeArraySlots(ItemInInventory[] array)
+    {
+        for (int i = 0; i < array.Length; i++)
+        {
+            if (array[i] == null) array[i] = new ItemInInventory();
+        }
     }
 
     private void Start()
     {
-        //CloseInventory();
         RefreshContent();
     }
-
-
-    //public void OpenInventory()
-    //{
-    //    inventoryPanel.SetActive(true);
-    //    player.StateMachine.ChangeState(PlayerStateType.UI);
-    //    RefreshContent();
-
-    //    // On force la State Machine � passer dans un �tat "Menu" ou "Idle" 
-    //    // pour emp�cher le joueur de frapper/courir pendant qu'il trie ses objets
-    //    //player.StateMachine.ChangeState(PlayerStateType.Idle);
-
-    //    // Si tu as un �tat sp�cifique "UI" ou "Pause", c'est encore mieux :
-    //    // player.StateMachine.ChangeState(PlayerStateType.InventoryOpen);
-
-    //    PaletteSystem.instance.UpdateEquipmentsDesequipButtons();
-
-    //    if (navManager != null) navManager.onCancel = CloseInventory;
-    //}
-
-    //public void CloseInventory()
-    //{
-    //    if (itemActionsSystem.actionPanel.activeSelf) return;
-
-    //    inventoryPanel.SetActive(false); 
-    //    itemActionsSystem.actionPanel.SetActive(false);
-    //    TooltipSystem.instance.Hide();
-
-    //    PaletteSystem.instance.UpdateEquipmentsDesequipButtons();
-
-    //    if (navManager != null) navManager.onCancel = null;
-    //}
-
 
     public void AddItem(ItemData item)
     {
         Debug.Log("Adding item: " + item.itemName);
 
-        List<ItemInInventory> targetList = null;
+        ItemInInventory[] targetArray = GetTargetArray(item.itemType);
 
-        switch (item.itemType)
-        {
-            case ItemType.Equipment:
-            case ItemType.Consumable:
-                if (IsFullEquipment())
-                {
-                    Debug.LogWarning("Cannot add item, equipment inventory is full.");
-                    return;
-                }
-                targetList = contentEquipment;
-                break;
-
-            case ItemType.Ressource:
-                if (IsFullRessources())
-                {
-                    Debug.LogWarning("Cannot add item, ressources inventory is full.");
-                    return;
-                }
-                targetList = contentRessources;
-                break;
-
-            case ItemType.Craft:
-                if (IsFullCraft())
-                {
-                    Debug.LogWarning("Cannot add item, craft inventory is full.");
-                    return;
-                }
-                targetList = contentCraft;
-                break;
-
-            default:
-                if (IsFullRessources())
-                {
-                    Debug.LogWarning("Cannot add item, ressources inventory is full.");
-                    return;
-                }
-                targetList = contentRessources;
-                break;
-        }
-
-        // Cas sp�cial fl�ches
+        // Cas spécial flèches (On garde ta logique)
         if (equipment.arrowItemInInventory.itemData != null)
         {
             if (item.damageType == equipment.arrowItemInInventory.itemData.damageType
@@ -144,20 +91,31 @@ public class InventorySystem : MonoBehaviour
             }
         }
 
-       
-
-        // Recherche de stacks existants
-        var stacks = targetList.Where(i => i.itemData == item).ToList();
-
         bool itemAdded = false;
 
-        if (stacks.Count > 0 && item.stackable)
+        // 1. Recherche d'un stack existant non plein
+        if (item.stackable)
         {
-            foreach (var stack in stacks)
+            for (int i = 0; i < targetArray.Length; i++)
             {
-                if (stack.count < item.maxStack)
+                if (targetArray[i].itemData == item && targetArray[i].count < item.maxStack)
                 {
-                    stack.count++;
+                    targetArray[i].count++;
+                    itemAdded = true;
+                    break;
+                }
+            }
+        }
+
+        // 2. Si pas trouvé de stack, on cherche le PREMIER emplacement vide (index le plus bas)
+        if (!itemAdded)
+        {
+            for (int i = 0; i < targetArray.Length; i++)
+            {
+                if (targetArray[i].itemData == null) // Case libre !
+                {
+                    targetArray[i].itemData = item;
+                    targetArray[i].count = 1;
                     itemAdded = true;
                     break;
                 }
@@ -166,11 +124,7 @@ public class InventorySystem : MonoBehaviour
 
         if (!itemAdded)
         {
-            targetList.Add(new ItemInInventory
-            {
-                itemData = item,
-                count = 1
-            });
+            Debug.LogWarning($"Impossible d'ajouter {item.itemName}, l'inventaire de cette catégorie est plein.");
         }
 
         RefreshContent();
@@ -178,298 +132,254 @@ public class InventorySystem : MonoBehaviour
 
     public void RemoveItem(ItemData item)
     {
-        List<ItemInInventory> targetList = null;
+        ItemInInventory[] targetArray = GetTargetArray(item.itemType);
 
-        switch (item.itemType)
+        // On cherche le premier objet correspondant en partant de la fin (ou du début, au choix)
+        for (int i = 0; i < targetArray.Length; i++)
         {
-            case ItemType.Equipment:
-            case ItemType.Consumable:
-                targetList = contentEquipment;
+            if (targetArray[i].itemData == item)
+            {
+                if (targetArray[i].count > 1)
+                {
+                    targetArray[i].count--;
+                }
+                else
+                {
+                    // Vrai nettoyage de la case : on remet à blanc sans détruire l'index
+                    targetArray[i].itemData = null;
+                    targetArray[i].count = 0;
+                }
                 break;
-
-            case ItemType.Ressource:
-                targetList = contentRessources;
-                break;
-
-            case ItemType.Craft:
-                targetList = contentCraft;
-                break;
-
-            default:
-                targetList = contentRessources;
-                break;
+            }
         }
-
-        ItemInInventory itemInInventory = targetList
-            .FirstOrDefault(i => i.itemData == item);
-
-        if (itemInInventory == null)
-            return;
-
-        if (itemInInventory.count > 1)
-            itemInInventory.count--;
-        else
-            targetList.Remove(itemInInventory);
 
         RefreshContent();
     }
 
-    public List<ItemInInventory> GetContent()
+    // Fonction de déplacement manuel (Crucial pour le glisser-déposer ou l'indexation comme dans ton coffre !)
+    public void MoveItem(ItemType type, int fromIndex, int toIndex)
     {
-        List<ItemInInventory> content = new List<ItemInInventory>();
+        ItemInInventory[] targetArray = GetTargetArray(type);
 
-        content.AddRange(contentRessources);
-        content.AddRange(contentCraft);
-        content.AddRange(contentEquipment);
+        if (fromIndex < 0 || fromIndex >= targetArray.Length || toIndex < 0 || toIndex >= targetArray.Length) return;
 
-        return content;
+        // Inversion classique de deux cases (Swap)
+        ItemInInventory temp = targetArray[fromIndex];
+        targetArray[fromIndex] = targetArray[toIndex];
+        targetArray[toIndex] = temp;
+
+        RefreshContent();
     }
 
-    public List<ItemInInventory> GetContentEquipment()
+    private ItemInInventory[] GetTargetArray(ItemType type)
     {
-        return contentEquipment;
-    }
-
-    public List<ItemInInventory> GetPlayerRessourcesList()
-    {
-        return contentRessources;
-    }
-
-    public List<ItemInInventory> GetPlayerCraftList()
-    {
-        return contentCraft;
-    }
-    public int GetItemCount(ItemData item)
-    {
-        if (item == null) return 0;
-
-        // On r�cup�re la liste cible selon le type
-        List<ItemInInventory> targetList = item.itemType switch
+        return type switch
         {
             ItemType.Equipment or ItemType.Consumable => contentEquipment,
             ItemType.Ressource => contentRessources,
             ItemType.Craft => contentCraft,
-            _ => null // Cas inconnu
+            _ => contentRessources
         };
+    }
 
-        if (targetList == null)
-        {
-            Debug.LogWarning($"Type d'item {item.itemType} non g�r� dans GetItemCount");
-            return 0;
-        }
+    public List<ItemInInventory> GetContent()
+    {
+        // On fusionne les tableaux en ignorant les slots vides pour les scripts tiers qui demandent tout d'un coup
+        List<ItemInInventory> content = new List<ItemInInventory>();
+        content.AddRange(contentRessources.Where(i => i.itemData != null));
+        content.AddRange(contentCraft.Where(i => i.itemData != null));
+        content.AddRange(contentEquipment.Where(i => i.itemData != null));
+        return content;
+    }
 
-        // Version boucle simple (plus performante que LINQ si appel�e souvent)
+    public ItemInInventory[] GetContentEquipment() => contentEquipment;
+    public ItemInInventory[] GetPlayerRessourcesList() => contentRessources;
+    public ItemInInventory[] GetPlayerCraftList() => contentCraft;
+
+    public int GetItemCount(ItemData item)
+    {
+        if (item == null) return 0;
+        ItemInInventory[] targetArray = GetTargetArray(item.itemType);
+
         int total = 0;
-        foreach (var slot in targetList)
+        for (int i = 0; i < targetArray.Length; i++)
         {
-            if (slot.itemData == item)
-                total += slot.count;
+            if (targetArray[i].itemData == item)
+                total += targetArray[i].count;
         }
         return total;
     }
 
     public void RefreshContent()
     {
-        RefreshCraftContent();
-        RefreshRessourcesContent();
-        RefreshEquipmentContent();
+        // 1. Ressources et Craft utilisent le composant "SlotInventory" (Tooltip)
+        RefreshResourcesAndCraftContent(inventoryRessourcesSlotsParent, contentRessources, true);
+        RefreshResourcesAndCraftContent(inventoryCraftSlotsParent, contentCraft, false);
+
+        // 2. L'équipement utilise le composant "Slot" (Action Panel)
+        RefreshEquipmentContent(inventoryEquipmentSlotsParent, contentEquipment);
     }
-    public void RefreshCraftContent()
+
+    // 🟢 Gestion des slots de type "SlotInventory" (Ressources / Craft)
+    private void RefreshResourcesAndCraftContent(Transform slotsParent, ItemInInventory[] contentArray, bool isResource)
     {
-        //On vide tous les slots / visuels
-        for (int i = 0; i < inventoryCraftSlotsParent.childCount; i++)
+        int childCount = slotsParent.childCount;
+
+        for (int i = 0; i < childCount; i++)
         {
-            Slot currentSlot = inventoryCraftSlotsParent.GetChild(i).GetComponent<Slot>();
+            SlotInventory currentSlot = slotsParent.GetChild(i).GetComponent<SlotInventory>();
+            if (currentSlot == null) continue;
 
-            currentSlot.item = null;
-            currentSlot.itemVisual.sprite = emptySlotVisual;
-            currentSlot.countTexte.enabled = false;
-        }
+            // Liaison des données d'indexation fixe
+            currentSlot.arrayIndex = i;
+            currentSlot.isResource = isResource;
 
-        //On peuple le visuel des slots selon le contenu de l'inventaire
-        for (int i = 0; i < contentCraft.Count; i++)
-        {
-            Slot currentSlot = inventoryCraftSlotsParent.GetChild(i).GetComponent<Slot>();
-            if (contentCraft[i].itemData == null)
+            if (i < contentArray.Length && contentArray[i] != null && contentArray[i].itemData != null)
             {
-                RemoveItem(contentCraft[i].itemData);
-                continue;
-            }
-            currentSlot.item = contentCraft[i].itemData;
-            currentSlot.itemVisual.sprite = contentCraft[i].itemData.visual;
+                currentSlot.item = contentArray[i].itemData;
+                currentSlot.count = contentArray[i].count;
+                currentSlot.itemVisual.sprite = contentArray[i].itemData.visual;
+                currentSlot.SetSlotState(true); // Active le fond/contour si implémenté
 
-            if (currentSlot.item.stackable)
-            {
-                currentSlot.countTexte.text = contentCraft[i].count.ToString();
+
+                currentSlot.countTexte.text = contentArray[i].count.ToString();
                 currentSlot.countTexte.enabled = true;
             }
-        }
-    }
-    public void RefreshRessourcesContent()
-    {
-        //On vide tous les slots / visuels
-        for (int i = 0; i < inventoryRessourcesSlotsParent.childCount; i++)
-        {
-            Slot currentSlot = inventoryRessourcesSlotsParent.GetChild(i).GetComponent<Slot>();
-
-            currentSlot.item = null;
-            currentSlot.itemVisual.sprite = emptySlotVisual;
-            currentSlot.countTexte.enabled = false;
-        }
-
-        //On peuple le visuel des slots selon le contenu de l'inventaire
-        for (int i = 0; i < contentRessources.Count; i++)
-        {
-            Slot currentSlot = inventoryRessourcesSlotsParent.GetChild(i).GetComponent<Slot>();
-            if (contentRessources[i].itemData == null)
+            else
             {
-                RemoveItem(contentRessources[i].itemData);
-                continue;
-            }
-            currentSlot.item = contentRessources[i].itemData;
-            currentSlot.itemVisual.sprite = contentRessources[i].itemData.visual;
-
-            if (currentSlot.item.stackable)
-            {
-                currentSlot.countTexte.text = contentRessources[i].count.ToString();
-                currentSlot.countTexte.enabled = true;
-            }
-        }
-    }
-    public void RefreshEquipmentContent()
-    {
-        //On vide tous les slots / visuels
-        for (int i = 0; i < inventoryEquipmentSlotsParent.childCount; i++)
-        {
-            Slot currentSlot = inventoryEquipmentSlotsParent.GetChild(i).GetComponent<Slot>();
-
-            currentSlot.item = null;
-            currentSlot.itemVisual.sprite = emptySlotVisual;
-            currentSlot.countTexte.enabled = false;
-        }
-
-        //On peuple le visuel des slots selon le contenu de l'inventaire
-        for (int i = 0; i < contentEquipment.Count; i++)
-        {
-            Slot currentSlot = inventoryEquipmentSlotsParent.GetChild(i).GetComponent<Slot>();
-            if (contentEquipment[i].itemData == null)
-            {
-                RemoveItem(contentEquipment[i].itemData);
-                continue;
-            }
-            currentSlot.item = contentEquipment[i].itemData;
-            currentSlot.itemVisual.sprite = contentEquipment[i].itemData.visual;
-
-            if (currentSlot.item.stackable)
-            {
-                currentSlot.countTexte.text = contentEquipment[i].count.ToString();
-                currentSlot.countTexte.enabled = true;
+                // Case vide du tableau
+                currentSlot.item = null;
+                currentSlot.count = 0;
+                currentSlot.itemVisual.sprite = emptySlotVisual;
+                currentSlot.countTexte.enabled = false;
+                currentSlot.SetSlotState(false);
             }
         }
     }
 
-    public bool IsFullRessources()
+    // 🟢 Gestion des slots de type "Slot" (Équipement)
+    private void RefreshEquipmentContent(Transform slotsParent, ItemInInventory[] contentArray)
     {
-        return contentRessources.Count == InventoryRessourcesCraftSize;
+        int childCount = slotsParent.childCount;
+
+        for (int i = 0; i < childCount; i++)
+        {
+            Slot currentSlot = slotsParent.GetChild(i).GetComponent<Slot>();
+            if (currentSlot == null) continue;
+
+            // Note : Si tu veux pouvoir déplacer tes équipements à l'index plus tard,
+            // tu pourras ajouter un "public int arrayIndex;" dans ton script Slot.cs
+
+            if (i < contentArray.Length && contentArray[i] != null && contentArray[i].itemData != null)
+            {
+                currentSlot.item = contentArray[i].itemData;
+                currentSlot.itemVisual.sprite = contentArray[i].itemData.visual;
+
+                // Gestion de l'affichage de la quantité (ex: consommables empilés dans l'onglet équipement)
+                if (contentArray[i].itemData.stackable && contentArray[i].count > 1)
+                {
+                    currentSlot.countTexte.text = contentArray[i].count.ToString();
+                    currentSlot.countTexte.gameObject.SetActive(true);
+                }
+                else
+                {
+                    if (currentSlot.countTexte != null) currentSlot.countTexte.gameObject.SetActive(false);
+                }
+            }
+            else
+            {
+                // Case vide du tableau
+                currentSlot.item = null;
+                currentSlot.itemVisual.sprite = emptySlotVisual;
+                if (currentSlot.countTexte != null) currentSlot.countTexte.gameObject.SetActive(false);
+            }
+        }
     }
-    public bool IsFullCraft()
-    {
-        return contentCraft.Count == InventoryRessourcesCraftSize;
-    }
-    public bool IsFullEquipment()
-    {
-        return contentEquipment.Count == EquipmentSize;
-    }
+
+    // Les vérifications de remplissage comptent désormais les slots occupés (non-null)
+    public bool IsFullRessources() => contentRessources.Count(i => i.itemData != null) >= InventoryRessourcesCraftSize;
+    public bool IsFullCraft() => contentCraft.Count(i => i.itemData != null) >= InventoryRessourcesCraftSize;
+    public bool IsFullEquipment() => contentEquipment.Count(i => i.itemData != null) >= EquipmentSize;
 
     public void ClearContent()
     {
-        ClearContentRessources();
-        ClearContentCarft();
-        ClearContentEquipment();
+        ResetArray(contentRessources);
+        ResetArray(contentCraft);
+        ResetArray(contentEquipment);
+        RefreshContent();
     }
-    public void ClearContentRessources()
+    private void ResetArray(ItemInInventory[] array)
     {
-        contentRessources.Clear();
-    }
-    public void ClearContentCarft()
-    {
-        contentCraft.Clear();
-    }
-    public void ClearContentEquipment()
-    {
-        contentEquipment.Clear();
+        for (int i = 0; i < array.Length; i++)
+        {
+            array[i].itemData = null;
+            array[i].count = 0;
+        }
     }
 
     public bool KeyIsInInventory(ItemData itemData)
     {
+        Debug.Log($"Checking if item {itemData.itemName} is in inventory...");
         return contentRessources.Any(i => i.itemData == itemData);
     }
 
-    #region SaveSystem
-
-    void SaveList(List<ItemInInventory> source, List<ItemInInventorySave> destination)
-    {
-        foreach (var item in source)
-        {
-            destination.Add(new ItemInInventorySave
-            {
-                itemID = item.itemData.itemID,
-                count = item.count
-            });
-        }
-    }
+    #region SaveSystem (Index-Safe)
     public InventorySaveData GetSaveData()
     {
         InventorySaveData data = new InventorySaveData
         {
-            ressources = new List<ItemInInventorySave>(contentRessources.Count),
-            craft = new List<ItemInInventorySave>(contentCraft.Count),
-            equipment = new List<ItemInInventorySave>(contentEquipment.Count)
+            ressources = SaveArray(contentRessources),
+            craft = SaveArray(contentCraft),
+            equipment = SaveArray(contentEquipment)
         };
-
-        SaveList(contentRessources, data.ressources);
-        SaveList(contentCraft, data.craft);
-        SaveList(contentEquipment, data.equipment);
-
         return data;
     }
 
-    void LoadList(List<ItemInInventorySave> source, List<ItemInInventory> destination)
+    private List<ItemInInventorySave> SaveArray(ItemInInventory[] array)
     {
-        foreach (var savedItem in source)
+        List<ItemInInventorySave> savedList = new List<ItemInInventorySave>();
+        for (int i = 0; i < array.Length; i++)
         {
+            // On sauvegarde même les cases vides en mettant un ID à "" ou null 
+            // pour mémoriser l'emplacement exact (l'index) de chaque objet !
+            savedList.Add(new ItemInInventorySave
+            {
+                itemID = array[i].itemData != null ? array[i].itemData.itemID : "",
+                count = array[i].count,
+                slotIndex = i // 🟢 On stocke l'index de la case !
+            });
+        }
+        return savedList;
+    }
+
+    public void LoadSaveData(InventorySaveData data)
+    {
+        if (data == null) return;
+
+        ResetArray(contentRessources);
+        ResetArray(contentCraft);
+        ResetArray(contentEquipment);
+
+        if (data.ressources != null) LoadArray(data.ressources, contentRessources);
+        if (data.craft != null) LoadArray(data.craft, contentCraft);
+        if (data.equipment != null) LoadArray(data.equipment, contentEquipment);
+
+        RefreshContent();
+    }
+
+    private void LoadArray(List<ItemInInventorySave> savedList, ItemInInventory[] array)
+    {
+        foreach (var savedItem in savedList)
+        {
+            if (savedItem.slotIndex < 0 || savedItem.slotIndex >= array.Length) continue;
+            if (string.IsNullOrEmpty(savedItem.itemID)) continue;
+
             ItemData itemData = itemDatabase.GetItemByID(savedItem.itemID);
             if (itemData == null) continue;
 
-            destination.Add(new ItemInInventory
-            {
-                itemData = itemData,
-                count = savedItem.count
-            });
+            array[savedItem.slotIndex].itemData = itemData;
+            array[savedItem.slotIndex].count = savedItem.count;
         }
-    }
-    public void LoadSaveData(InventorySaveData data)
-    {
-        if (data == null)
-        {
-            Debug.LogWarning("InventorySaveData is null");
-            return;
-        }
-
-        contentRessources.Clear();
-        contentCraft.Clear();
-        contentEquipment.Clear();
-
-        if (data.ressources != null)
-            LoadList(data.ressources, contentRessources);
-
-        if (data.craft != null)
-            LoadList(data.craft, contentCraft);
-
-        if (data.equipment != null)
-            LoadList(data.equipment, contentEquipment);
-
-        RefreshContent();
     }
     #endregion
 }
@@ -486,6 +396,7 @@ public class ItemInInventorySave
 {
     public string itemID;
     public int count;
+    public int slotIndex; 
 }
 
 [System.Serializable]

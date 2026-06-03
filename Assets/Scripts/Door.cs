@@ -4,7 +4,6 @@ using System.Linq;
 
 public class Door : InteractableBase
 {
-    [SerializeField] private int niveauDeVerrouillage = 0; // Niveau de verrouillage de la porte
     [SerializeField] private bool IsUnlockable = true;
 
     [Header("Sounds")]
@@ -12,7 +11,6 @@ public class Door : InteractableBase
     [SerializeField] private AudioSource openDoorSound;
     [SerializeField] private AudioSource lockedDoorSound;
     [SerializeField] private AudioSource unlockedDoorSound;
-    [SerializeField] private AudioSource unlockFailSound;
 
 
     [SerializeField]
@@ -122,24 +120,6 @@ public class Door : InteractableBase
             ConsommerCle(key);
             DeverrouillerEtOuvrir();
         }
-        // Cas 2 : tentative de crochetage avec une clé "improvisée"
-        else if (key.attackPoints > 0)
-        {
-            float chanceDeReussite = Mathf.Clamp01((float)key.attackPoints / (niveauDeVerrouillage + 1));
-            float tirage = Random.value;
-
-            Debug.Log($"Chance de réussite : {chanceDeReussite}, tirage : {tirage}");
-
-            if (tirage <= chanceDeReussite)
-            {
-                DeverrouillerEtOuvrir();
-            }
-            else
-            {
-                unlockFailSound.PlayOneShot(unlockFailSound.clip);
-            }
-            ConsommerCle(key);
-        }
         else
         {
             lockedDoorSound.PlayOneShot(lockedDoorSound.clip);
@@ -160,9 +140,15 @@ public class Door : InteractableBase
 
     public override void OnInteract(PlayerInteractor player)
     {
-        if (InventorySystem.instance.KeyIsInInventory(keyItem))
+        if (keyItem != null && InventorySystem.instance.KeyIsInInventory(keyItem))
+        {
+            Debug.Log("Player has the key, trying to open the door with it.");
             TryToOpenWithKey(keyItem);
+        }
         else
+        {
+            Debug.Log("Player does not have the key, trying to open the door normally.");
             OpenAndCloseDoor();
+        }
     }
 }
