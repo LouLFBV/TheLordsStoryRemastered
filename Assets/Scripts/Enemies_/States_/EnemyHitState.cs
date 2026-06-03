@@ -2,10 +2,15 @@
 
 public class EnemyHitState : EnemyState
 {
+    private float hitDuration = 0.4f;
+    private float timer;
     public EnemyHitState(EnemyControllerBase enemy) : base(enemy) { }
 
     public override void Enter()
     {
+        // 🟢 IMPORTANT : On remet le timer à 0 à chaque fois qu'on entre dans l'état !
+        timer = 0f;
+
         // 1. On arrête les mouvements
         agent.isStopped = true;
 
@@ -19,27 +24,42 @@ public class EnemyHitState : EnemyState
 
         if (source != null && enemy.enemyData != null)
         {
-            // On récupère le tableau de sons depuis le ScriptableObject
             AudioClip[] hitSounds = enemy.enemyData.hitSound;
 
             if (hitSounds != null && hitSounds.Length > 0)
             {
-                // On tire un index au hasard entre 0 et la taille du tableau (exclu)
                 int randomIndex = Random.Range(0, hitSounds.Length);
                 AudioClip chosenSound = hitSounds[randomIndex];
 
                 if (chosenSound != null)
                 {
-                    source.Stop(); // On coupe le son en cours (pas, idle...)
-                    source.loop = false; // Pas de boucle pour un cri de douleur
-
-                    // On joue le son sélectionné aléatoirement
+                    source.Stop();
+                    source.loop = false;
                     source.PlayOneShot(chosenSound);
                 }
             }
         }
     }
 
-    public override void Update() { }
-    public override void Exit() { }
+    public override void Update()
+    {
+        timer += Time.deltaTime;
+
+        // Si l'ennemi meurt pendant qu'il encaisse le coup (ex: dégât de poison ou autre source)
+        if (enemy.Health.CurrentHealth <= 0)
+        {
+            enemy.StateMachine.ChangeState(EnemyStateType.Death);
+            return;
+        }
+
+        if (timer >= hitDuration && enemy.Health.CurrentHealth > 0)
+        {
+            enemy.StateMachine.ChangeState(EnemyStateType.Follow);
+        }
+    }
+
+    public override void Exit()
+    {
+        enemy.Agent.isStopped = false;
+    }
 }

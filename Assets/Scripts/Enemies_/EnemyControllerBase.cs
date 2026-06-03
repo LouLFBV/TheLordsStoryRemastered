@@ -307,7 +307,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         if (Health != null)
         {
             Health.OnDeath += HandleDeath;
-            Health.OnHit += GoToFollowState;
+            Health.OnHit += GoToHitState;
         }
     }
 
@@ -316,7 +316,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         if (Health != null)
         {
             Health.OnDeath -= HandleDeath;
-            Health.OnHit -= GoToFollowState;
+            Health.OnHit -= GoToHitState;
         }
     }
 
@@ -344,10 +344,16 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         }
     }
 
-    private void GoToFollowState()
+    private void GoToHitState()
     {
-        if (StateMachine.CurrentState == FollowState) return;
-        StateMachine.ChangeState(EnemyStateType.Follow);
+        if (Health.CurrentHealth <= 0 ||
+            StateMachine.CurrentState == DeathState ||
+            StateMachine.CurrentState == StunnedState)
+        {
+            return;
+        }
+
+        StateMachine.ChangeState(EnemyStateType.Hit);
     }
 
     public void SetLockOnIndicator(bool isLocked)
