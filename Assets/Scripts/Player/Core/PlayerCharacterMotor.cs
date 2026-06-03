@@ -36,7 +36,7 @@ public class PlayerCharacterMotor : MonoBehaviour
     }
     public void RotateTowardsInput(Vector2 input)
     {
-        if (input == Vector2.zero)
+        if (input == Vector2.zero || player.interactSystem.isBusy)
             return;
 
         Vector3 forward = cameraTransform.forward;
@@ -63,37 +63,37 @@ public class PlayerCharacterMotor : MonoBehaviour
             )
         );
     }
-    public void Rotate(Vector2 input)
-    {
-        // CAS 1 : On est verrouillé sur un ennemi
-        if (player.LockOn != null && player.LockOn.IsLocked)
-        {
-            // On calcule la direction vers la cible
-            Vector3 targetPos = player.LockOn.CurrentTarget.position;
-            Vector3 dir = (targetPos - transform.position).normalized;
-            dir.y = 0; // On reste bien vertical
+    //public void Rotate(Vector2 input)
+    //{
+    //    // CAS 1 : On est verrouillé sur un ennemi
+    //    if (player.LockOn != null && player.LockOn.IsLocked)
+    //    {
+    //        // On calcule la direction vers la cible
+    //        Vector3 targetPos = player.LockOn.CurrentTarget.position;
+    //        Vector3 dir = (targetPos - transform.position).normalized;
+    //        dir.y = 0; // On reste bien vertical
 
-            if (dir != Vector3.zero)
-            {
-                Quaternion targetRot = Quaternion.LookRotation(dir);
+    //        if (dir != Vector3.zero)
+    //        {
+    //            Quaternion targetRot = Quaternion.LookRotation(dir);
 
-                // On utilise MoveRotation pour que ce soit fluide et physique
-                player.Rigidbody.MoveRotation(
-                    Quaternion.Slerp(
-                        player.Rigidbody.rotation,
-                        targetRot,
-                        rotationSpeed * Time.fixedDeltaTime
-                    )
-                );
-            }
-        }
-        // CAS 2 : On n'est pas verrouillé, on tourne vers l'input
-        else
-        {
-            // On appelle simplement ta méthode existante !
-            RotateTowardsInput(input);
-        }
-    }
+    //            // On utilise MoveRotation pour que ce soit fluide et physique
+    //            player.Rigidbody.MoveRotation(
+    //                Quaternion.Slerp(
+    //                    player.Rigidbody.rotation,
+    //                    targetRot,
+    //                    rotationSpeed * Time.fixedDeltaTime
+    //                )
+    //            );
+    //        }
+    //    }
+    //    // CAS 2 : On n'est pas verrouillé, on tourne vers l'input
+    //    else
+    //    {
+    //        // On appelle simplement ta méthode existante !
+    //        RotateTowardsInput(input);
+    //    }
+    //}
 
     public bool IsGrounded()
     {

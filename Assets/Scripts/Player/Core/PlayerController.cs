@@ -63,7 +63,7 @@ public class PlayerController : MonoBehaviour, ICombatant
     public EquipmentLibraryItem PendingLibraryItem { get; private set; }
 
     [Header("Others")]
-    [SerializeField] private InteractSystem interactSystem;
+    [HideInInspector] public InteractSystem interactSystem;
     public UIPanelType RequestedPanelType { get; set; }
     public event Action<bool> OnOpenUI;
     private UIPanelType? _previousPanelType = null;

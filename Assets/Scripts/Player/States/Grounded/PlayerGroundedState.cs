@@ -16,7 +16,7 @@ public class PlayerGroundedState : PlayerState
 
     public override void Update()
     {
-        if (player.IsDead) return;
+        if (player.IsDead || player.interactSystem.isBusy) return;
 
         // 1. PRIORITÉ : La Chute
         if (!player.Motor.IsGrounded())
