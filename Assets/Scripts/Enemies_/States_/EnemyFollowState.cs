@@ -18,15 +18,16 @@ public class EnemyFollowState : EnemyState
 
     public override void Update()
     {
-
+        // 1. SÉCURITÉ ABSOLUE : Si le boss crie, on fige TOUT et on stoppe immédiatement l'état de poursuite
         if (enemy.isScreaming)
         {
             agent.isStopped = true;
             agent.velocity = Vector3.zero;
-            enemy.Animator.SetFloat("Speed", 0f); // Force l'anim de course à s'arrêter
+            enemy.Animator.SetFloat("Speed", 0f);
             return;
         }
 
+        // 2. Vérification de la cible
         if (enemy.target == null)
         {
             enemy.StateMachine.ChangeState(EnemyStateType.Idle);
@@ -35,22 +36,19 @@ public class EnemyFollowState : EnemyState
 
         float distance = Vector3.Distance(enemy.transform.position, enemy.target.position);
 
-        // On récupère le modificateur depuis le DamageReceiver de l'ennemi
+        // 3. Gestion de la vitesse et des effets de gel/slow
         float currentSlow = enemy.DmgReceiver.SpeedModifier;
-
-        // On applique la vitesse de course modulée par le gel
         agent.speed = enemy.enemyData.chaseSpeed * currentSlow;
-
-        // On adapte aussi la vitesse de l'animation pour éviter l'effet de glissade au sol !
         enemy.Animator.speed = currentSlow;
 
-        // on considère qu'il a engagé le combat proprement.
+        // 4. Gestion de la première Aggro
         if (!enemy.HasAggroedOnce && distance <= enemy.enemyData.visionRange)
         {
             enemy.HasAggroedOnce = true;
             Debug.Log($"<color=orange>[AGGRO]</color> {enemy.gameObject.name} a atteint le joueur. Mode normal activé.");
         }
 
+        // 5. PRIORITÉ 1 EN COMBAT : Est-ce qu'on peut attaquer ?
         AttackSO ready = enemy.PeekBestAttack();
         if (ready != null)
         {
@@ -58,9 +56,20 @@ public class EnemyFollowState : EnemyState
             return;
         }
 
+        // 6. PRIORITÉ 2 EN COMBAT : Est-ce qu'on doit bloquer ? (Seulement si pas d'attaque prête !)
+        if (enemy.AIManager.CanBlock && Time.time >= enemy.nextBlockTime)
+        {
+            if (distance <= enemy.enemyData.distToStartBlock && Random.value < 0.008f)
+            {
+                enemy.StateMachine.ChangeState(EnemyStateType.Block);
+                return;
+            }
+        }
+
+        // 7. Distances de confort et d'outils de combat (Orbit)
         if (distance <= agent.stoppingDistance + 0.5f && ready == null)
         {
-            // Debug.LogWarning("[FOLLOW] Au contact mais aucune attaque possible...");
+            // Au contact mais aucune attaque possible (en cooldown...)
         }
 
         if (enemy.AIManager.HasPermission(EnemyStateType.Orbit) && distance <= enemy.AIManager.OrbitDistance + 2f)
@@ -69,16 +78,17 @@ public class EnemyFollowState : EnemyState
             return;
         }
 
+        // 8. Perte de l'aggro si le joueur s'enfuit trop loin
         if (enemy.HasAggroedOnce && distance > enemy.enemyData.visionRange * 1.5f)
         {
             enemy.StateMachine.ChangeState(EnemyStateType.Idle);
             return;
         }
 
-        // Si on n'est pas en orbite, on fonce !
+        // 9. DÉPLACEMENT : Si aucune action de combat n'est requise, on avance !
         agent.SetDestination(enemy.target.position);
 
-        // Animation
+        // Animation de course dynamique
         float speedParameter = agent.velocity.magnitude / enemy.enemyData.chaseSpeed;
         enemy.Animator.SetFloat("Speed", speedParameter, 0.1f, Time.deltaTime);
     }

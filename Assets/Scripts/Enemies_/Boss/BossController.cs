@@ -17,8 +17,6 @@ public class BossController : EnemyControllerBase
     public BossAttackState AttackState { get; private set; }
     public BossScreamState ScreamState { get; private set; }
 
-    [Header("Core Boss")]
-    [HideInInspector] public ArmorSystem armor;
 
 
     [Header("VFX / Attack GameObjects")]
@@ -35,7 +33,6 @@ public class BossController : EnemyControllerBase
         StateMachine.AddState(EnemyStateType.Scream, ScreamState); 
         baseMusicVolume = bossAudioSource.volume;
 
-        armor = GetComponent<ArmorSystem>();
     }
 
     protected override void Start()

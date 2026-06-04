@@ -14,6 +14,7 @@ public class AIManager : MonoBehaviour
 
     // Système de permission simple
     public bool CanOrbit => enemyData != null && enemyData.canOrbit;
+    public bool CanBlock => enemyData != null && enemyData.canBlock;
     public bool CanGetHit => enemyData != null && enemyData.canGetHit;
     public bool HasGetHitAnim => enemyData != null && enemyData.hasGetHitAnim;
     public bool HasStunnedAnim => enemyData != null && enemyData.hasStunnedAnim;

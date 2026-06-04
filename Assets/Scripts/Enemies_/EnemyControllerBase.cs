@@ -44,6 +44,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     public EnemyHitState HitState { get; private set; }
     public EnemyStunnedState StunnedState { get; private set; }
     public EnemyDeathState DeathState { get; private set; }
+    public EnemyBlockState BlockState { get; private set; }
 
     [Header("Patrol Settings")]
     public Transform patrolCenterPoint;
@@ -55,6 +56,9 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     private Dictionary<AttackSO, float> _attackCooldownTimers = new Dictionary<AttackSO, float>();
     public bool isScreaming = false;
 
+    [Header("Block State")]
+    [HideInInspector] public ArmorSystem armor;
+    public float nextBlockTime { get; set; } // Traque le moment où le prochain blocage est autorisé
     protected override void Awake()
     {
         // 1. Initialisation des composants physiques
@@ -69,6 +73,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         DmgReceiver = GetComponent<DamageReceiver>();
         AIManager = GetComponent<AIManager>();
         AIManager.Initialize(this); // On passe le controller à l'AI Manager pour qu'il puisse interagir avec les états et les systèmes de l'ennemi
+        armor = GetComponent<ArmorSystem>();
 
         // 3. Création des instances d'états
         // On passera 'this' (le controller) à chaque état
@@ -79,6 +84,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         HitState = new EnemyHitState(this);
         StunnedState = new EnemyStunnedState(this);
         DeathState = new EnemyDeathState(this);
+        BlockState = new EnemyBlockState(this);
 
         // 4. Setup de la State Machine
         var states = new Dictionary<EnemyStateType, EnemyState>
@@ -89,7 +95,8 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
             { EnemyStateType.Patrol, PatrolState },
             { EnemyStateType.Hit, HitState },
             { EnemyStateType.Stunned, StunnedState },
-            { EnemyStateType.Death, DeathState }
+            { EnemyStateType.Death, DeathState },
+            { EnemyStateType.Block, BlockState }
         };
 
         StateMachine = new EnemyStateMachine(states);
@@ -241,6 +248,16 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     // On fait le pont entre les events de l'Animator et le CombatSystem
     public void AE_HitboxOpen() => Combat.AE_HitboxOpen();
     public void AE_HitboxClose() => Combat.AE_HitboxClose();
+
+    // --- Animation Events pour la Défense ---
+    public void AE_ExitBlockState()
+    {
+        // Si l'ennemi est bien en train de bloquer, on force la sortie
+        if (StateMachine.CurrentState == BlockState)
+        {
+            BlockState.NotifyAnimationFinished();
+        }
+    }
     // --- Animation Events (Même logique que le joueur) ---
 
     public void EquipWeapon(AttackSO weapon)

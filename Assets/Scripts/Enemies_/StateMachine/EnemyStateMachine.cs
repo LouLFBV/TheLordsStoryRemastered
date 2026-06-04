@@ -22,5 +22,6 @@ public enum EnemyStateType
     Hit,
     Stunned,
     Death,
-    Scream
+    Scream,
+    Block
 }

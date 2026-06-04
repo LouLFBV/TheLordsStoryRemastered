@@ -13,6 +13,11 @@ public class NewEnemySO : ScriptableObject
     public bool hasGetHitAnim = false;
     public bool hasStunnedAnim = false;
 
+    [Header("Combat Settings")]
+    public float blockDuration = 2f; 
+    public float blockCooldown = 5f; 
+    public float distToStartBlock = 3.5f; 
+
     [Header("LockOn Settings")]
     public float lockOnHeightOffset = 0.5f;
     public float maxRangeLockOn = 20f;
@@ -35,11 +40,11 @@ public class NewEnemySO : ScriptableObject
 
     [Header("Audio Settings")]
     public AudioClip idleSound;
-    public AudioClip walkSound;     // Joué quand il passe en Follow State
-    public AudioClip runSound;     // Joué quand il passe en Follow State
-    public AudioClip orbitSound;     // Joué quand il passe en Follow State
-    public AudioClip[] hitSound;     // Joué quand il encaisse un coup
-    public AudioClip deathSound;   // Joué à sa mort
+    public AudioClip walkSound;    
+    public AudioClip runSound;     
+    public AudioClip orbitSound;     
+    public AudioClip[] hitSound;     
+    public AudioClip deathSound;   
 }
 
 
