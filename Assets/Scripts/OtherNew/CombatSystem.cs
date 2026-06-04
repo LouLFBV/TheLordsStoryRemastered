@@ -57,15 +57,15 @@ public class CombatSystem : MonoBehaviour
 
     public void AE_HitboxOpen()
     {
-        Debug.Log("Fenêtre de dégâts ouverte !");
-        Debug.Log($"Owner: {_owner}, AttackData: {_currentAttackData}, WeaponDetector: {_weaponDetector}");
+        //Debug.Log("Fenêtre de dégâts ouverte !");
+        //Debug.Log($"Owner: {_owner}, AttackData: {_currentAttackData}, WeaponDetector: {_weaponDetector}");
         if (_weaponDetector != null && _currentAttackData != null && _owner != null)
         {
-            Debug.Log($"Calcul des dégâts pour {_owner} avec multiplicateur {_currentAttackData.damageMultiplier}");
             // On demande les dégâts de base à l'interface, peu importe qui c'est
             float weaponDamage = _owner.GetBaseWeaponDamage();
+            Debug.Log($"<color=orange>Calcul des dégâts pour {_owner} avec multiplicateur {_currentAttackData.damageMultiplier} et weaponDamage = {weaponDamage}</color>");
             float finalDamage = weaponDamage * _currentAttackData.damageMultiplier;
-
+            Debug.Log($"Dégâts finaux calculés : {finalDamage}");
             _weaponDetector.SetDamageFrame(finalDamage);
             _weaponDetector.ToggleCollider(true);
         }

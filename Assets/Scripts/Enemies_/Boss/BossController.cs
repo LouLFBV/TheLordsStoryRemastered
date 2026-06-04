@@ -15,6 +15,10 @@ public class BossController : EnemyControllerBase
 
     [Header("States")]
     public BossAttackState AttackState { get; private set; }
+    public BossScreamState ScreamState { get; private set; }
+
+    [Header("Core Boss")]
+    [HideInInspector] public ArmorSystem armor;
 
 
     [Header("VFX / Attack GameObjects")]
@@ -23,12 +27,15 @@ public class BossController : EnemyControllerBase
     protected override void Awake()
     {
         base.Awake();
-        // Dans BossController.cs (au moment d'écraser ou de setup le dictionnaire de la State Machine) :
-        AttackState = new BossAttackState(this); // Si ta variable AttackState est protected/public dans la base
 
-        // Et dans ton dictionnaire d'états du Boss, assure-toi d'associer :
-        StateMachine.AddState(EnemyStateType.Attack, new BossAttackState(this));
+        AttackState = new BossAttackState(this); 
+        ScreamState = new BossScreamState(this);
+
+        StateMachine.AddState(EnemyStateType.Attack, AttackState);
+        StateMachine.AddState(EnemyStateType.Scream, ScreamState); 
         baseMusicVolume = bossAudioSource.volume;
+
+        armor = GetComponent<ArmorSystem>();
     }
 
     protected override void Start()
@@ -68,6 +75,7 @@ public class BossController : EnemyControllerBase
         }
         // 1. Animation & Son de cri
         Animator.SetTrigger(newPhase.screamAnimationTrigger);
+        StateMachine.ChangeState(EnemyStateType.Scream);
 
         // 2. Musique avec transition fluide
         if (newPhase.phaseMusic != null)
@@ -130,6 +138,19 @@ public class BossController : EnemyControllerBase
         }
     }
 
+    public void PlayScreamVFXAndAudio()
+    {
+        // On récupère les données de la phase actuelle
+        BossPhase currentPhase = phases[currentPhaseIndex];
+
+        if (currentPhase.phaseScreamSound != null && bossAudioSource != null)
+        {
+            // On utilise PlayOneShot pour ne pas couper la musique de fond qui s'atténue (Fade)
+            bossAudioSource.PlayOneShot(currentPhase.phaseScreamSound);
+            Debug.Log($"<color=yellow>[AUDIO BOSS]</color> Lecture du cri : {currentPhase.phaseScreamSound.name}");
+        }
+    }
+
     // Optionnel : Si tu veux que le boss devienne plus rapide à chaque phase
     private void BoostBossStats(BossPhase phase)
     {
@@ -184,6 +205,11 @@ public class BossController : EnemyControllerBase
 
     public void AE_OnAttackFinished() => (StateMachine.CurrentState as BossAttackState)?.OnAnimationFinished();
 
+    public void AE_OnScreamingFinished()
+    {
+        StateMachine.ChangeState(EnemyStateType.Follow);
+    }
+
     #region Audio Fading
     private IEnumerator FadeMusicSequence(AudioClip newClip)
     {
@@ -213,6 +239,7 @@ public class BossPhase
     public string phaseName;
     [Range(0, 1)] public float healthThreshold; // Ex: 0.5f pour 50% PV
     public AudioClip phaseMusic;
+    public AudioClip phaseScreamSound;
     public float damageBoost;
     public List<AttackSO> newAttacks; // Attaques ajoutées à cette phase
     public string screamAnimationTrigger = "Scream";

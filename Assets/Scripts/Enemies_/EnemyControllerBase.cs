@@ -53,6 +53,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     [SerializeField] private GameObject itemToDrop;
     private WorldObjectID _worldID;
     private Dictionary<AttackSO, float> _attackCooldownTimers = new Dictionary<AttackSO, float>();
+    public bool isScreaming = false;
 
     protected override void Awake()
     {
@@ -348,7 +349,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     {
         if (Health.CurrentHealth <= 0 ||
             StateMachine.CurrentState == DeathState ||
-            StateMachine.CurrentState == StunnedState)
+            StateMachine.CurrentState == StunnedState || isScreaming)
         {
             return;
         }

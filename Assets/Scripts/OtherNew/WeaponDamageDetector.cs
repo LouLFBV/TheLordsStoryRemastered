@@ -1,4 +1,4 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 using System.Collections.Generic;
 
 public class WeaponDamageDetector : MonoBehaviour
@@ -17,22 +17,44 @@ public class WeaponDamageDetector : MonoBehaviour
 
     private void Awake()
     {
-        myCollider = GetComponent<Collider>();
+        FetchCollider();
     }
 
+    //public void SetDamageFrame(float amount) => damageForThisFrame = amount;
     public void SetDamageFrame(float amount) => damageForThisFrame = amount;
+
+
+    private void FetchCollider()
+    {
+        if (myCollider == null)
+        {
+            myCollider = GetComponent<Collider>();
+        }
+    }
 
     public void ToggleCollider(bool state)
     {
+        FetchCollider(); // S√©curit√© si l'Awake ne s'est pas jou√©
         if (myCollider != null) myCollider.enabled = state;
         if (!state) alreadyHit.Clear();
     }
 
-    public void DisableDamage() => myCollider.enabled = false;
+    public void DisableDamage()
+    {
+        FetchCollider(); // S√©curit√© si l'Awake ne s'est pas jou√©
+        if (myCollider != null)
+        {
+            myCollider.enabled = false;
+        }
+        else
+        {
+            Debug.LogWarning($"[WeaponDamageDetector] Impossible de d√©sactiver le collider sur {gameObject.name} car aucun Collider n'est pr√©sent !", gameObject);
+        }
+    }
 
     private void OnTriggerEnter(Collider other)
     {
-        // …vite de se frapper soi-mÍme ou de frapper 2x la mÍme cible
+        // √âvite de se frapper soi-m√™me ou de frapper 2x la m√™me cible
         if (other.gameObject == transform.root.gameObject || alreadyHit.Contains(other.gameObject))
             return;
 
@@ -45,25 +67,25 @@ public class WeaponDamageDetector : MonoBehaviour
 
     private void ExecuteHitLogic(Collider other, IDamageable target)
     {
-        // 1. DÈtermination des dÈg‚ts de cette frame
+        // 1. D√©termination des d√©g√¢ts de cette frame
         float dmg = hasDamageCollider ? colliderDamage : damageForThisFrame;
 
-        // 2. CrÈation du conteneur d'informations dynamique du coup
-        // On passe 'transform.root.gameObject' pour dÈfinir l'attaquant (le joueur ou le monstre global)
+        // 2. Cr√©ation du conteneur d'informations dynamique du coup
+        // On passe 'transform.root.gameObject' pour d√©finir l'attaquant (le joueur ou le monstre global)
         DamageInfo info = new DamageInfo(dmg, itemData.damageType, itemData.effet, itemData.poiseDamage, transform.root.gameObject);
 
-        // 3. Envoi du paquet ‡ la cible
+        // 3. Envoi du paquet √† la cible
         target.TakeDamage(info);
 
         // 4. Camera Shake (Game Feel)
         CameraEvents.OnCameraShake?.Invoke(itemData.cameraShakeIntensity, itemData.cameraShakeDuration);
 
-        // 5. Logique physique spÈcifique aux FlËches (Arrow)
+        // 5. Logique physique sp√©cifique aux Fl√®ches (Arrow)
         if (itemData.equipmentType == EquipmentType.Arrow)
         {
             HandleArrowCollision(other);
         }
-        else if (bloodPrefab != null) // Sang pour le corps ‡ corps
+        else if (bloodPrefab != null) // Sang pour le corps √† corps
         {
             Instantiate(bloodPrefab, other.ClosestPoint(transform.position), Quaternion.identity);
         }

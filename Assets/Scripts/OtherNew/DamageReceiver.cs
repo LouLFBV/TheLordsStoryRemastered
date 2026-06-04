@@ -12,6 +12,8 @@ public class DamageReceiver : MonoBehaviour, IDamageable
     // Propriété publique pour que l'IA connaisse son ralentissement actuel
     public float SpeedModifier { get; private set; } = 1f;
 
+    [SerializeField] private GameObject burnGameObject; 
+
     private void Awake()
     {
         _health = GetComponent<HealthSystem>();
@@ -89,11 +91,13 @@ public class DamageReceiver : MonoBehaviour, IDamageable
 
     private IEnumerator FeuDotCoroutine(float baseDamage)
     {
+        if (burnGameObject != null) burnGameObject.SetActive(true);
         for (int i = 0; i < 5; i++)
         {
             yield return new WaitForSeconds(1f);
             if (_health != null) _health.TakeDamage(baseDamage * 0.2f);
         }
+        if (burnGameObject != null) burnGameObject.SetActive(false);
     }
 
     private void TriggerHitReaction()

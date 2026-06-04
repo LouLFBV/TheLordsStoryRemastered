@@ -21,5 +21,6 @@ public enum EnemyStateType
     Attack,
     Hit,
     Stunned,
-    Death
+    Death,
+    Scream
 }

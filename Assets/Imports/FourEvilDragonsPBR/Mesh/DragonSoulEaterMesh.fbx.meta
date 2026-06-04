@@ -223,5 +223,5 @@ AssetOrigin:
   productId: 78923
   packageName: Four Evil Dragons Pack PBR
   packageVersion: 1.3
-  assetPath: Assets/FourEvilDragonsPBR/Mesh/DragonSoulEaterMesh.fbx
+  assetPath: Assets/Imports/FourEvilDragonsPBR/Mesh/DragonSoulEaterMesh.fbx
   uploadId: 422264

@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class EnemyFollowState : EnemyState
@@ -17,6 +18,15 @@ public class EnemyFollowState : EnemyState
 
     public override void Update()
     {
+
+        if (enemy.isScreaming)
+        {
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+            enemy.Animator.SetFloat("Speed", 0f); // Force l'anim de course à s'arrêter
+            return;
+        }
+
         if (enemy.target == null)
         {
             enemy.StateMachine.ChangeState(EnemyStateType.Idle);
