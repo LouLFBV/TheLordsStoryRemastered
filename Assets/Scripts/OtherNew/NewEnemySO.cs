@@ -16,7 +16,7 @@ public class NewEnemySO : ScriptableObject
     [Header("Combat Settings")]
     public float blockDuration = 2f; 
     public float blockCooldown = 5f; 
-    public float distToStartBlock = 3.5f; 
+    public float distToStartBlock = 3.5f;
 
     [Header("LockOn Settings")]
     public float lockOnHeightOffset = 0.5f;

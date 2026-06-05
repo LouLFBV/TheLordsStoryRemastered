@@ -27,7 +27,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
 
     [Header("UI & Feedback")]
     [SerializeField] private GameObject lockOnIndicator;
-    [SerializeField] private EnemyHealthUI healthUI;
+    public EnemyHealthUI healthUI;
 
     [Header("Systems (Shared with Player)")]
     public HealthSystem Health { get; private set; }
@@ -366,7 +366,8 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     {
         if (Health.CurrentHealth <= 0 ||
             StateMachine.CurrentState == DeathState ||
-            StateMachine.CurrentState == StunnedState || isScreaming)
+            StateMachine.CurrentState == StunnedState || isScreaming ||
+            StateMachine.CurrentState == BlockState )
         {
             return;
         }

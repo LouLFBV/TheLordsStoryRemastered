@@ -13,6 +13,13 @@ public class AttackSO : ScriptableObject
     [Header("Combo Logic")]
     public AttackSO nextAttack;       // L'attaque suivante si on reclique
 
+
+    [Header("Ranged/Projectile Settings (Optional)")]
+    public GameObject projectilePrefab;
+    public float projectileSpeed = 10f;
+    public FirePointType firePointType = FirePointType.Forward; 
+
+
     [Header("AI Conditions")]
     public float minDistance;
     public float maxDistance;
@@ -37,4 +44,11 @@ public class AttackSO : ScriptableObject
     public AudioClip attackSound;
 
     //[HideInInspector] public float nextAttackTime; 
+}
+
+
+public enum FirePointType
+{
+    Forward,      
+    Down
 }

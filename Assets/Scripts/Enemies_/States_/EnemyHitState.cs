@@ -8,7 +8,6 @@ public class EnemyHitState : EnemyState
 
     public override void Enter()
     {
-        // 🟢 IMPORTANT : On remet le timer à 0 à chaque fois qu'on entre dans l'état !
         timer = 0f;
 
         // 1. On arrête les mouvements
@@ -16,6 +15,7 @@ public class EnemyHitState : EnemyState
 
         // 2. On joue l'animation de hit
         enemy.Animator.SetTrigger("Hit");
+        Debug.Log($"<color=red>[ENEMY HIT]</color> {enemy.gameObject.name} est dans l'état Hit. Animation déclenchée.");
 
         // 3. Feedback visuel et sonore
         Debug.Log($"{enemy.gameObject.name} a été touché !");

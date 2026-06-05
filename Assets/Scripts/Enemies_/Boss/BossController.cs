@@ -19,6 +19,12 @@ public class BossController : EnemyControllerBase
 
 
 
+
+    [Header("Ranged Attack Transforms")]
+    [SerializeField] private Transform forwardFirePoint;
+    [SerializeField] private Transform downFirePoint;
+
+
     [Header("VFX / Attack GameObjects")]
     private GameObject _currentActiveVisual;
 
@@ -39,6 +45,9 @@ public class BossController : EnemyControllerBase
     {
         base.Start();
         PlayPhaseMusic(0);
+
+        if (UIManagerSystem.Instance != null)
+            UIManagerSystem.Instance.hudElements.Add(healthUI.gameObject);
     }
 
     protected override void Update()
@@ -70,7 +79,6 @@ public class BossController : EnemyControllerBase
             newPhase.gameObjectEvent.SetActive(true);
             Debug.Log($"GameObject event triggered for phase: {newPhase.phaseName}");
         }
-        // 1. Animation & Son de cri
         Animator.SetTrigger(newPhase.screamAnimationTrigger);
         StateMachine.ChangeState(EnemyStateType.Scream);
 
@@ -159,6 +167,18 @@ public class BossController : EnemyControllerBase
         Debug.Log($"Stats boosted for {phase.phaseName}: Speed is now {Agent.speed}");
     }
 
+    // Fonction pour récupérer le bon transform selon le choix du SO
+    public Transform GetFirePoint(FirePointType type, AttackSO currentAttack)
+    {
+        switch (type)
+        {
+            case FirePointType.Forward:
+                return forwardFirePoint;
+            case FirePointType.Down:
+                return downFirePoint;
+        }
+        return transform; // Sécurité si rien n'est trouvé
+    }
 
     // Call cette fonction au début du souffle/vfx dans l'animator
     public void AE_ActivateAttackVisual()
@@ -187,6 +207,33 @@ public class BossController : EnemyControllerBase
             _currentActiveVisual.SetActive(false);
             Debug.Log($"[Boss VFX] Désactivé : {_currentActiveVisual.name}");
             _currentActiveVisual = null;
+        }
+    }
+
+
+    // C'est cette fonction que tu vas appeler dans ton Animator à la place de l'ancienne !
+    public void AE_SpawnFireBall()
+    {
+        var attackState = StateMachine.CurrentState as BossAttackState;
+        if (attackState == null || attackState.CurrentAttack == null) return;
+
+        AttackSO currentAttack = attackState.CurrentAttack;
+
+        Transform spawnPoint = GetFirePoint(currentAttack.firePointType, currentAttack);
+
+        GameObject fireBall = Instantiate(currentAttack.projectilePrefab, spawnPoint.position, spawnPoint.rotation);
+
+        if (fireBall != null)
+        {
+
+            Rigidbody rb = fireBall.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.useGravity = false;
+                rb.linearVelocity = spawnPoint.forward * currentAttack.projectileSpeed;
+            }
+
+            Destroy(fireBall, 5f);
         }
     }
 
