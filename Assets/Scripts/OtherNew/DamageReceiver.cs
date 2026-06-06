@@ -58,7 +58,7 @@ public class DamageReceiver : MonoBehaviour, IDamageable
             case Effet.Foudre:
                 if (_enemy != null && (_enemy.isScreaming || _enemy.StateMachine.CurrentState == _enemy.BlockState))
                     break;
-                TriggerStun(1.5f);
+                TriggerStun(damageInfo.stunDuration);
                 break;
         }
     }
@@ -104,9 +104,7 @@ public class DamageReceiver : MonoBehaviour, IDamageable
         {
             if (_enemy.StateMachine.CurrentState != _enemy.StunnedState && _enemy.AIManager.CanGetHit)
             {
-                // On simule un appel propre à la fonction de sécurité que tu as modifiée dans EnemyControllerBase
-                // Cela va vérifier isScreaming, BlockState, etc.
-                //_enemy.SendMessage("GoToHitState", SendMessageOptions.DontRequireReceiver);
+                _enemy.GoToHitState();
 
                 _enemy.target = PlayerController.Instance.transform;
             }

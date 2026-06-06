@@ -15,7 +15,7 @@ public class EnemyStunnedState : EnemyState
         _timer = 0f;
         agent.isStopped = true;
         agent.velocity = Vector3.zero;
-
+        enemy.Poise.ResetPoise(); 
         if (enemy.AIManager.HasStunnedAnim)
             enemy.Animator.SetTrigger("Stunned"); // Assure-toi d'avoir un trigger "Stunned" dans ton Animator
         else

@@ -15,6 +15,10 @@ public class WeaponDamageDetector : MonoBehaviour
     [SerializeField] private bool hasDamageCollider = false;
     [SerializeField] private float colliderDamage = 10f;
 
+    [Header("Pour éviter que les ennemis s'attaquent tous seuls")]
+    [SerializeField] private LayerMask damageLayers;
+    [SerializeField] private bool ignoreSelfDamage = true;
+
     private void Awake()
     {
         FetchCollider();
@@ -60,6 +64,11 @@ public class WeaponDamageDetector : MonoBehaviour
 
         if (other.TryGetComponent<IDamageable>(out var target))
         {
+            if (ignoreSelfDamage && (damageLayers.value & (1 << other.gameObject.layer)) != 0)
+            {
+                Debug.Log($"[Dégâts Ignorés] {transform.root.name} a touché un objet du même groupe : {other.gameObject.name}");
+                return;
+            }
             alreadyHit.Add(other.gameObject);
             ExecuteHitLogic(other, target);
         }
@@ -72,7 +81,7 @@ public class WeaponDamageDetector : MonoBehaviour
 
         // 2. Création du conteneur d'informations dynamique du coup
         // On passe 'transform.root.gameObject' pour définir l'attaquant (le joueur ou le monstre global)
-        DamageInfo info = new DamageInfo(dmg, itemData.damageType, itemData.effet, itemData.poiseDamage, transform.root.gameObject);
+        DamageInfo info = new DamageInfo(dmg, itemData.damageType, itemData.effet, itemData.poiseDamage, itemData.stunDuration, transform.root.gameObject);
 
         // 3. Envoi du paquet à la cible
         target.TakeDamage(info);

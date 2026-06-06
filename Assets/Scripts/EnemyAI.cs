@@ -154,7 +154,7 @@ public class EnemyAI : EnemyParent
 
         yield return null; // Laisse une frame
 
-        DamageInfo info = new DamageInfo(10f, damageType, 0f, 0f, transform.root.gameObject);
+        DamageInfo info = new DamageInfo(10f, damageType, 0f, 0f,0F, transform.root.gameObject);
         playerStats.DmgReceiver.TakeDamage(info);
         yield return new WaitForSeconds(attackDelay);
         if (agent.enabled)

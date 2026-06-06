@@ -32,6 +32,7 @@ public class ItemData : ScriptableObject
     public HandWeapon handWeaponType;
     public DamageType damageType;
     public Effet effet;
+    public float stunDuration = 1.5f;
 
     [Header("Bow Stats")]
     public float rangeMin;

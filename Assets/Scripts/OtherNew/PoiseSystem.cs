@@ -3,9 +3,9 @@ using UnityEngine;
 public class PoiseSystem : MonoBehaviour
 {
     public bool IsBroken => CurrentPoise <= 0;
-    [SerializeField] private float maxPoise = 50f;
+    [SerializeField] private float maxPoise = 30f;
     [SerializeField] private float poiseRecoveryRate = 10f;
-    [SerializeField] private float poiseResetDelay = 2f;
+    [SerializeField] private float poiseResetDelay = 20f;
 
     public float CurrentPoise { get; private set; }
 
@@ -33,6 +33,7 @@ public class PoiseSystem : MonoBehaviour
 
     public bool ApplyPoiseDamage(float amount)
     {
+        Debug.Log($"Poise avant : {CurrentPoise}, dégâts de poise : {amount}");
         CurrentPoise -= amount;
         resetTimer = poiseResetDelay;
 

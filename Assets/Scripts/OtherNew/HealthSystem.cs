@@ -40,16 +40,12 @@ public class HealthSystem : MonoBehaviour
     }
     public void Heal(float amount)
     {
-        // Si on est déjà full vie, on peut choisir de ne pas consommer l'objet
-        // Mais si on soigne, on lance la logique :
         if (CurrentHealth < MaxHealth)
         {
             if (healEffect != null) healEffect.Play();
 
             CurrentHealth = Mathf.Min(CurrentHealth + amount, MaxHealth);
 
-            // C'est CA qui remplace "UpdateHealthBar" ! 
-            // Ton script d'UI doit être abonné à cet event.
             OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
         }
     }
@@ -58,7 +54,6 @@ public class HealthSystem : MonoBehaviour
     public void SetInvulnerable(bool state)
     {
         _isInvulnerable = state;
-        // Optionnel : Changer la couleur ou ajouter un effet de transparence
     }
 
     public void SetHealth(float newHealth) 

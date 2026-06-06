@@ -325,7 +325,6 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         if (Health != null)
         {
             Health.OnDeath += HandleDeath;
-            Health.OnHit += GoToHitState;
         }
     }
 
@@ -334,7 +333,6 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         if (Health != null)
         {
             Health.OnDeath -= HandleDeath;
-            Health.OnHit -= GoToHitState;
         }
     }
 
@@ -362,7 +360,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         }
     }
 
-    private void GoToHitState()
+    public void GoToHitState()
     {
         if (Health.CurrentHealth <= 0 ||
             StateMachine.CurrentState == DeathState ||
