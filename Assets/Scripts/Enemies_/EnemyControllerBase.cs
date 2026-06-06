@@ -189,7 +189,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
 
     public AttackSO PeekBestAttack()
     {
-        if (target == null) return null;
+        if (target == null || isScreaming) return null;
 
         // Délai global entre deux attaques de n'importe quel type
         if (Time.time < lastAttackExitTime + 1.5f) return null;

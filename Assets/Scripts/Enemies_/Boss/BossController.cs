@@ -77,9 +77,7 @@ public class BossController : EnemyControllerBase
         if (newPhase.gameObjectEvent != null)
         {
             newPhase.gameObjectEvent.SetActive(true);
-            Debug.Log($"GameObject event triggered for phase: {newPhase.phaseName}");
         }
-        Animator.SetTrigger(newPhase.screamAnimationTrigger);
         StateMachine.ChangeState(EnemyStateType.Scream);
 
         // 2. Musique avec transition fluide
@@ -156,7 +154,6 @@ public class BossController : EnemyControllerBase
         }
     }
 
-    // Optionnel : Si tu veux que le boss devienne plus rapide à chaque phase
     private void BoostBossStats(BossPhase phase)
     {
         // Augmente la vitesse du NavMeshAgent (ex: +20%)
@@ -164,7 +161,6 @@ public class BossController : EnemyControllerBase
         Agent.acceleration *= 1.2f;
 
         // On peut aussi booster les dégâts via un multiplicateur global si tu en as un
-        Debug.Log($"Stats boosted for {phase.phaseName}: Speed is now {Agent.speed}");
     }
 
     // Fonction pour récupérer le bon transform selon le choix du SO
@@ -247,7 +243,18 @@ public class BossController : EnemyControllerBase
         }
     }
 
-    public void AE_OnAttackFinished() => (StateMachine.CurrentState as BossAttackState)?.OnAnimationFinished();
+    public void AE_OnAttackFinished()
+    {
+        if (StateMachine.CurrentState is BossAttackState attackState)
+        {
+            attackState.OnAnimationFinished();
+            Debug.Log("[Boss] AttackFinished traité légitimement.");
+        }
+        else
+        {
+            Debug.LogWarning($"[Boss] AttackFinished ignoré car le boss est dans l'état : {StateMachine.CurrentState.GetType().Name}");
+        }
+    }
 
     public void AE_OnScreamingFinished()
     {
@@ -280,13 +287,11 @@ public class BossController : EnemyControllerBase
 [System.Serializable]
 public class BossPhase
 {
-    public string phaseName;
     [Range(0, 1)] public float healthThreshold; // Ex: 0.5f pour 50% PV
     public AudioClip phaseMusic;
     public AudioClip phaseScreamSound;
     public float damageBoost;
-    public List<AttackSO> newAttacks; // Attaques ajoutées à cette phase
-    public string screamAnimationTrigger = "Scream";
+    public List<AttackSO> newAttacks; // Attaques ajoutées à cette phases
     public GameObject gameObjectEvent;
 }
 

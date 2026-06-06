@@ -18,8 +18,11 @@ public class BossScreamState : EnemyState
     {
         Debug.Log($"<color=red>[BOSS SCREAM]</color> Enter State.");
         _boss.isScreaming = true;
-
         _boss.Animator.SetBool("IsScreaming", true);
+
+        _boss.Animator.ResetTrigger("Hit");
+
+        _boss.ForceDisableActiveVisual();
 
         // Sauvegarde des stats d'armure d'origine
         _armorClassiqueDefault = _boss.armor.armorClassique;
@@ -27,7 +30,7 @@ public class BossScreamState : EnemyState
         _armorContendantDefault = _boss.armor.armorContendant;
         _armorPercantDefault = _boss.armor.armorPercant;
 
-        // On booste l'armure à un niveau divin
+        // Boost d'armure
         _boss.armor.armorClassique = 9999f;
         _boss.armor.armorTranchant = 9999f;
         _boss.armor.armorContendant = 9999f;
@@ -38,11 +41,10 @@ public class BossScreamState : EnemyState
         agent.velocity = Vector3.zero;
         _boss.Animator.SetFloat("Speed", 0f);
 
-        // Lancement des feedbacks sonores et visuels
         _boss.PlayScreamVFXAndAudio();
     }
 
-    
+
 
     public override void Update()
     {
