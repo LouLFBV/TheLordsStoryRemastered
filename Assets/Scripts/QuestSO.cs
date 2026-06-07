@@ -8,6 +8,7 @@ public class QuestSO : ScriptableObject
     [Header("Identification")]
     public string questID;
     public string questName;
+    public int questLevel = 1;
     [TextArea] public string description;
     public string objectif;
 

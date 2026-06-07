@@ -1,12 +1,17 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class NewQuestManager : MonoBehaviour
 {
     public static NewQuestManager instance;
 
+    [Header("Quests Lists")]
     public List<QuestInstance> activeQuests = new List<QuestInstance>();
     public List<QuestInstance> finishedQuests = new List<QuestInstance>();
+
+    [Header("Global History (Retroactive tracking)")]
+    public Dictionary<string, int> globalKillHistory = new Dictionary<string, int>();
+    public HashSet<string> globalInteractionHistory = new HashSet<string>();
 
     private void Awake()
     {
@@ -14,29 +19,67 @@ public class NewQuestManager : MonoBehaviour
         else Destroy(gameObject);
     }
 
-    // Ajouter une qu�te
+    // Ajouter une quête
     public void AddQuest(QuestSO questData)
     {
         if (activeQuests.Exists(q => q.data == questData))
             return;
 
-        activeQuests.Add(new QuestInstance
+        QuestInstance newQuest = new QuestInstance
         {
             data = questData,
             status = QuestStatus.InProgress,
-            currentCount = 0
-        });
-        NewQuestLog.instance.CreateQuestButton(activeQuests[activeQuests.Count - 1]);
+            currentCount = 0,
+            interactionDone = false,
+            escortFinished = false
+        };
+
+        if (questData.questType == QuestType.Hunt)
+        {
+            string enemyKey = questData.targetEnemyType.ToString();
+            if (globalKillHistory.ContainsKey(enemyKey))
+            {
+                newQuest.currentCount = globalKillHistory[enemyKey];
+            }
+        }
+        else if (questData.questType == QuestType.Interaction)
+        {
+            if (globalInteractionHistory.Contains(questData.questID))
+            {
+                newQuest.interactionDone = true;
+            }
+        }
+        else if (questData.questType == QuestType.Collect || questData.questType == QuestType.Craft)
+        {
+            if (InventorySystem.instance != null && questData.requiredItem != null)
+            {
+                newQuest.currentCount = InventorySystem.instance.GetItemCount(questData.requiredItem);
+            }
+        }
+
+        activeQuests.Add(newQuest);
+
+        if (NewQuestLog.instance != null)
+            NewQuestLog.instance.CreateQuestButton(newQuest);
     }
 
+    // Marquer une interaction comme faite
     public void MarkInteractionDone(QuestSO quest)
     {
+        if (!globalInteractionHistory.Contains(quest.questID))
+            globalInteractionHistory.Add(quest.questID);
+
         QuestInstance q = activeQuests.Find(x => x.data == quest);
-        if (q == null) return;
+        if (q != null)
+        {
+            q.interactionDone = true;
+        }
 
-        q.interactionDone = true;
+        if (NewQuestLog.instance != null)
+        {
+            NewQuestLog.instance.UpdateHUDToggleState();
+        }
     }
-
 
     public QuestInstance GetQuestInstance(QuestSO questData)
     {
@@ -48,9 +91,18 @@ public class NewQuestManager : MonoBehaviour
         return finishedQuests.Exists(q => q.data == questData);
     }
 
-    // V�rifier progression (ex : ramasser un objet, tuer un ennemi�)
+    // Vérifier progression (ex : ramasser un objet, tuer un ennemi…)
     public void UpdateQuestProgress(string target, int amount = 1, ItemData itemDataTarget = null)
     {
+        if (itemDataTarget == null) // C'est un monstre (Hunt)
+        {
+            if (!globalKillHistory.ContainsKey(target))
+                globalKillHistory[target] = 0;
+
+            globalKillHistory[target] += amount;
+        }
+
+        // On met à jour les quêtes actives en cours
         foreach (var quest in activeQuests)
         {
             if (quest.status != QuestStatus.InProgress) continue;
@@ -69,48 +121,48 @@ public class NewQuestManager : MonoBehaviour
                     break;
             }
         }
+
+        if (NewQuestLog.instance != null)
+        {
+            NewQuestLog.instance.UpdateHUDToggleState();
+        }
     }
 
     public bool CanCompleteQuest(QuestInstance quest)
     {
         if (quest == null || quest.status != QuestStatus.InProgress)
             return false;
-        if (quest.data.questType == QuestType.Interaction)
-        {
-            quest = activeQuests.Find(q => q.data == quest.data);
-        }
+
         return quest.data.IsComplete(quest.currentCount, quest.interactionDone, quest.escortFinished);
     }
 
-
-
-    // Marquer comme termin�e
     public void CompleteQuest(QuestInstance quest)
     {
         quest.status = QuestStatus.Completed;
         QuestInstance toRemove = activeQuests.Find(q => q.data == quest.data);
+
         if (toRemove != null)
             activeQuests.Remove(toRemove);
+
         if (!finishedQuests.Exists(q => q.data == quest.data))
             finishedQuests.Add(quest);
     }
 
-    public void ApplyRewards(QuestInstance questInstane)
+    public void ApplyRewards(QuestInstance questInstance)
     {
-        if (questInstane.data.rewards == null) return;
+        if (questInstance.data.rewards == null) return;
 
-        //PlayerStats.instance.reputationData.reputationPoints += questInstane.data.rewards.reputation;
-        if (questInstane.data.rewards.gold > 0)
-            PlayerController.Instance.Wallet.AddGold(questInstane.data.rewards.gold);
+        if (questInstance.data.rewards.gold > 0)
+            PlayerController.Instance.Wallet.AddGold(questInstance.data.rewards.gold);
 
-        if (questInstane.data.rewards.items != null)
+        if (questInstance.data.rewards.items != null)
         {
-            foreach (var item in questInstane.data.rewards.items)
+            foreach (var item in questInstance.data.rewards.items)
             {
                 InventorySystem.instance.AddItem(item);
             }
         }
-        questInstane.rewardsGiven = true;
+        questInstance.rewardsGiven = true;
     }
 
     #region Save/Load
@@ -118,13 +170,18 @@ public class NewQuestManager : MonoBehaviour
     {
         QuestSaveData data = new QuestSaveData();
 
-        foreach (var quest in activeQuests)
+        foreach (var quest in activeQuests) data.activeQuests.Add(ToSaveData(quest));
+        foreach (var quest in finishedQuests) data.completedQuests.Add(ToSaveData(quest));
+
+        foreach (var kvp in globalKillHistory)
         {
-            data.activeQuests.Add(ToSaveData(quest));
+            data.globalKillHistorySave.Add(new KillHistoryEntry { enemyType = kvp.Key, count = kvp.Value });
         }
+        data.globalInteractionHistorySave = new List<string>(globalInteractionHistory);
 
         return data;
     }
+
     private QuestInstanceSaveData ToSaveData(QuestInstance quest)
     {
         return new QuestInstanceSaveData
@@ -138,36 +195,44 @@ public class NewQuestManager : MonoBehaviour
         };
     }
 
-
     public void LoadSaveData(QuestSaveData data)
     {
         if (data == null) return;
 
         activeQuests.Clear();
+        finishedQuests.Clear();
+        globalKillHistory.Clear();
 
-        HashSet<string> completedIDs = new();
+        // 🔄 CORRECTION : Restauration de l'historique global
+        foreach (var entry in data.globalKillHistorySave)
+        {
+            globalKillHistory[entry.enemyType] = entry.count;
+        }
+        globalInteractionHistory = new HashSet<string>(data.globalInteractionHistorySave);
 
-
+        // Chargement des quêtes actives et complétées
         foreach (var questData in data.activeQuests)
         {
-            if (completedIDs.Contains(questData.questID)) continue;
-
             QuestInstance quest = FromSaveData(questData);
-            if (quest != null)
-                activeQuests.Add(quest);
+            if (quest != null) activeQuests.Add(quest);
+        }
+
+        foreach (var questData in data.completedQuests)
+        {
+            QuestInstance quest = FromSaveData(questData);
+            if (quest != null) finishedQuests.Add(quest);
+        }
+
+        if (NewQuestLog.instance != null)
+        {
+            NewQuestLog.instance.OnAffichageQuestPanel(activeQuests);
         }
     }
-
-
 
     private QuestInstance FromSaveData(QuestInstanceSaveData data)
     {
         QuestSO questSO = QuestDatabase.Instance.GetQuestByID(data.questID);
-        if (questSO == null)
-        {
-            Debug.LogWarning($"Quest not found: {data.questID}");
-            return null;
-        }
+        if (questSO == null) return null;
 
         return new QuestInstance
         {
@@ -182,9 +247,21 @@ public class NewQuestManager : MonoBehaviour
     #endregion
 }
 
+// ─── EXTENSIONS DE STRUCTURES DE SAUVEGARDE SÉRIALISABLES ───
 [System.Serializable]
 public class QuestSaveData
 {
     public List<QuestInstanceSaveData> activeQuests = new();
     public List<QuestInstanceSaveData> completedQuests = new();
+
+    // Ajoutés pour sérialiser proprement les Dictionnaires/HashSets de l'historique
+    public List<KillHistoryEntry> globalKillHistorySave = new();
+    public List<string> globalInteractionHistorySave = new();
+}
+
+[System.Serializable]
+public class KillHistoryEntry
+{
+    public string enemyType;
+    public int count;
 }

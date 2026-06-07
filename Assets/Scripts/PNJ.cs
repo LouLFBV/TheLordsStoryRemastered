@@ -283,7 +283,7 @@ public class PNJ : InteractableBase
         animator.SetBool("isTalking", true);
         index = 0;
         currentDialogue = currentQuestSO.sentencesQuestAccepted;
-        NewQuestLog.instance.ActiveDesactiveQuestText(currentQuestSO);
+        NewQuestLog.instance.TrackQuestOnHUD(activeQuestInstance);
         Debug.Log("Quest accepted: " + currentQuestSO.questName);
         NextLine();
     }
@@ -307,16 +307,11 @@ public class PNJ : InteractableBase
         NewQuestManager.instance.CompleteQuest(activeQuestInstance);
 
         if (currentQuestSO.requiredItem != null)
-            DeleteObjectsInInventory(
-            currentQuestSO.requiredItem,
-            currentQuestSO.requiredItemCount
-        );
+            DeleteObjectsInInventory(currentQuestSO.requiredItem, currentQuestSO.requiredItemCount);
 
-        if (currentQuestSO.questName == NewQuestLog.instance.QuestActiveText.text)
+        if (NewQuestLog.instance.currentlyTrackedQuest != null && NewQuestLog.instance.currentlyTrackedQuest.data == currentQuestSO)
         {
-            if (UIManagerSystem.Instance != null)
-                UIManagerSystem.Instance.hudElements.Remove(NewQuestLog.instance.panelQuestActive);
-            //NewQuestLog.instance.questToggle.isOn = false;
+            NewQuestLog.instance.UntrackQuest();
         }
 
         index = 0;
@@ -330,12 +325,20 @@ public class PNJ : InteractableBase
     private void VerifObjectsInInventory()
     {
         if (activeQuestInstance == null || activeQuestInstance.status != QuestStatus.InProgress || currentQuestSO.requiredItem == null) return;
+
+        activeQuestInstance.currentCount = 0;
+
         foreach (var obj in InventorySystem.instance.GetContent())
         {
             if (currentQuestSO.requiredItem == obj.itemData)
             {
                 activeQuestInstance.currentCount += obj.count;
             }
+        }
+
+        if (NewQuestLog.instance.currentlyTrackedQuest == activeQuestInstance)
+        {
+            NewQuestLog.instance.UpdateHUDToggleState();
         }
     }
 

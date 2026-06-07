@@ -26,7 +26,7 @@ public class InventorySystem : MonoBehaviour
 
     public Sprite emptySlotVisual;
 
-    [SerializeField] private UINavigationManager navManager;
+    public Sprite itemLevel1Icon, itemLevel2Icon, itemLevel3Icon;
 
     // Constantes de tailles
     const int InventoryRessourcesCraftSize = 20;

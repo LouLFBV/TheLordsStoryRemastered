@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
@@ -7,18 +7,20 @@ public class NewQuestLog : MonoBehaviour
 {
     public static NewQuestLog instance;
 
-    [Header("UI Active Quest Texte")]
+    [Header("UI Active Quest Texte (HUD)")]
     public TextMeshProUGUI QuestActiveText;
     public TextMeshProUGUI objectifQuestActiveText;
     public Toggle questActiveToggle;
     public GameObject panelQuestActive;
 
-
-    [Header("UI Menu Panel Info")]
+    [Header("UI Menu Panel Info (Journal)")]
+    [SerializeField] private Image questLevelImage;
+    [SerializeField] private Sprite questLevel1, questLevel2, questLevel3, questLevel4, questLevel5;
     [SerializeField] private TextMeshProUGUI questNameText;
     [SerializeField] private TextMeshProUGUI questDescriptionText;
-    [SerializeField] private TextMeshProUGUI questObjectifText;
     [SerializeField] private Toggle questToggle;
+    [SerializeField] private TextMeshProUGUI questObjectifText;
+    [SerializeField] private Toggle questObjectifToggle;
 
     [Header("UI Menu Panel List Quests")]
     [SerializeField] private GameObject panelDescriptionQuest;
@@ -27,91 +29,167 @@ public class NewQuestLog : MonoBehaviour
     [SerializeField] private Transform rewardsList;
 
     [Header("Prefabs")]
-
     [SerializeField] private GameObject buttonQuestPrefab;
-    [SerializeField] private GameObject objectifQuestPrefab;
     [SerializeField] private GameObject rewardQuestPrefab;
-    [SerializeField] private GameObject objectifOnScreenPrefab;
-    //[SerializeField] private GameObject gameObjectPourAfficher;
-    //[SerializeField] private TextMeshProUGUI compteurEnemiesText;
-    //public Toggle questToggle;
 
-    [SerializeField] private UINavigationManager uiNavigationManager;
+    [HideInInspector] public QuestInstance currentlyTrackedQuest;  
+    [HideInInspector] public QuestInstance currentlySelectedQuest; 
 
     private void Awake()
     {
         if (instance == null) instance = this;
         else Destroy(gameObject);
     }
-    private void ShowQuest(QuestInstance quest/*, bool isActive*/)
+
+    private void ShowQuest(QuestInstance quest)
     {
         if (quest == null) return;
 
+        // On mémorise quelle quête est actuellement ouverte dans le menu
+        currentlySelectedQuest = quest;
+
         ClearChildren(rewardsList);
+
+        switch (quest.data.questLevel)
+        {
+            case 1: questLevelImage.sprite = questLevel1; break;
+            case 2: questLevelImage.sprite = questLevel2; break;
+            case 3: questLevelImage.sprite = questLevel3; break;
+            case 4: questLevelImage.sprite = questLevel4; break;
+            case 5: questLevelImage.sprite = questLevel5; break;
+            default: questLevelImage.sprite = questLevel1; break;
+        }
 
         questNameText.text = quest.data.questName;
         questDescriptionText.text = quest.data.description;
         questObjectifText.text = quest.data.objectif;
+
         foreach (string reward in quest.data.rewardsText)
         {
             GameObject obj = Instantiate(rewardQuestPrefab, rewardsList);
             obj.GetComponent<TextMeshProUGUI>().text = $"- {reward}";
         }
+
+        // --- GESTION DU TOGGLE DE SUIVI (AFFICHER SUR L'ÉCRAN) ---
+        if (questToggle != null)
+        {
+            questToggle.onValueChanged.RemoveAllListeners();
+
+            bool isAlreadyTracked = (currentlyTrackedQuest != null && currentlyTrackedQuest.data == quest.data);
+            questToggle.SetIsOnWithoutNotify(isAlreadyTracked);
+
+            questToggle.onValueChanged.AddListener((isOn) =>
+            {
+                if (isOn)
+                    TrackQuestOnHUD(quest);
+                else
+                    UntrackQuest();
+            });
+        }
+
+        if (questObjectifToggle != null)
+        {
+            bool isComplete = NewQuestManager.instance.CanCompleteQuest(quest);
+            questObjectifToggle.SetIsOnWithoutNotify(isComplete);
+        }
         panelDescriptionQuest.SetActive(true);
-
-        //if (quest.data.questType == QuestType.Hunt && isActive)
-        //{
-        //    compteurEnemiesText.gameObject.SetActive(true);
-        //    QuestInstance questInstance = QuestManager.instance.GetQuestInstance(quest.data);
-        //    compteurEnemiesText.text = $"Ennemis tu�s : {questInstance.currentCount} / {quest.data.requiredKillCount}";
-        //}
-        //else
-        //{
-        //    compteurEnemiesText.gameObject.SetActive(false);
-        //}
-
-        // Active = toggle disponible, Completed = pas de toggle
-        //gameObjectPourAfficher.SetActive(isActive);
-
-        //if (isActive)
-        //{
-        //    questToggle.onValueChanged.RemoveAllListeners();
-        //    questToggle.onValueChanged.AddListener((isOn) =>
-        //    {
-        //        if (isOn)
-        //            ActiveDesactiveQuestText(questNameText.text);
-        //        else
-        //            QuestActiveText.gameObject.SetActive(false);
-        //    });
-        //}
     }
 
-    public void CreateQuestButton(QuestInstance quest/*, bool isActive*/)
+    // Affiche la quête sur l'écran du joueur (HUD)
+    public void TrackQuestOnHUD(QuestInstance quest)
+    {
+        if (quest == null) return;
+
+        currentlyTrackedQuest = quest;
+        QuestActiveText.text = quest.data.questName;
+        objectifQuestActiveText.text = quest.data.objectif;
+
+        panelQuestActive.gameObject.SetActive(true);
+
+        if (UIManagerSystem.Instance != null && !UIManagerSystem.Instance.hudElements.Contains(panelQuestActive))
+            UIManagerSystem.Instance.hudElements.Add(panelQuestActive);
+
+        UpdateHUDToggleState();
+    }
+
+    // Désactive le suivi de la quête sur l'écran
+    public void UntrackQuest()
+    {
+        currentlyTrackedQuest = null;
+        panelQuestActive.gameObject.SetActive(false);
+
+        if (UIManagerSystem.Instance != null)
+            UIManagerSystem.Instance.hudElements.Remove(panelQuestActive);
+
+        // On rafraîchit les éléments pour s'assurer que les visuels soient clean
+        UpdateHUDToggleState();
+    }
+
+    public void UpdateHUDToggleState()
+    {
+        // 1️⃣ GESTION DU HUD (Écran de jeu)
+        if (currentlyTrackedQuest != null && questActiveToggle != null)
+        {
+            bool isHUDQuestComplete = NewQuestManager.instance.CanCompleteQuest(currentlyTrackedQuest);
+            questActiveToggle.SetIsOnWithoutNotify(isHUDQuestComplete);
+        }
+
+        if (currentlySelectedQuest != null)
+        {
+            // Case de l'objectif de description
+            if (questObjectifToggle != null)
+            {
+                bool isMenuQuestComplete = NewQuestManager.instance.CanCompleteQuest(currentlySelectedQuest);
+                questObjectifToggle.SetIsOnWithoutNotify(isMenuQuestComplete);
+            }
+
+            if (questToggle != null)
+            {
+                bool isAlreadyTracked = (currentlyTrackedQuest != null && currentlyTrackedQuest.data == currentlySelectedQuest.data);
+                questToggle.SetIsOnWithoutNotify(isAlreadyTracked);
+            }
+        }
+    }
+
+    public void CreateQuestButton(QuestInstance quest)
     {
         GameObject button = null;
         if (quest.data.isMainQuest)
-             button = Instantiate(buttonQuestPrefab, questsFirstList);
+            button = Instantiate(buttonQuestPrefab, questsFirstList);
         else
-             button = Instantiate(buttonQuestPrefab, questsSecondList);
-
-        uiNavigationManager.elements.Add(button.GetComponent<UISelectable>());
+            button = Instantiate(buttonQuestPrefab, questsSecondList);
 
         SlotQuete slot = button.GetComponent<SlotQuete>();
-        // slot.icone.sprite = quest.data.icon;
         slot.questNameText.text = quest.data.questName;
+
+        switch (quest.data.questLevel)
+        {
+            case 1: slot.questIcon.sprite = questLevel1; break;
+            case 2: slot.questIcon.sprite = questLevel2; break;
+            case 3: slot.questIcon.sprite   = questLevel3; break;
+            case 4: slot.questIcon.sprite = questLevel4; break;
+            case 5: slot.questIcon.sprite = questLevel5; break;
+            default: slot.questIcon.sprite = questLevel1; break;
+        }
         slot.button.onClick.RemoveAllListeners();
         slot.button.onClick.AddListener(() =>
         {
-            ShowQuest(quest/*, isActive*/);
+            ShowQuest(quest);
         });
     }
-    public void DesactivePanel() => panelDescriptionQuest.SetActive(false);
+
+    public void DesactivePanel()
+    {
+        currentlySelectedQuest = null; // On oublie la sélection quand on ferme le panel
+        panelDescriptionQuest.SetActive(false);
+    }
 
     private void ClearChildren(Transform parent)
     {
         foreach (Transform child in parent)
             Destroy(child.gameObject);
     }
+
     public void OnAffichageQuestPanel(List<QuestInstance> listQuest)
     {
         ClearChildren(questsFirstList);
@@ -119,63 +197,39 @@ public class NewQuestLog : MonoBehaviour
         foreach (var quest in listQuest)
             CreateQuestButton(quest);
 
+        currentlySelectedQuest = null;
         panelDescriptionQuest.SetActive(false);
     }
-    public void ActiveDesactiveQuestText(QuestSO questSO)
-    {
-        QuestActiveText.text = questSO.questName;
-        objectifQuestActiveText.text = questSO.objectif;
-        panelQuestActive.gameObject.SetActive(true);
-        if (UIManagerSystem.Instance != null)
-            UIManagerSystem.Instance.hudElements.Add(panelQuestActive);
-    }
-
-    //public void OnAffichage()
-    //{
-    //    panelDescriptionQuest.SetActive(false);
-    //    foreach (Transform child in QuestsList)
-    //        Destroy(child.gameObject);
-    //}
 
     #region Save/Load
     public QuestLogSaveData GetSaveData()
     {
         return new QuestLogSaveData
         {
-            activeQuestText = QuestActiveText.gameObject.activeSelf
-                ? QuestActiveText.text
-                : string.Empty,
-            isQuestToggleOn = questActiveToggle != null && questActiveToggle.isOn
+            trackedQuestID = currentlyTrackedQuest != null ? currentlyTrackedQuest.data.questID : string.Empty,
+            isHUDPanelActive = panelQuestActive.activeSelf
         };
     }
 
     public void LoadSaveData(QuestLogSaveData data)
     {
-        if (data == null || string.IsNullOrEmpty(data.activeQuestText))
+        if (data == null || string.IsNullOrEmpty(data.trackedQuestID))
         {
-            QuestActiveText.gameObject.SetActive(false);
+            UntrackQuest();
             return;
         }
 
-        //  Texte
-        QuestActiveText.text = data.activeQuestText;
-        objectifQuestActiveText.text = data.activeObjectifQuestText;
-        panelQuestActive.gameObject.SetActive(true);
+        QuestInstance loadedQuest = NewQuestManager.instance.activeQuests.Find(q => q.data.questID == data.trackedQuestID);
 
-        //  Toggle (sans d�clencher l�event)
-        //if (questToggle != null)
-        //{
-        //    questToggle.onValueChanged.RemoveAllListeners();
-        //    questToggle.isOn = data.isQuestToggleOn;
-
-        //    questToggle.onValueChanged.AddListener(isOn =>
-        //    {
-        //        if (isOn)
-        //            ActiveDesactiveQuestText(QuestActiveText.text);
-        //        else
-        //            QuestActiveText.gameObject.SetActive(false);
-        //    });
-        //}
+        if (loadedQuest != null)
+        {
+            TrackQuestOnHUD(loadedQuest);
+            panelQuestActive.gameObject.SetActive(data.isHUDPanelActive);
+        }
+        else
+        {
+            UntrackQuest();
+        }
     }
     #endregion
 }
@@ -183,8 +237,6 @@ public class NewQuestLog : MonoBehaviour
 [System.Serializable]
 public class QuestLogSaveData
 {
-    public string activeQuestText;
-    public string activeObjectifQuestText;
-    public bool isQuestToggleOn;
+    public string trackedQuestID;
+    public bool isHUDPanelActive;
 }
-

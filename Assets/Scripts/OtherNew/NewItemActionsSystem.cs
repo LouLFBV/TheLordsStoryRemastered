@@ -34,6 +34,7 @@ public class NewItemActionsSystem : MonoBehaviour
     [HideInInspector] public ItemData itemCurrentlySelected;
 
     [Header("item Description")]
+    [SerializeField] private Image itemLevel;
     [SerializeField] private TextMeshProUGUI itemNameText;
     [SerializeField] private TextMeshProUGUI itemDescriptionText;
 
@@ -110,6 +111,14 @@ public class NewItemActionsSystem : MonoBehaviour
         itemEffetText.gameObject.SetActive(false);
         itemTypeDeResistanceText.gameObject.SetActive(false);
 
+        switch (item.levelAmelioration)
+        {
+            case 0: itemLevel.sprite = InventorySystem.instance.itemLevel1Icon; break;
+            case 1: itemLevel.sprite = InventorySystem.instance.itemLevel2Icon; break;
+            case 2: itemLevel.sprite = InventorySystem.instance.itemLevel3Icon; break;
+            default: itemLevel.sprite = InventorySystem.instance.itemLevel1Icon; break;
+        }
+
         if (!isEquipped)
         {
             switch (item.itemType)
@@ -134,22 +143,6 @@ public class NewItemActionsSystem : MonoBehaviour
                     dropItemButton.gameObject.SetActive(true);
                     destroyItemButton.gameObject.SetActive(true);
                     //actionPanelRect.anchoredPosition = positionForEquipment;
-                    break;
-                case ItemType.QuestItem:
-                    useItemButton.gameObject.SetActive(false);
-                    equipmentItemButton.gameObject.SetActive(false);
-                    dropItemButton.gameObject.SetActive(false);
-                    destroyItemButton.gameObject.SetActive(false);
-                    //actionPanel.transform.position = positionInitiale;
-                    break;
-                case ItemType.Ressource:
-                case ItemType.Craft:
-                case ItemType.Key:
-                    useItemButton.gameObject.SetActive(false);
-                    equipmentItemButton.gameObject.SetActive(false);
-                    dropItemButton.gameObject.SetActive(true);
-                    destroyItemButton.gameObject.SetActive(false);
-                    //actionPanelRect.anchoredPosition = positionInitiale;
                     break;
             }
             desequipmentItemButton.gameObject.SetActive(false);

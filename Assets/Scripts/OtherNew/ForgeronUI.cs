@@ -117,10 +117,9 @@ public class ForgeronUI : MonoBehaviour
             if (item.itemData != null) allEligibleItems.Add(item.itemData);
         }
 
-        // AJOUTER : Les items de la palette (armes équipées) si le type correspond
         foreach (var slotPalette in PaletteSystem.instance.slotManager.weapons)
         {
-            if (slotPalette.itemData != null && slotPalette.itemData.equipmentType == equipmentType)
+            if (slotPalette != null && slotPalette.itemData != null && slotPalette.itemData.equipmentType == equipmentType)
             {
                 allEligibleItems.Add(slotPalette.itemData);
             }
@@ -128,7 +127,7 @@ public class ForgeronUI : MonoBehaviour
 
         foreach (var slotPalette in EquipmentSystem.instance.equipmentSlots)
         {
-            if (slotPalette.item != null && slotPalette.item.equipmentType == equipmentType)
+            if (slotPalette != null && slotPalette.item != null && slotPalette.item.equipmentType == equipmentType)
             {
                 allEligibleItems.Add(slotPalette.item);
             }
@@ -189,6 +188,9 @@ public class ForgeronUI : MonoBehaviour
 
         foreach (ItemInInventory item in items)
         {
+            if (item == null || item.itemData == null)
+                continue;
+
             if (item.itemData.equipmentType == equipmentType)
             {
                 filteredItems.Add(item);
