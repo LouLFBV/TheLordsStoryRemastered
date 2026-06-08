@@ -1,12 +1,13 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 public class Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     public ItemData item;
     public Image itemVisual;
     public Image itemTypeVisual;
-    public Text countTexte;
+    public TextMeshProUGUI countTexte;
     [SerializeField] private bool isEquipmentSlot;
 
     [SerializeField]

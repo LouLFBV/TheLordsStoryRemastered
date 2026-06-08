@@ -162,7 +162,7 @@ public class NewItemActionsSystem : MonoBehaviour
 
         if (item.attackPoints > 0)
         {
-            itemDegatsText.text = $"Degats : {item.attackPoints}";
+            itemDegatsText.text = $"Dégâts : {item.attackPoints}";
             itemDegatsText.gameObject.SetActive(true);
 
             itemEffetText.text = $"Effet : {item.damageType}";
@@ -171,9 +171,9 @@ public class NewItemActionsSystem : MonoBehaviour
         if (item.armorPoints > 0)
         {
 
-            itemDegatsText.text = $"Pourcentage de reduction : {item.attackPoints}";
+            itemDegatsText.text = $"Pourcentage de réduction : {item.attackPoints}";
             itemDegatsText.gameObject.SetActive(true);
-            itemTypeDeResistanceText.text = $"Type de Resistance : {item.armorType}";
+            itemTypeDeResistanceText.text = $"Type de Résistance : {item.armorType}";
             itemTypeDeResistanceText.gameObject.SetActive(true);
             itemEffetText.gameObject.SetActive(false);
         }

@@ -38,6 +38,7 @@ public class Menu : MonoBehaviour
     [Header("Input Settings UI")]
     [SerializeField] private Slider mouseSensitivitySlider;
     [SerializeField] private Slider gamepadSensitivitySlider;
+    [SerializeField] private Slider gamepadAimSensitivitySlider;
     [SerializeField] private Slider deadzoneSlider;
 
     [Header("UI for Menu")]
