@@ -10,11 +10,14 @@ public class PlayerInputHandler : MonoBehaviour
 
     [Header("Gamepad Settings")]
     public float gamepadSensitivity = 5f;
+    public float gamepadAimSensitivity = 2.5f;
     public float stickDeadzone = 0.15f;
 
     public Vector2 MoveInput { get; private set; }
     public Vector2 MouseLook { get; private set; }
-    public Vector2 GamepadLook { get; private set; }
+
+    private Vector2 rawGamepadLook;
+    public Vector2 GamepadLook => rawGamepadLook * (AimHeld ? gamepadAimSensitivity : gamepadSensitivity);
     public Vector2 NavigateLook { get; private set; }
     public Vector2 GamepadScroll { get; private set; }
     public bool AttackPressed { get; private set; }
@@ -51,6 +54,25 @@ public class PlayerInputHandler : MonoBehaviour
         input = GetComponent<PlayerInput>();
     }
 
+    private void Start()
+    {
+        LoadSensitivitySettings();
+    }
+
+    public void LoadSensitivitySettings()
+    {
+        if (PlayerPrefs.HasKey("MouseSensi"))
+            mouseSensitivity = PlayerPrefs.GetFloat("MouseSensi");
+
+        if (PlayerPrefs.HasKey("GamepadSensi"))
+            gamepadSensitivity = PlayerPrefs.GetFloat("GamepadSensi");
+
+        if (PlayerPrefs.HasKey("GamepadAimSensi"))
+            gamepadAimSensitivity = PlayerPrefs.GetFloat("GamepadAimSensi");
+
+        if (PlayerPrefs.HasKey("Deadzone"))
+            stickDeadzone = PlayerPrefs.GetFloat("Deadzone");
+    }
     private void OnEnable()
     {
         // --- MOVE avec Deadzone ---
@@ -66,8 +88,8 @@ public class PlayerInputHandler : MonoBehaviour
         input.actions["LookMouse"].performed += ctx => MouseLook = ctx.ReadValue<Vector2>() * mouseSensitivity;
         input.actions["LookMouse"].canceled += _ => MouseLook = Vector2.zero;
 
-        input.actions["LookGamepad"].performed += ctx => GamepadLook = ctx.ReadValue<Vector2>() * gamepadSensitivity;
-        input.actions["LookGamepad"].canceled += _ => GamepadLook = Vector2.zero;
+        input.actions["LookGamepad"].performed += ctx => rawGamepadLook = ctx.ReadValue<Vector2>();
+        input.actions["LookGamepad"].canceled += _ => rawGamepadLook = Vector2.zero;
 
         // --- NAVIGATE (UI) ---
         input.actions["Navigate"].performed += ctx => {

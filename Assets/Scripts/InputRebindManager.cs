@@ -36,11 +36,10 @@ public static class InputRebindManager
 
         if (type == DeviceType.Gamepad)
         {
+            // On cherche tout ce qui ressemble à un périphérique de manette
             binding = action.bindings.FirstOrDefault(b =>
                 !string.IsNullOrEmpty(b.effectivePath) &&
-                b.effectivePath.Contains("<Gamepad>") ||
-                b.effectivePath.Contains("<DualShockGamepadHID>") ||
-                b.effectivePath.Contains("<DualSenseGamepadHID>")
+                (b.effectivePath.Contains("Gamepad") || b.effectivePath.Contains("Joystick"))
             );
         }
         else // Keyboard + Mouse
@@ -60,6 +59,10 @@ public static class InputRebindManager
                 iconField.sprite = icon;
                 iconField.enabled = true;
                 return;
+            }
+            else
+            {
+                Debug.LogWarning($"Aucun icône trouvé pour la binding : {binding.effectivePath}");
             }
         }
 

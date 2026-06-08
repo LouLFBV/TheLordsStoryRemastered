@@ -1,4 +1,5 @@
-using UnityEngine;
+﻿using UnityEngine;
+
 public class PlayerGroundedState : PlayerState
 {
     public PlayerGroundedState(PlayerController player) : base(player) { }
@@ -6,19 +7,26 @@ public class PlayerGroundedState : PlayerState
     public override void Enter()
     {
         base.Enter();
-        player.Animator.applyRootMotion = true; // Le sol reprend le contr�le via l'anim
+        player.Animator.applyRootMotion = true; // Le sol reprend le contrôle via l'anim
         player.Animator.SetBool("Grounded", true);
-        player.Animator.SetBool("IsFalling", false); 
+        player.Animator.SetBool("IsFalling", false);
         player.Motor.SetFriction(true);
-        // On ne nettoie les layers que si on vient d'un �tat "non-grounded" 
-        // ou d'une attaque, pour �viter les saccades entre Idle et Move.
     }
 
     public override void Update()
     {
-        if (player.IsDead || player.interactSystem.isBusy) return;
+        if (player.IsDead || player.interactSystem.isBusy)
+        {
+            if (player.Animator != null) player.Animator.speed = 1f; // Sécurité
+            return;
+        }
 
-        // 1. PRIORIT� : La Chute
+        // ─── NOUVEAUTÉ : APPLICATION DU SPEED MODIFIER AU SOL ───
+        float currentSlow = (player.DmgReceiver != null) ? player.DmgReceiver.SpeedModifier : 1f;
+        player.Animator.speed = currentSlow;
+        // ────────────────────────────────────────────────────────
+
+        // 1. PRIORITÉ : La Chute
         if (!player.Motor.IsGrounded())
         {
             player.StateMachine.ChangeState(PlayerStateType.Fall);
@@ -31,17 +39,15 @@ public class PlayerGroundedState : PlayerState
             return;
         }
 
-        // 2. PRIORIT� : Le Saut
+        // 2. PRIORITÉ : Le Saut
         if (player.Input.JumpPressed)
         {
-            // On v�rifie si assez de temps s'est �coul� depuis le dernier saut
             if (Time.time < player.lastJumpTime + player.jumpCooldown)
             {
-                return; // Trop t�t, on ignore l'input
+                return;
             }
 
-            // Si on arrive ici, le saut est autoris�
-            player.lastJumpTime = Time.time; // On enregistre le moment du saut
+            player.lastJumpTime = Time.time;
             player.Input.UseJumpInput();
             player.StateMachine.ChangeState(PlayerStateType.Jump);
             return;
@@ -50,7 +56,7 @@ public class PlayerGroundedState : PlayerState
         if (player.Input.AttackPressed && CanEat())
         {
             Debug.Log("Consume Pressed");
-            player.Input.UseAttackInput(); // Consomme l'input
+            player.Input.UseAttackInput();
             player.StateMachine.ChangeState(PlayerStateType.Consume);
             return;
         }
@@ -59,7 +65,8 @@ public class PlayerGroundedState : PlayerState
         if (player.PendingLibraryItem != null)
             if (player.PendingLibraryItem.itemPrefab != null)
                 hasWeapon = player.PendingLibraryItem.itemPrefab.activeSelf;
-        // 3. PRIORIT� : L'Attaque ou l'Arc
+
+        // 3. PRIORITÉ : L'Attaque ou l'Arc
         if (player.Input.AttackPressed && hasWeapon)
         {
             HandleAttackInput();
@@ -77,25 +84,22 @@ public class PlayerGroundedState : PlayerState
             return;
         }
 
-        // 4. PRIORIT� : La Vis�e (AimState)
-        // Si on n'attaque pas, mais qu'on maintient le bouton de vis�e
+        // 4. PRIORITÉ : La Visée (AimState)
         if (player.Input.AimHeld)
         {
             player.StateMachine.ChangeState(PlayerStateType.Aim);
             return;
         }
 
-        // 5. PRIORIT� : La Roulade
-        if (player.Input.RollPressed && player.Stamina.CanSpend(30f))
+        // 5. PRIORITÉ : La Roulade
+        if (player.Input.RollPressed && player.Stamina.CanSpend(player.rollCout))
         {
             player.Input.UseRollInput();
             player.StateMachine.ChangeState(PlayerStateType.Roll);
             return;
         }
 
-        
-
-        // 7. PRIORIT� : Le LockOn
+        // 7. PRIORITÉ : Le LockOn
         if (player.Input.LockOnPressed)
         {
             Debug.Log("LockOn Pressed");
@@ -105,18 +109,23 @@ public class PlayerGroundedState : PlayerState
         }
     }
 
+    public override void Exit()
+    {
+        base.Exit();
+        if (player.Animator != null)
+            player.Animator.speed = 1f;
+    }
+
     private void HandleAttackInput(bool isSpecialAttack = false)
     {
-        // On r�cup�re l'arme active via ton PaletteSystem
         ItemData activeWeapon = PaletteSystem.instance.slotManager.weaponSlots[0].isEquipped ?
                                 PaletteSystem.instance.slotManager.weaponSlots[0].slotItemData :
                                 PaletteSystem.instance.slotManager.weaponSlots[1].slotItemData;
 
         if (activeWeapon == null) return;
-        // --- DISTINCTION ARC / M�L�E ---
+
         if (activeWeapon.handWeaponType == HandWeapon.Bow)
         {
-            // On v�rifie les munitions via ton BowBehaviour
             if (player.Bow.VerifIfCanShoot())
             {
                 player.StateMachine.ChangeState(PlayerStateType.BowCharge);
@@ -136,6 +145,7 @@ public class PlayerGroundedState : PlayerState
             player.StateMachine.ChangeState(PlayerStateType.Attack);
         }
     }
+
     protected virtual void HandleCrouchInput()
     {
         if (player.Input.CrouchPressed)
@@ -144,12 +154,13 @@ public class PlayerGroundedState : PlayerState
             player.StateMachine.ChangeState(PlayerStateType.Crouch);
         }
     }
+
     private bool CanEat()
     {
         Debug.Log("Checking if player can consume...");
         var palette = PaletteSystem.instance;
         if (palette == null) return false;
 
-        return palette.slotManager.objectSlots[0].isEquipped  || palette.slotManager.objectSlots[1].isEquipped ;
+        return palette.slotManager.objectSlots[0].isEquipped || palette.slotManager.objectSlots[1].isEquipped;
     }
 }

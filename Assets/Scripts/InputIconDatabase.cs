@@ -54,12 +54,18 @@ public class InputIconDatabase : MonoBehaviour
             return null;
 
         // ------------------ GAMEPAD ------------------
-        if (controlPath.Contains("<Gamepad>"))
+        if (controlPath.Contains("Gamepad") || controlPath.Contains("DualShock") || controlPath.Contains("DualSense"))
         {
             if (activeGamepadSet == null)
                 UpdateGamepadSet();
 
-            return activeGamepadSet?.GetIcon(controlPath);
+            string normalizedPath = controlPath;
+            if (controlPath.Contains("DualShock") || controlPath.Contains("DualSense"))
+            {
+                normalizedPath = controlPath.Replace("DualShockGamepadHID", "<Gamepad>").Replace("DualSenseGamepadHID", "<Gamepad>");
+            }
+
+            return activeGamepadSet?.GetIcon(normalizedPath);
         }
 
         // ------------------ KEYBOARD ------------------

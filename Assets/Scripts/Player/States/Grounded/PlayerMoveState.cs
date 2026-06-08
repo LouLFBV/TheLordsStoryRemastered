@@ -2,9 +2,11 @@
 
 public class PlayerMoveState : PlayerGroundedState
 {
+
     private Vector2 cachedInput;
 
     // Vitesses
+   // private float walkSpeed = 2f;
     private float runSpeed = 4f;
     private float sprintSpeed = 7f;
 
@@ -32,10 +34,35 @@ public class PlayerMoveState : PlayerGroundedState
             return;
         }
 
+        // --- SYSTÈME DE SÉCURITÉ (Pente & Mur) ---
+        //bool isBlocked = false;
+
+        //// Check Mur/Pente
+        //Vector3 rayOrigin = player.transform.position + Vector3.up * 1f;
+        //if (Physics.Raycast(rayOrigin, player.transform.forward, 0.7f, ~0, QueryTriggerInteraction.Ignore))
+        //{
+        //    isBlocked = true;
+        //}
+
+        //if (isBlocked)
+        //{
+        //    // On ne coupe la vélocité QUE si on n'est pas en train de transitionner vers la roulade
+        //    // et on utilise une approche plus douce
+        //    player.Animator.applyRootMotion = false;
+        //    Vector3 v = player.Rigidbody.linearVelocity;
+        //    player.Rigidbody.linearVelocity = new Vector3(0, v.y, 0);
+        //}
+        //else
+        //{
+        //    player.Animator.applyRootMotion = true;
+        //}
+
+        // --- RESTE DU CODE (Rotation, Sprint, Anim) ---
         player.Motor.RotateTowardsInput(input);
 
         // Sprint
         isSprinting = CanSprint(input);
+
         float animSpeed = isSprinting ? sprintSpeed : runSpeed;
 
         // FOV sprint
@@ -50,35 +77,26 @@ public class PlayerMoveState : PlayerGroundedState
             changedFOV = false;
         }
 
-        // ─── NOUVEAUTÉ : APPLICATION DU SPEED MODIFIER (Root Motion) ───
-        float currentSlow = 1f;
-        if (player.DmgReceiver != null)
-        {
-            currentSlow = player.DmgReceiver.SpeedModifier;
-        }
-
-        player.Animator.speed = currentSlow;
-
-
         // Paramètres Animator pour Root Motion
         player.Animator.SetFloat(AnimatorHashes.hHash, input.x, 0.1f, Time.deltaTime);
         player.Animator.SetFloat(AnimatorHashes.vHash, input.y, 0.1f, Time.deltaTime);
-
-        // On garde le calcul de base ici pour le Blend Tree, l'Animator.speed s'occupe du reste
         player.Animator.SetFloat(AnimatorHashes.speedHash, input.magnitude * (animSpeed / sprintSpeed), 0.1f, Time.deltaTime);
 
         // Stamina
         if (isSprinting)
             player.Stamina.Spend(player.Stamina.consommationRate * Time.deltaTime);
 
-        if (player.Input.SprintHeld)
+        if (player.Input.SprintHeld) // Le joueur VEUT sprinter
         {
             if (isSprinting)
             {
+                // Consommation normale
                 player.Stamina.Spend(player.Stamina.consommationRate * Time.deltaTime);
             }
             else if (!player.Stamina.HasStamina())
             {
+                // Le joueur appuie mais HasStamina est faux (épuisé ou vide)
+                // On force l'appel à Spend(0) ou une méthode de feedback
                 player.Stamina.RequestEmptyFeedback();
             }
         }
@@ -86,6 +104,7 @@ public class PlayerMoveState : PlayerGroundedState
 
     public override void FixedUpdate()
     {
+        // On continue à orienter le personnage vers l'input
         player.Motor.RotateTowardsInput(cachedInput);
     }
 
@@ -94,9 +113,6 @@ public class PlayerMoveState : PlayerGroundedState
         base.Exit();
         ThirdPersonCameraController.Instance.ResetFOV();
         changedFOV = false;
-
-        if (player.Animator != null)
-            player.Animator.speed = 1f;
     }
 
     private bool CanSprint(Vector2 input)

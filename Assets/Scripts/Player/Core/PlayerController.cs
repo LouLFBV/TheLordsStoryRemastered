@@ -56,6 +56,7 @@ public class PlayerController : MonoBehaviour, ICombatant
 
     [Header("Roll Settings")]
     public float rollForce = 4f;
+    public float rollCout = 30f;
 
 
     [Header("Library")]

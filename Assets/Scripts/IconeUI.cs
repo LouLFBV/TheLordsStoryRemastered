@@ -15,6 +15,9 @@ public class IconeUI : MonoBehaviour
     public float pulseSpeed = 1.5f;      // vitesse du pulse
     public float pulseScale = 1.15f;     // taille max du pulse
 
+    private bool isForcedDevice = false;
+    private DeviceType forcedDevice;
+
     private void Awake()
     {
         icone = GetComponent<Image>();
@@ -39,6 +42,23 @@ public class IconeUI : MonoBehaviour
             StopCoroutine(pulseRoutine);
 
         transform.localScale = baseScale;
+    }
+
+    public void SetActionAndDevice(string newActionName, bool forceDevice = false, DeviceType device = default)
+    {
+        actionName = newActionName;
+        isForcedDevice = forceDevice;
+
+        if (forceDevice)
+        {
+            forcedDevice = device;
+            currentDevice = device;
+        }
+
+        if (gameObject.activeInHierarchy)
+        {
+            StartCoroutine(UpdateIconWhenReady());
+        }
     }
 
     private IEnumerator UpdateIconWhenReady()
@@ -68,17 +88,20 @@ public class IconeUI : MonoBehaviour
 
         DeviceWatcher.Instance.OnDeviceChanged += UpdateDevice;
 
-        currentDevice = DeviceWatcher.Instance.CurrentDevice;
+        currentDevice = isForcedDevice ? forcedDevice : DeviceWatcher.Instance.CurrentDevice;
         UpdateIcon();
     }
 
     private void UpdateDevice(DeviceType device)
     {
+
+        if (isForcedDevice) return;
+
         currentDevice = device;
         StartCoroutine(UpdateIconWhenReady());
     }
 
-    // --- NOUVELLE PARTIE : Animation de pulsation ---
+    // --- Animation de pulsation ---
 
     private IEnumerator PulseIcon()
     {

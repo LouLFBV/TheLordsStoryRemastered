@@ -125,7 +125,8 @@ public class Menu : MonoBehaviour
         {
             var input = PlayerController.Instance.Input;
             mouseSensitivitySlider.value = input.mouseSensitivity;
-            gamepadSensitivitySlider.value = input.gamepadSensitivity;
+            gamepadSensitivitySlider.value = input.gamepadSensitivity; 
+            gamepadAimSensitivitySlider.value = input.gamepadAimSensitivity;
             deadzoneSlider.value = input.stickDeadzone;
         }
 
@@ -438,6 +439,14 @@ private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         }
     }
 
+    public void OnGamepadAimSensitivityChanged(float value)
+    {
+        if (PlayerController.Instance != null && PlayerController.Instance.Input != null)
+        {
+            PlayerController.Instance.Input.gamepadAimSensitivity = value;
+            PlayerPrefs.SetFloat("GamepadAimSensi", value);
+        }
+    }
     public void OnDeadzoneChanged(float value)
     {
         if (PlayerController.Instance != null && PlayerController.Instance.Input != null)
@@ -446,6 +455,8 @@ private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
             PlayerPrefs.SetFloat("Deadzone", value);
         }
     }
+
+
 
     #endregion
 }
