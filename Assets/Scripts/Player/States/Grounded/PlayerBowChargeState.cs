@@ -70,11 +70,17 @@ public class PlayerBowChargeState : PlayerGroundedState
         player.Animator.SetFloat(AnimatorHashes.speedHash, input.magnitude * moveSpeedFactor, 0.1f, Time.deltaTime);
 
         // 5. Condition de tir (Ce qui était dans "HandleShooting")
-        if (!player.Input.AttackPressed)
+        if (!player.Input.AttackHeld)
         {
             if (player.Bow.canShoot)
             {
                 player.Bow.ShootArrow();
+                player.StateMachine.ChangeState(PlayerStateType.Idle);
+            }
+            else
+            {
+                // Si on relâche avant la fin de l'anim, on annule proprement
+                player.Bow.chargeBow = false;
                 player.StateMachine.ChangeState(PlayerStateType.Idle);
             }
         }

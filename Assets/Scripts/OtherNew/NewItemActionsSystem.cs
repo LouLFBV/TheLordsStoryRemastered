@@ -214,7 +214,6 @@ public class NewItemActionsSystem : MonoBehaviour
         instantiatedItem.transform.position = dropPoint.position;
         instantiatedItem.GetComponent<Item>().enableFloating = true;
         DestroyActionButton();
-        player.Input.UseDropActionInput();
 
     }
 

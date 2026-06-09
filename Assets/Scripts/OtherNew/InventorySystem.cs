@@ -71,7 +71,13 @@ public class InventorySystem : MonoBehaviour
     {
         RefreshContent();
     }
-
+    public void AddItem(ItemData item, int quantity)
+    {
+        for (int i = 0; i < quantity; i++)
+        {
+            AddItem(item);
+        }
+    }
     public void AddItem(ItemData item)
     {
         Debug.Log("Adding item: " + item.itemName);

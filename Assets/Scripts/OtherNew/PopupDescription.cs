@@ -96,7 +96,6 @@ public class PopupDescription : WorldDisappearOnCollected
         tmp.text = text;
     }
 
-    // --- NOUVELLE MÉTHODE ---
     private void CreateDualIconChunk(string actionName)
     {
         // 1. Icône Clavier/Souris
@@ -106,7 +105,7 @@ public class PopupDescription : WorldDisappearOnCollected
         iconeCS.SetActionAndDevice(actionName, true, DeviceType.Keyboard);
 
         // 2. Le slash de séparation
-        CreateTextChunk(" / ");
+        CreateTextChunk("/");
 
         // 3. Icône Manette
         GameObject iconGamepadObj = Instantiate(iconChunkPrefab, horizontalLayoutGroup);
