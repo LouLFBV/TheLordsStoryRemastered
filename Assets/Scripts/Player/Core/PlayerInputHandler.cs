@@ -22,7 +22,9 @@ public class PlayerInputHandler : MonoBehaviour
     public Vector2 GamepadScroll { get; private set; }
     public bool AttackPressed { get; private set; }
     public bool AttackSpecialPressed { get; private set; }
-    public bool AttackHeld { get; private set; } 
+    public bool AttackHeld { get; private set; }
+    public bool AttackAnyHeld => AttackHeld || AttackSpecialHeld;
+    public bool AttackSpecialHeld { get; private set; }
     public bool RollPressed { get; private set; }
     public bool SprintHeld { get; private set; }
     public bool CrouchPressed { get; private set; }
@@ -118,15 +120,22 @@ public class PlayerInputHandler : MonoBehaviour
 
         input.actions["Attack"].performed += ctx => {
             AttackPressed = true;
-            AttackHeld = true;  // On commence à maintenir
+            AttackHeld = true;  
         };
         input.actions["Attack"].canceled += ctx => {
             AttackPressed = false;
-            AttackHeld = false; // On relâche
+            AttackHeld = false;
         };
 
-        input.actions["AttackSpecial"].performed += ctx => AttackSpecialPressed = true;
-        input.actions["AttackSpecial"].canceled += ctx => AttackSpecialPressed = false;
+        input.actions["AttackSpecial"].performed += ctx => {
+            AttackSpecialPressed = true;
+            AttackSpecialHeld = true;
+        };
+        input.actions["AttackSpecial"].canceled += ctx =>
+        {
+            AttackSpecialPressed = false;
+            AttackSpecialHeld = false;
+        };
 
         input.actions["ForwardRoll"].performed += ctx => RollPressed = true;
         input.actions["ForwardRoll"].canceled += ctx => RollPressed = false;
@@ -252,4 +261,12 @@ public class PlayerInputHandler : MonoBehaviour
     public void UseEquipActionInput() => EquipActionPressed = false;
     public void UseUseActionInput() => UseActionPressed = false;
     public void UseUnequipAction() => UnequipActionPressed = false;
+
+    public void ResetAllAttackInputs()
+    {
+        AttackPressed = false;
+        AttackHeld = false;
+        AttackSpecialPressed = false;
+        AttackSpecialHeld = false;
+    }
 }

@@ -23,7 +23,7 @@ public class PlayerBowChargeState : PlayerGroundedState
 
     public override void Update()
     {
-
+        Debug.Log("Attaque maintenue : " + player.Input.AttackHeld);
         // 1. Gestion de la charge (Inchangé)
         if (currentChargeTime < chargeDuration)
         {
@@ -70,7 +70,7 @@ public class PlayerBowChargeState : PlayerGroundedState
         player.Animator.SetFloat(AnimatorHashes.speedHash, input.magnitude * moveSpeedFactor, 0.1f, Time.deltaTime);
 
         // 5. Condition de tir (Ce qui était dans "HandleShooting")
-        if (!player.Input.AttackHeld)
+        if (!player.Input.AttackAnyHeld)
         {
             if (player.Bow.canShoot)
             {
@@ -79,7 +79,6 @@ public class PlayerBowChargeState : PlayerGroundedState
             }
             else
             {
-                // Si on relâche avant la fin de l'anim, on annule proprement
                 player.Bow.chargeBow = false;
                 player.StateMachine.ChangeState(PlayerStateType.Idle);
             }
@@ -90,8 +89,8 @@ public class PlayerBowChargeState : PlayerGroundedState
     {
         base.Exit();
         player.Animator.SetBool(AnimatorHashes.chargeBool, false);
-        player.Animator.SetFloat(AnimatorHashes.speedHash, 0f);
-
+        player.Animator.SetFloat(AnimatorHashes.speedHash, 0f); 
+        player.Input.ResetAllAttackInputs();
         // Reset de la caméra
         ThirdPersonCameraController.Instance.SetAimState(false);
         ThirdPersonCameraController.Instance.ResetFOV();

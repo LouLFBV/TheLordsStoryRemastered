@@ -6,7 +6,7 @@ using UnityEngine.EventSystems;
 public class UIMainMenu : MonoBehaviour
 {
     [Header("Cursor Settings")]
-    [SerializeField] private float cursorSpeed = 1000f;
+    [SerializeField] private float cursorSpeed = 1300f;
 
     [Header("UI References")]
     [SerializeField] private GameObject creditUI; 
