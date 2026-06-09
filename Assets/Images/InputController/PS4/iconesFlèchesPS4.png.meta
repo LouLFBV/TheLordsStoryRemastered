@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: d05871a257a9a6e4782023d27696a2b8
+guid: dae8af10bb9a2a248a311d97238e3412
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -43,13 +43,13 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
-  spriteBorder: {x: 13, y: 13, z: 13, w: 13}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -108,13 +108,101 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: "iconesFl\xE8chesPS4_0"
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 22
+        width: 60
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4fd50f6b230efc24bb5c6a0022b81c85
+      internalID: 681640707
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "iconesFl\xE8chesPS4_1"
+      rect:
+        serializedVersion: 2
+        x: 141
+        y: 22
+        width: 60
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5450cb6c97ae60c40a6cd50a831a185b
+      internalID: 542601824
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "iconesFl\xE8chesPS4_2"
+      rect:
+        serializedVersion: 2
+        x: 253
+        y: 22
+        width: 60
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d2884883f3f89ac4c835c56565276e6c
+      internalID: 553613596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "iconesFl\xE8chesPS4_3"
+      rect:
+        serializedVersion: 2
+        x: 367
+        y: 22
+        width: 60
+        height: 60
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bf2f7bac71287fb4b9f48f801fc3143c
+      internalID: -760310010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
-    internalID: 1537655665
+    spriteID: 72827af16c62008458355ff2d309b0b9
+    internalID: 0
     vertices: []
     indices: 
     edges: []
@@ -122,7 +210,11 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      "iconesFl\xE8chesPS4_0": 681640707
+      "iconesFl\xE8chesPS4_1": 542601824
+      "iconesFl\xE8chesPS4_2": 553613596
+      "iconesFl\xE8chesPS4_3": -760310010
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class InputIconDatabase : MonoBehaviour
 {
@@ -38,9 +39,11 @@ public class InputIconDatabase : MonoBehaviour
             case GamepadType.Switch:
                 activeGamepadSet = switchSet;
                 break;
-
-            default:
+            case GamepadType.Xbox:
                 activeGamepadSet = xboxSet;
+                break;
+            default:
+                activeGamepadSet = playstationSet;
                 break;
         }
     }
@@ -53,34 +56,26 @@ public class InputIconDatabase : MonoBehaviour
         if (string.IsNullOrEmpty(controlPath))
             return null;
 
-        // ------------------ GAMEPAD ------------------
-        if (controlPath.Contains("Gamepad") || controlPath.Contains("DualShock") || controlPath.Contains("DualSense"))
+        // 1. Déterminer quel set utiliser
+        ButtonIconSet targetSet = null;
+
+        if (controlPath.Contains("Gamepad") || controlPath.Contains("DualShock") || controlPath.Contains("DualSense") || controlPath.Contains("Joystick"))
         {
-            if (activeGamepadSet == null)
-                UpdateGamepadSet();
-
-            string normalizedPath = controlPath;
-            if (controlPath.Contains("DualShock") || controlPath.Contains("DualSense"))
-            {
-                normalizedPath = controlPath.Replace("DualShockGamepadHID", "<Gamepad>").Replace("DualSenseGamepadHID", "<Gamepad>");
-            }
-
-            return activeGamepadSet?.GetIcon(normalizedPath);
+            if (activeGamepadSet == null) UpdateGamepadSet();
+            targetSet = activeGamepadSet;
         }
+        else if (controlPath.Contains("<Keyboard>")) targetSet = keyboardSet;
+        else if (controlPath.Contains("<Mouse>")) targetSet = mouseSet;
 
-        // ------------------ KEYBOARD ------------------
-        if (controlPath.Contains("<Keyboard>"))
-        {
-            return keyboardSet?.GetIcon(controlPath);
-        }
+        if (targetSet == null) return null;
 
-        // ------------------ MOUSE ---------------------
-        if (controlPath.Contains("<Mouse>"))
-        {
-            return mouseSet?.GetIcon(controlPath);
-        }
+        // 2. Trouver l'icône en comparant la fin du chemin (ex: "select")
+        // On extrait la partie après le dernier slash (ex: "select")
+        string key = controlPath.Split('/').Last();
 
-        // ------------------ UNKNOWN -------------------
-        return null; // laisser texte en fallback
+        // On cherche dans le set une entrée qui se termine par ce nom
+        var entry = targetSet.icons.FirstOrDefault(i => i.controlPath.Split('/').Last() == key);
+
+        return entry?.icon;
     }
 }
