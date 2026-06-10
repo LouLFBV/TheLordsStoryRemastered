@@ -12,6 +12,7 @@ public class Menu : MonoBehaviour
     public Button loadGameButton;
     public Button loadLastGameButton;
     public Button clearSavedDataButton;
+    public Button saveButton;
     [SerializeField] private Animator animatorPanelChargerPartie;
 
     [SerializeField]
@@ -80,9 +81,9 @@ public class Menu : MonoBehaviour
             return;
         }
 
+        VerifSaveGameButton();
 
 
-        
 
 
         // Initialisation des qualités graphiques
@@ -303,7 +304,13 @@ private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         TransitionPanel.Instance.PlayTransitionOut();
         SaveManager.Instance.SaveGame();
         TransitionPanel.Instance.Continue();
-
+    }
+    private void VerifSaveGameButton()
+    {
+        if (saveButton == null) return;
+        string nomDeScene = SceneManager.GetActiveScene().name;
+        bool canSave = nomDeScene != "Boss1" && nomDeScene != "Boss2" && nomDeScene != "Boss3" && nomDeScene != "BossFinal" && nomDeScene != "GrotteSecreteBoss";
+        saveButton.interactable = canSave;
     }
     public void LoadGame(int slot)
     {
