@@ -37,12 +37,12 @@ public class FootstepController : MonoBehaviour
         if (clip == null)
             return;
 
-        if (animator.GetBool("IsSprinting"))
-            audioSource.volume = 0.9f;
-        else if (animator.GetBool("IsCrouched"))
-            audioSource.volume *= 0.4f;
-        else
-            audioSource.volume = 0.6f;
+        //if (animator.GetBool("IsSprinting"))
+        //    audioSource.volume = 0.9f;
+        //else if (animator.GetBool("IsCrouched"))
+        //    audioSource.volume *= 0.4f;
+        //else
+        //    audioSource.volume = 0.6f;
 
         audioSource.pitch = Random.Range(0.95f, 1.05f);
         audioSource.PlayOneShot(clip);

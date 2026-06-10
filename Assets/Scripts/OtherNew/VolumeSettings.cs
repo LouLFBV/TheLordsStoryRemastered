@@ -1,6 +1,6 @@
 ﻿using UnityEngine.UI;
 using UnityEngine.Audio;
-using UnityEngine; // ⚠️ NE PAS OUBLIER POUR L'AUDIO MIXER
+using UnityEngine; 
 
 public class VolumeSettings : MonoBehaviour
 {
@@ -19,13 +19,13 @@ public class VolumeSettings : MonoBehaviour
         InitSliderValue("Master", masterVolumeSlider);
         InitSliderValue("MusicVolume", musicVolumeSlider);
         InitSliderValue("SFXVolume", sfxVolumeSlider);
-        InitSliderValue("PasVolume", sfxVolumeSlider);
+        InitSliderValue("PasVolume", pasVolumeSlider);
 
         // 2. On écoute les changements de valeur des sliders en temps réel
         masterVolumeSlider.onValueChanged.AddListener(SetMasterVolume);
         musicVolumeSlider.onValueChanged.AddListener(SetMusicVolume);
         sfxVolumeSlider.onValueChanged.AddListener(SetSFXVolume);
-        sfxVolumeSlider.onValueChanged.AddListener(SetPasVolume);
+        pasVolumeSlider.onValueChanged.AddListener(SetPasVolume);
     }
 
     public void SetMasterVolume(float value) => UpdateMixerVolume("Master", value);
