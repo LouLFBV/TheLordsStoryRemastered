@@ -81,11 +81,40 @@ public class UIManagerSystem : MonoBehaviour
         List<RaycastResult> results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(eventData, results);
 
+        // Log pour voir si quelque chose est détecté
+        Debug.Log($"[UIManager] Tentative de clic à {eventData.position}. Objets trouvés : {results.Count}");
+
         if (results.Count > 0)
         {
             GameObject clickedObject = results[0].gameObject;
+            Debug.Log($"[UIManager] Objet cliqué : {clickedObject.name} (Tag: {clickedObject.tag})");
+
+            // Exécution de l'événement clic
             ExecuteEvents.Execute(clickedObject, eventData, ExecuteEvents.pointerClickHandler);
+
+            // Sélection de l'objet
             EventSystem.current.SetSelectedGameObject(clickedObject);
+            Debug.Log($"[UIManager] {clickedObject.name} a été défini comme SelectedGameObject.");
+
+            var rebindComp = clickedObject.GetComponentInParent<InputRebindUI>();
+
+            // Si on a trouvé le script de rebind, on utilise l'objet qui le porte
+            if (rebindComp != null)
+            {
+                clickedObject = rebindComp.gameObject;
+
+                // Simule le clic
+                ExecuteEvents.Execute(clickedObject, eventData, ExecuteEvents.pointerClickHandler);
+
+                // Au lieu de laisser la sélection, on la retire immédiatement
+                EventSystem.current.SetSelectedGameObject(null);
+
+                Debug.Log($"[UIManager] Clic effectué sur {clickedObject.name} et sélection réinitialisée.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[UIManager] Clic effectué mais aucun objet UI n'a été trouvé sous le curseur !");
         }
     }
 

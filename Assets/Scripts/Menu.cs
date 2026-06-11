@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.InputSystem;
@@ -15,11 +16,9 @@ public class Menu : MonoBehaviour
     public Button saveButton;
     [SerializeField] private Animator animatorPanelChargerPartie;
 
-    [SerializeField]
-    private Dropdown resolutionDropdown;
+    [SerializeField]    private TMP_Dropdown resolutionDropdown;
 
-    [SerializeField]
-    private Dropdown qualitiesDropdown;
+    [SerializeField]    private TMP_Dropdown qualitiesDropdown;
 
     [SerializeField]
     private Slider volumeSlider;

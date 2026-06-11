@@ -23,6 +23,8 @@ public class InputRebindUI : MonoBehaviour
 
     public void StartRebind()
     {
+        if (UIManagerSystem.Instance != null) UIManagerSystem.Instance.ToggleCursor(false);
+
         InputAction action = playerInput.actions[actionName];
 
         iconField.enabled = false;
@@ -35,8 +37,8 @@ public class InputRebindUI : MonoBehaviour
         string path = binding.effectivePath;
 
         rebindOperation = action.PerformInteractiveRebinding(bindingIndex)
-            .WithCancelingThrough("<Keyboard>/escape")
-            .OnMatchWaitForAnother(0.1f);
+        .WithCancelingThrough("<Keyboard>/escape")
+        .OnMatchWaitForAnother(0.1f);
 
         //  BLOQUAGE CROISÉ CLAVIER / MANETTE
         if (!string.IsNullOrEmpty(path))
@@ -56,18 +58,22 @@ public class InputRebindUI : MonoBehaviour
         }
 
         rebindOperation
-            .OnComplete(operation =>
-            {
-                operation.Dispose();
-                playerInput.actions.Enable();
-                FinishRebind();
-            })
-            .OnCancel(operation =>
-            {
-                operation.Dispose();
-                playerInput.actions.Enable();
-                RefreshDisplay();
-            });
+        .OnComplete(operation =>
+        {
+            operation.Dispose();
+            playerInput.actions.Enable();
+            // 2. Réactive le curseur après la saisie
+            if (UIManagerSystem.Instance != null) UIManagerSystem.Instance.ToggleCursor(true);
+            FinishRebind();
+        })
+        .OnCancel(operation =>
+        {
+            operation.Dispose();
+            playerInput.actions.Enable();
+            // 2. Réactive le curseur après annulation
+            if (UIManagerSystem.Instance != null) UIManagerSystem.Instance.ToggleCursor(true);
+            RefreshDisplay();
+        });
 
         rebindOperation.Start();
 
