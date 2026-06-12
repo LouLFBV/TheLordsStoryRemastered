@@ -6,7 +6,7 @@ public class PlayerUIState : PlayerState
     public override void Enter()
     {
         base.Enter(); 
-        if (player.RequestedPanelType != UIPanelType.Dialogue)
+        if (player.RequestedPanelType != UIPanelType.Dialogue && player.RequestedPanelType != UIPanelType.EndGame)
         {
             
             Time.timeScale = 0f;
@@ -35,6 +35,7 @@ public class PlayerUIState : PlayerState
     public override void Exit()
     {
         base.Exit();
+        if (player.RequestedPanelType == UIPanelType.EndGame) return;
         if (player.RequestedPanelType != UIPanelType.Dialogue)
         {
             Time.timeScale = 1f;
@@ -59,5 +60,6 @@ public enum UIPanelType
     Options,
     Commandes,
     Dialogue,
+    EndGame,
     None
 }

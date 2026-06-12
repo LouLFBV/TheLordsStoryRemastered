@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using TMPro; // Important pour manipuler le TextMeshPro
+using UnityEngine.UI; // Pour manipuler les éléments UI comme le CanvasGroup et les Images
 
 public class GameEndManager : MonoBehaviour
 {
@@ -16,7 +17,8 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private AudioClip endGameMusic;
 
     [Header("Ending UI (Séquence de Textes)")]
-    [SerializeField] private EndingText[] endingTexts; // Ton tableau de GameObjects contenant du TMPro
+    [SerializeField] private EndingText[] endingTexts; // Ton tableau personnalisé robuste
+    [SerializeField] private float textFadeDuration = 1.5f;   // Vitesse globale des fondus (In/Out) des textes/icônes
     [SerializeField] private GameObject menuButton;           // Le bouton de retour au menu
 
     private void OnEnable() => bossHealthSystem.OnDeath += StartEndSequence;
@@ -28,17 +30,33 @@ public class GameEndManager : MonoBehaviour
         if (fadePanel != null) fadePanel.alpha = 0f;
         if (menuButton != null) menuButton.SetActive(false);
 
-        // On éteint tous les textes du tableau et on met leur alpha à 0
-        foreach (EndingText txtObject in endingTexts)
+        // On initialise chaque groupe de texte : tout invisible à l'alpha 0
+        foreach (EndingText group in endingTexts)
         {
-            if (txtObject != null)
+            if (group == null) continue;
+
+            // 1. On passe tous les TextMeshPro du groupe à un alpha de 0
+            if (group.textMeshProUGUIs != null)
             {
-                TextMeshProUGUI tmp = txtObject.textObject.GetComponent<TextMeshProUGUI>();
-                if (tmp != null)
+                foreach (TextMeshProUGUI tmp in group.textMeshProUGUIs)
                 {
-                    tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, 0f);
+                    if (tmp != null)
+                    {
+                        tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, 0f);
+                    }
                 }
-                txtObject.textObject.SetActive(false);
+            }
+
+            // 2. On passe l'icône à un alpha de 0
+            if (group.icone != null)
+            {
+                group.icone.color = new Color(group.icone.color.r, group.icone.color.g, group.icone.color.b, 0f);
+            }
+
+            // 3. On désactive le parent pour ne pas polluer le raycast ou l'UI au départ
+            if (group.parentTextObject != null)
+            {
+                group.parentTextObject.SetActive(false);
             }
         }
     }
@@ -50,8 +68,13 @@ public class GameEndManager : MonoBehaviour
 
     private IEnumerator EndSequenceRoutine()
     {
+        yield return new WaitForSeconds(5f);
+
         // 1. Désactiver les inputs
-        PlayerController.Instance.Input.DesactiveInput();
+        //PlayerController.Instance.Input.DesactiveInput();
+
+        PlayerController.Instance.RequestedPanelType = UIPanelType.EndGame; // On s'assure qu'aucun panneau n'est actif
+        PlayerController.Instance.StateMachine.ChangeState(PlayerStateType.UI);     
 
         // 2. Prendre le contrôle de la caméra
         ThirdPersonCameraController.Instance.EnterCinematicMode();
@@ -59,17 +82,26 @@ public class GameEndManager : MonoBehaviour
         // 3. Rotation fluide vers le ciel
         float time = 0;
         Quaternion startRot = ThirdPersonCameraController.Instance.transform.rotation;
-        Quaternion endRot = skyViewPoint.rotation;
+
+        // --- MAGIE ICI ---
+        // On extrait le X (Pitch) du point dans le ciel
+        float targetPitch = skyViewPoint.eulerAngles.x;
+        // On garde le Y (Yaw) actuel de la caméra pour éviter qu'elle tourne sur les côtés
+        float currentYaw = startRot.eulerAngles.y;
+
+        // On reconstruit la rotation cible parfaite (X du ciel, Y actuel, Z à 0)
+        Quaternion endRot = Quaternion.Euler(targetPitch, currentYaw, 0f);
 
         while (time < 2f)
         {
+            // Le Slerp va maintenant se faire uniquement sur l'axe X
             ThirdPersonCameraController.Instance.transform.rotation = Quaternion.Slerp(startRot, endRot, time / 2f);
             time += Time.deltaTime;
             yield return null;
         }
 
-        // --- Attente de 3 secondes avant le fondu au noir ---
-        yield return new WaitForSeconds(3f);
+        // Attente de 3 secondes avant le fondu au noir
+        yield return new WaitForSeconds(1f);
 
         // 4. Fondu au noir (durée : 2 secondes)
         yield return FadeCanvas(fadePanel, 1f, 2f);
@@ -94,34 +126,31 @@ public class GameEndManager : MonoBehaviour
             audioSource.Play();
         }
 
-        // B. Affichage des textes un par un
+        // B. Affichage des groupes de textes un par un
         for (int i = 0; i < endingTexts.Length; i++)
         {
-            if (endingTexts[i] == null) continue;
+            EndingText currentGroup = endingTexts[i];
+            if (currentGroup == null || currentGroup.parentTextObject == null) continue;
 
-            // Récupération du composant TextMeshPro
-            if (!endingTexts[i].textObject.TryGetComponent<TextMeshProUGUI>(out var tmpText))
-            {
-                Debug.LogWarning($"Le GameObject {endingTexts[i].textObject.name} n'a pas de composant TextMeshProUGUI !");
-                continue;
-            }
+            // On active le conteneur parent
+            currentGroup.parentTextObject.SetActive(true);
 
-            // On active le GameObject et on lance le fondu d'apparition (Alpha 0 -> 1)
-            endingTexts[i].textObject.SetActive(true);
-            yield return FadeTMPro(tmpText, 1f, endingTexts[i].displayDuration);
+            // Fondu d'apparition (Alpha 0 -> 1) de tous les textes + l'icône en même temps
+            yield return FadeEndingGroup(currentGroup, 1f, textFadeDuration);
 
-            yield return new WaitForSeconds(endingTexts[i].displayDuration);
+            // Temps d'attente propre à cette étape (configuré dans ton inspecteur)
+            yield return new WaitForSeconds(currentGroup.displayDuration);
 
-            // SI ce n'est PAS le dernier texte du tableau, on le fait disparaître
+            // SI ce n'est PAS la dernière étape, on fait tout disparaître
             if (i < endingTexts.Length - 1)
             {
-                yield return FadeTMPro(tmpText, 0f, endingTexts[i].displayDuration);
-                endingTexts[i].textObject.SetActive(false); // On le désactive pour nettoyer la hiérarchie
+                yield return FadeEndingGroup(currentGroup, 0f, textFadeDuration);
+                currentGroup.parentTextObject.SetActive(false); // Nettoyage de la hiérarchie
             }
-            // SI c'est le dernier texte, la boucle se termine ici, il reste donc affiché !
+            // SI c'est le dernier groupe, la boucle s'arrête et il reste affiché !
         }
 
-        // C. Affichage du bouton de retour au menu (une fois la boucle terminée)
+        // C. Affichage du bouton de retour au menu
         if (menuButton != null)
         {
             menuButton.SetActive(true);
@@ -144,26 +173,66 @@ public class GameEndManager : MonoBehaviour
         canvasGroup.alpha = targetAlpha;
     }
 
-    // --- FONCTION DE FONDU POUR TEXTMESHPRO ---
-    private IEnumerator FadeTMPro(TextMeshProUGUI text, float targetAlpha, float duration)
+    // --- NOUVELLE FONCTION : FONDU SIMULTANÉ DU GROUPE (TEXTES + ICÔNE) ---
+    private IEnumerator FadeEndingGroup(EndingText group, float targetAlpha, float duration)
     {
-        Color startColor = text.color;
-        Color targetColor = new Color(startColor.r, startColor.g, startColor.b, targetAlpha);
         float time = 0f;
+
+        // On sauvegarde les alphas de départ pour chaque texte du groupe
+        float[] startAlphasText = new float[group.textMeshProUGUIs.Length];
+        for (int j = 0; j < group.textMeshProUGUIs.Length; j++)
+        {
+            if (group.textMeshProUGUIs[j] != null)
+                startAlphasText[j] = group.textMeshProUGUIs[j].color.a;
+        }
+
+        // On sauvegarde l'alpha de départ de l'icône
+        float startAlphaIcon = group.icone != null ? group.icone.color.a : 0f;
 
         while (time < duration)
         {
-            text.color = Color.Lerp(startColor, targetColor, time / duration);
+            float progress = time / duration;
+
+            // Appliquer le fondu sur tous les textes présents dans le tableau
+            for (int j = 0; j < group.textMeshProUGUIs.Length; j++)
+            {
+                if (group.textMeshProUGUIs[j] != null)
+                {
+                    Color c = group.textMeshProUGUIs[j].color;
+                    c.a = Mathf.Lerp(startAlphasText[j], targetAlpha, progress);
+                    group.textMeshProUGUIs[j].color = c;
+                }
+            }
+
+            // Appliquer le fondu sur l'icône (si elle existe)
+            if (group.icone != null)
+            {
+                Color c = group.icone.color;
+                c.a = Mathf.Lerp(startAlphaIcon, targetAlpha, progress);
+                group.icone.color = c;
+            }
+
             time += Time.deltaTime;
             yield return null;
         }
-        text.color = targetColor;
+
+        // Sécurité de fin de boucle : on force l'alpha cible exact
+        foreach (var tmp in group.textMeshProUGUIs)
+        {
+            if (tmp != null) tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, targetAlpha);
+        }
+        if (group.icone != null)
+        {
+            group.icone.color = new Color(group.icone.color.r, group.icone.color.g, group.icone.color.b, targetAlpha);
+        }
     }
 }
 
 [System.Serializable]
 public class EndingText
 {
-    public GameObject textObject; // Le GameObject contenant le TextMeshPro
-    public float displayDuration = 3f; // Durée d'affichage pour ce texte spécifique
+    public GameObject parentTextObject; // Le conteneur UI principal de cette étape
+    public TextMeshProUGUI[] textMeshProUGUIs; // Tous les textes à animer en même temps (ex: Titre + Paragraphe)
+    public Image icone; // L'icône ou le logo lié à ce texte
+    public float displayDuration = 3f; // Durée d'affichage spécifique
 }
