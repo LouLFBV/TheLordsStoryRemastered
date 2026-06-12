@@ -1,3 +1,0 @@
-Pour le cadre, utiliser le même que pour l'UI du marchand
-
-Pareil pour la croix pour fermer la fenêtre

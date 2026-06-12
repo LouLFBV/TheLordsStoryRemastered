@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
 
 public class PlayerInputHandler : MonoBehaviour
 {
@@ -239,6 +238,8 @@ public class PlayerInputHandler : MonoBehaviour
         Object1Pressed = false;
         Object2Pressed = false;
     }
+
+    public void DesactiveInput() => input.enabled = false;
     public void UseInventoryInput() => InventoryPressed = false;
     public void UseMenuInput() => MenuPressed = false;
     public void UseCloseMenuInput() => CloseMenuPressed = false;

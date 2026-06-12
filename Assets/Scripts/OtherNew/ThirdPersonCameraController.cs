@@ -41,8 +41,8 @@ public class ThirdPersonCameraController : MonoBehaviour
     private float currentCollisionDistance;
 
 
-    [Header("Lock Transition")]
     private bool _isLocked = false;
+    private bool _isCinematicMode = false;
     public bool IsLocked => _isLocked;
 
     // Valeurs de travail
@@ -89,7 +89,7 @@ public class ThirdPersonCameraController : MonoBehaviour
     }
     private void LateUpdate()
     {
-        if (_isLocked) return; // Si la caméra est verrouillée, on ignore tout input de rotation
+        if (_isLocked || _isCinematicMode) return; // Si la caméra est verrouillée, on ignore tout input de rotation
         HandleInput();
         UpdateCameraPosition();
     }
@@ -183,6 +183,8 @@ public class ThirdPersonCameraController : MonoBehaviour
     }
 
     public Transform GetTransform() => transform;
+    public void EnterCinematicMode() { _isCinematicMode = true; }
+    public void ExitCinematicMode() { _isCinematicMode = false; }
 
     public void SetAimState(bool isAiming)
     {

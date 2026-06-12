@@ -1,1 +1,0 @@
-Je n'envoie pas le fond avec les éléments séparés parce que je ne vois pas comment adapter le rouge à tous les écrans. Je te le donne en 1920x1080px qui est le ratio par défaut des écrans PC.
