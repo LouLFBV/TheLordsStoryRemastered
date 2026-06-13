@@ -31,7 +31,10 @@ public class PlayerAttackState : PlayerGroundedState
             player.StateMachine.ChangeState(PlayerStateType.Idle);
             return;
         }
-
+        if (player.CurrentAttack.attackSound != null)
+        {
+            player.PlayLocalSound(player.CurrentAttack.attackSound);
+        }
         // On ordonne l'exécution
         player.Combat.ExecuteAttack(player.CurrentAttack);
         player.Animator.SetLayerWeight(player.CurrentAttack.animatorLayer, 1f);
@@ -50,6 +53,10 @@ public class PlayerAttackState : PlayerGroundedState
             {
                 // On prépare la suite
                 player.CurrentAttack = player.CurrentAttack.nextAttack;
+                if (player.CurrentAttack.attackSound != null)
+                {
+                    player.PlayLocalSound(player.CurrentAttack.attackSound);
+                }
                 player.Combat.ExecuteAttack(player.CurrentAttack);
             }
         }

@@ -65,6 +65,7 @@ public class PlayerController : MonoBehaviour, ICombatant
 
     [Header("Others")]
     [HideInInspector] public InteractSystem interactSystem;
+    [SerializeField] private AudioSource audioSourceAttack;
     public UIPanelType RequestedPanelType { get; set; }
     public event Action<bool> OnOpenUI;
     private UIPanelType? _previousPanelType = null;
@@ -208,6 +209,14 @@ public class PlayerController : MonoBehaviour, ICombatant
             Rigidbody.rotation * Animator.deltaRotation
         );
     }
+
+    #region Sound
+    public void PlayLocalSound(AudioClip clip)
+    {
+        if (clip == null) return;
+        audioSourceAttack.PlayOneShot(clip);
+    }
+    #endregion
 
     #region Animation Events
     public void AE_EquipWeapon() // AE pour Animation Event
