@@ -9,8 +9,7 @@ public class SpawnRate : MonoBehaviour
         int randomValue = Random.Range(0, 100);
         if (randomValue > spawnRate)
         {
-            GameObject parent = transform.parent.gameObject;
-            Destroy(parent);
+            Destroy(transform.gameObject);
         }
     }
 }
