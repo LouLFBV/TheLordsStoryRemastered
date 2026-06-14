@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -81,6 +82,7 @@ public class Menu : MonoBehaviour
         }
 
         VerifSaveGameButton();
+        VerifLoadSaveGameButton();
 
 
 
@@ -140,6 +142,14 @@ public class Menu : MonoBehaviour
         Time.timeScale = 1f; // Assurez-vous que le temps est normalisé au démarrage du menu
 
         OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
+    }
+
+    private void VerifLoadSaveGameButton()
+    {
+        if (loadLastGameButton == null) return;
+        string nomDeScene = SceneManager.GetActiveScene().name;
+        bool canSave = nomDeScene != "Donjon";
+        loadLastGameButton.interactable = canSave;
     }
 
     private void OnEnable()
@@ -308,7 +318,7 @@ private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (saveButton == null) return;
         string nomDeScene = SceneManager.GetActiveScene().name;
-        bool canSave = nomDeScene != "Boss1" && nomDeScene != "Boss2" && nomDeScene != "Boss3" && nomDeScene != "BossFinal" && nomDeScene != "GrotteSecreteBoss";
+        bool canSave = nomDeScene != "Boss1" && nomDeScene != "Boss2" && nomDeScene != "Boss3" && nomDeScene != "BossFinal" && nomDeScene != "GrotteSecreteBoss" && nomDeScene != "Donjon";
         saveButton.interactable = canSave;
     }
     public void LoadGame(int slot)
