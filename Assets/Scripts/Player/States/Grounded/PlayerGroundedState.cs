@@ -65,6 +65,8 @@ public class PlayerGroundedState : PlayerState
         if (player.PendingLibraryItem != null)
             if (player.PendingLibraryItem.itemPrefab != null)
                 hasWeapon = player.PendingLibraryItem.itemPrefab.activeSelf;
+        if (!hasWeapon)
+            Debug.LogWarning("No weapon equipped! Please equip a weapon to attack.");
 
         // 3. PRIORITÉ : L'Attaque ou l'Arc
         if (player.Input.AttackPressed && hasWeapon)

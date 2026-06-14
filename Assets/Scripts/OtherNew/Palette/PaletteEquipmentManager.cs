@@ -242,9 +242,7 @@ public class PaletteEquipmentManager : MonoBehaviour
         else
         {
             // On déséquipe l'objet actuel
-            player.PendingUnequipType = itemToEquip.handWeaponType; // Souvent None ou SmallItem
-            player.PendingWeaponItem = itemToEquip; // Pour que UnequipState sache que c'est un consommable
-            player.StateMachine.ChangeState(PlayerStateType.Unequip);
+            player.PrepareUnequip(itemToEquip);
             slotManager.objectSlots[slot].isEquipped = false;
         }
 
@@ -354,9 +352,8 @@ public class PaletteEquipmentManager : MonoBehaviour
         if (item == null) return;
 
         PaletteSlot slotData = slotManager.weaponSlots[slot];
-        player.PendingUnequipType = item.handWeaponType;
 
-        player.StateMachine.ChangeState(PlayerStateType.Unequip);
+        PlayerController.Instance.PrepareUnequip(item);
         slotData.isEquipped = false;
     }
 }

@@ -2,31 +2,20 @@ using UnityEngine;
 
 public class PaletteSaveSystem : MonoBehaviour
 {
-    
     [SerializeField] private EquipmentLibrary equipmentLibrary;
     [SerializeField] private InteractSystem interactSystem;
     [SerializeField] private PaletteSlotManager slotManager;
     [SerializeField] private PaletteEquipmentManager equipmentManager;
+
     public PaletteSaveData GetSaveData()
     {
+        // CORRECTION : On utilise "CreateSlotSave" pour injecter le statut 'isEquipped' provenant des slots réels
         return new PaletteSaveData
         {
-            weapon1 = CreateSave(slotManager.weapons[0]),
-            weapon2 = CreateSave(slotManager.weapons[1]),
-            object1 = CreateSave(slotManager.objects[0]),
-            object2 = CreateSave(slotManager.objects[1]),
-        };
-    }
-
-    private PaletteSlotSave CreateSave(ItemInInventory slot)
-    {
-        if (slot.itemData == null)
-            return null;
-
-        return new PaletteSlotSave
-        {
-            itemID = slot.itemData.itemID,
-            count = slot.count
+            weapon1 = CreateSlotSave(slotManager.weapons[0]?.itemData, slotManager.weapons[0], slotManager.weaponSlots[0].isEquipped),
+            weapon2 = CreateSlotSave(slotManager.weapons[1]?.itemData, slotManager.weapons[1], slotManager.weaponSlots[1].isEquipped),
+            object1 = CreateSlotSave(slotManager.objects[0]?.itemData, slotManager.objects[0], slotManager.objectSlots[0].isEquipped),
+            object2 = CreateSlotSave(slotManager.objects[1]?.itemData, slotManager.objects[1], slotManager.objectSlots[1].isEquipped),
         };
     }
 
@@ -43,8 +32,6 @@ public class PaletteSaveSystem : MonoBehaviour
         };
     }
 
-
-
     public void LoadSaveData(PaletteSaveData data)
     {
         slotManager.ClearPalette();
@@ -58,10 +45,9 @@ public class PaletteSaveSystem : MonoBehaviour
         slotManager.RefreshAffichage();
         slotManager.UpdateImageSeleted();
 
+        // On applique l'équipement une fois que toute la palette est prête
         ApplyEquippedStateAfterLoad();
     }
-
-
 
     private void LoadWeaponSlot(int slot, PaletteSlotSave save)
     {
@@ -78,11 +64,10 @@ public class PaletteSaveSystem : MonoBehaviour
             count = save.count
         };
 
-        PaletteSlot slotData = slotManager.weaponSlots[slot - 1];
+        PaletteSlot slotData = slotManager.weaponSlots[index];
         slotData.slotItemData = item;
-        slotData.isEquipped = save.isEquipped;
+        slotData.isEquipped = save.isEquipped; // Récupère enfin le vrai état !
     }
-
 
     private void LoadObjectSlot(int slot, PaletteSlotSave save)
     {
@@ -99,7 +84,7 @@ public class PaletteSaveSystem : MonoBehaviour
             count = save.count
         };
 
-        PaletteSlot slotData = slotManager.objectSlots[slot - 1];
+        PaletteSlot slotData = slotManager.objectSlots[index];
         slotData.slotItemData = item;
         slotData.isEquipped = save.isEquipped;
         slotManager.UpdateSlotUI(index, save.count);
@@ -129,36 +114,59 @@ public class PaletteSaveSystem : MonoBehaviour
 
     private void EquipFromSave(ItemData item)
     {
-        // Désactiver tout
-        equipmentManager.DisableObject(slotManager.objectSlots[0].slotItemData);
-        equipmentManager.DisableObject(slotManager.objectSlots[1].slotItemData);
+        // Désactiver les objets rapides pour éviter les conflits visuels dans les mains
+        if (slotManager.objectSlots[0].slotItemData != null) equipmentManager.DisableObject(slotManager.objectSlots[0].slotItemData);
+        if (slotManager.objectSlots[1].slotItemData != null) equipmentManager.DisableObject(slotManager.objectSlots[1].slotItemData);
 
         EquipmentLibraryItem libItem = equipmentLibrary.Get(item);
 
-        // Activer le prefab
-        if (!libItem.itemPrefab.activeSelf)
+        if (libItem != null && libItem.itemPrefab != null)
+        {
+            // Activer instantanément le visuel de l'arme au spawn
             libItem.itemPrefab.SetActive(true);
 
-        // Informer les systèmes
-        //interactSystem.SetCurrentEquippedItem(libItem);
-        //PlayerStats.instance.equipmentToEquip = libItem;
+            if (PlayerController.Instance != null)
+            {
+                PlayerController player = PlayerController.Instance;
 
-        // Animator
-        // ApplyWeaponTypeToAnimator(item.handWeaponType);
+                player.PendingLibraryItem = libItem;
+                player.PendingWeaponItem = item;
+                player.PendingWeaponType = item.handWeaponType;
 
-        Debug.Log($"[SAVE] Equipped weapon from save: {item.name}");
+                player.Animator.SetBool("BowEquipped", item.handWeaponType == HandWeapon.Bow);
+                player.Animator.SetBool("IsTwoHandedWeapon", item.handWeaponType == HandWeapon.TwoHanded);
+                player.Animator.SetBool("IsOneHandedWeapon", item.handWeaponType == HandWeapon.OneHanded);
+
+                if (libItem.itemPrefab.TryGetComponent<WeaponDamageDetector>(out var newDetector))
+                {
+                    player.Combat.UpdateWeaponDetector(newDetector);
+                }
+                else if (item.itemType != ItemType.Consumable)
+                {
+                    Debug.LogWarning($"[SAVE] Le prefab {libItem.itemPrefab.name} n'a pas de WeaponDamageDetector au chargement !");
+                }
+
+            }
+        }
+
+        Debug.Log($"[SAVE] Equipped weapon from save successfully with animations and hitboxes: {item.name}");
     }
 
     private void EquipObjectFromSave(ItemData item)
     {
-
         EquipmentLibraryItem libItem = equipmentLibrary.Get(item);
 
-        if (!libItem.itemPrefab.activeSelf)
+        if (libItem != null && libItem.itemPrefab != null)
+        {
             libItem.itemPrefab.SetActive(true);
-        interactSystem.SetCurrentEquippedItem(libItem);
+            if (interactSystem != null) interactSystem.SetCurrentEquippedItem(libItem);
 
-        //animator.SetBool("CarryingConsumable", true);
+            // Si tu as une animation d'attente quand le joueur tient une potion :
+            if (PlayerController.Instance != null)
+            {
+                PlayerController.Instance.Animator.SetBool("CarryingConsumable", true);
+            }
+        }
 
         Debug.Log($"[SAVE] Equipped object from save: {item.name}");
     }

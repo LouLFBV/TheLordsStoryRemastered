@@ -61,7 +61,7 @@ public class PlayerController : MonoBehaviour, ICombatant
 
     [Header("Library")]
     public EquipmentLibrary equipmentLibrary;
-    public EquipmentLibraryItem PendingLibraryItem { get; private set; }
+    public EquipmentLibraryItem PendingLibraryItem { get;  set; }
 
     [Header("Others")]
     [HideInInspector] public InteractSystem interactSystem;
@@ -279,6 +279,24 @@ public class PlayerController : MonoBehaviour, ICombatant
 
             PendingWeaponType = data.handWeaponType;
             StateMachine.ChangeState(PlayerStateType.Equip);
+        }
+    }
+    public void PrepareUnequip(ItemData data)
+    {
+        if (data == null) return;
+
+        // On va chercher l'item dans la librairie pour que l'état d'Un-equip sache quel Prefab éteindre
+        PendingLibraryItem = equipmentLibrary.Get(data);
+
+        if (PendingLibraryItem != null)
+        {
+            PendingUnequipType = data.handWeaponType;
+            StateMachine.ChangeState(PlayerStateType.Unequip);
+        }
+        else
+        {
+            // Sécurité si l'item n'est pas dans la librairie, on passe quand même à l'état pour ne pas bloquer le joueur
+            StateMachine.ChangeState(PlayerStateType.Unequip);
         }
     }
 

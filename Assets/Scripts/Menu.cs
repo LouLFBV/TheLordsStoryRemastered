@@ -81,9 +81,6 @@ public class Menu : MonoBehaviour
             return;
         }
 
-        VerifSaveGameButton();
-        VerifLoadSaveGameButton();
-
 
 
 
@@ -144,7 +141,7 @@ public class Menu : MonoBehaviour
         OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
     }
 
-    private void VerifLoadSaveGameButton()
+    private void VerifLoadSaveGameButton(Scene scene, LoadSceneMode mode)
     {
         if (loadLastGameButton == null) return;
         string nomDeScene = SceneManager.GetActiveScene().name;
@@ -155,6 +152,9 @@ public class Menu : MonoBehaviour
     private void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
+        SceneManager.sceneLoaded += VerifSaveGameButton;
+        SceneManager.sceneLoaded += VerifLoadSaveGameButton;
+
     }
 
     private void OnDisable()
@@ -314,7 +314,7 @@ private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         SaveManager.Instance.SaveGame();
         TransitionPanel.Instance.Continue();
     }
-    private void VerifSaveGameButton()
+    private void VerifSaveGameButton(Scene scene, LoadSceneMode mode)
     {
         if (saveButton == null) return;
         string nomDeScene = SceneManager.GetActiveScene().name;

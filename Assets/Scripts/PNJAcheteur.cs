@@ -79,6 +79,7 @@ public class PNJAcheteur : PNJParent
             // Fermeture
             if (player.Input.CancelPressed || player.Input.CloseMenuPressed)
             {
+                Debug.Log("[PNJAcheteur] Fermeture du panel de produits");
                 EndCommerce();
                 player.Input.UseCancelInput();
                 player.Input.UseCloseMenuInput();
