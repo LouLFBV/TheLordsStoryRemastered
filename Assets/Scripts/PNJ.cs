@@ -158,7 +158,7 @@ public class PNJ : InteractableBase
         AddEnemiesKilled();
 
 
-        if (canGiveQuest && currentQuestSO != null)
+        if (canGiveQuest && currentQuestSO != null && !isPnjInteraction)
         {
             if (activeQuestInstance == null)
             {
@@ -187,7 +187,6 @@ public class PNJ : InteractableBase
             currentDialogue = sentences;
         }
 
-        // Démarre la lecture
         NextLine();
     }
 
@@ -365,9 +364,10 @@ public class PNJ : InteractableBase
     {
         foreach (var quest in NewQuestManager.instance.activeQuests)
         {
-            if (quest.data.namePNJ == namePNJ && quest.status == QuestStatus.InProgress)
+            if (quest.data.questType == QuestType.Interaction && quest.data.namePNJ == namePNJ && quest.status == QuestStatus.InProgress)
             {
-                quest.interactionDone = true;
+                NewQuestManager.instance.MarkInteractionDone(quest.data);
+
                 activeQuestInstance = quest;
                 currentQuestSO = quest.data;
                 currentDialogue = currentQuestSO.sentencesInteraction;
