@@ -78,7 +78,8 @@ public class PlayerInputHandler : MonoBehaviour
     private void OnEnable()
     {
         // --- MOVE avec Deadzone ---
-        input.actions["Move"].performed += ctx => {
+        input.actions["Move"].performed += ctx =>
+        {
             Vector2 raw = ctx.ReadValue<Vector2>();
             // Si le stick est moins incliné que la deadzone, on met à 0
             MoveInput = (raw.magnitude < stickDeadzone) ? Vector2.zero : raw;
@@ -94,39 +95,46 @@ public class PlayerInputHandler : MonoBehaviour
         input.actions["LookGamepad"].canceled += _ => rawGamepadLook = Vector2.zero;
 
         // --- NAVIGATE (UI) ---
-        input.actions["Navigate"].performed += ctx => {
+        input.actions["Navigate"].performed += ctx =>
+        {
             Vector2 raw = ctx.ReadValue<Vector2>();
             // Deadzone appliquée
             NavigateLook = (raw.magnitude < stickDeadzone) ? Vector2.zero : raw;
             NavigationInput = NavigateLook;
         };
-        input.actions["Navigate"].canceled += _ => {
+        input.actions["Navigate"].canceled += _ =>
+        {
             NavigateLook = Vector2.zero;
             NavigationInput = Vector2.zero;
         };
 
         // --- SCROLL (UI) ---
-        input.actions["Scroll"].performed += ctx => {
+        input.actions["Scroll"].performed += ctx =>
+        {
             Vector2 raw = ctx.ReadValue<Vector2>();
             // On utilise GamepadScroll UNIQUEMENT pour le défilement
             GamepadScroll = (raw.magnitude < stickDeadzone) ? Vector2.zero : raw;
         };
-        input.actions["Scroll"].canceled += _ => {
+        input.actions["Scroll"].canceled += _ =>
+        {
             GamepadScroll = Vector2.zero;
         };
 
 
 
-        input.actions["Attack"].performed += ctx => {
+        input.actions["Attack"].performed += ctx =>
+        {
             AttackPressed = true;
-            AttackHeld = true;  
+            AttackHeld = true;
         };
-        input.actions["Attack"].canceled += ctx => {
+        input.actions["Attack"].canceled += ctx =>
+        {
             AttackPressed = false;
             AttackHeld = false;
         };
 
-        input.actions["AttackSpecial"].performed += ctx => {
+        input.actions["AttackSpecial"].performed += ctx =>
+        {
             AttackSpecialPressed = true;
             AttackSpecialHeld = true;
         };
@@ -243,6 +251,7 @@ public class PlayerInputHandler : MonoBehaviour
     public void UseInventoryInput() => InventoryPressed = false;
     public void UseMenuInput() => MenuPressed = false;
     public void UseCloseMenuInput() => CloseMenuPressed = false;
+    public void UseCancelInput() => CancelPressed = false;
     public void UseCloseInventoryInput() => CloseInventoryPressed = false;
     public void UseWeapon1Pressed() => Weapon1Pressed = false;
     public void UseWeapon2Pressed() => Weapon2Pressed = false;
@@ -257,7 +266,6 @@ public class PlayerInputHandler : MonoBehaviour
     public void UseAttackSpecialInput() => AttackSpecialPressed = false;
     public void UseLockOnInput() => LockOnPressed = false;
     public void UseSubmitInput() => SubmitPressed = false;
-    public void UseCancelInput() => CancelPressed = false;
     public void UseDropActionInput() => DropActionPressed = false;
     public void UseEquipActionInput() => EquipActionPressed = false;
     public void UseUseActionInput() => UseActionPressed = false;

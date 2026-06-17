@@ -45,7 +45,11 @@ public class SaveManager : MonoBehaviour
         data.equipment = EquipmentSystem.instance.GetSaveData();
         data.map = MapManager.instance.GetSaveData();
         data.quests = NewQuestManager.instance.GetSaveData();
-        //data.questLog = NewQuestLog.instance.GetSaveData();
+        data.questLog = NewQuestLog.instance.GetSaveData();
+
+        if (RecipeDatabase.Instance != null)
+            data.recipes = RecipeDatabase.Instance.GetSaveData();
+
         if (ChestInventory.Instance != null)
             data.chestInventory = ChestInventory.Instance.GetSaveData();
 
@@ -100,9 +104,13 @@ public class SaveManager : MonoBehaviour
         if (data.quests != null)
             NewQuestManager.instance.LoadSaveData(data.quests);
 
+        if (data.recipes != null && RecipeDatabase.Instance != null)
+            RecipeDatabase.Instance.LoadSaveData(data.recipes);
+
         if (data.questLog != null)
             NewQuestLog.instance.LoadSaveData(data.questLog);
         
+
         while (ChestInventory.Instance == null)
         {
             yield return null;
@@ -149,6 +157,7 @@ public class SaveData
     public WorldStateSaveData world;
     public QuestLogSaveData questLog;
     public ChestInventoryData chestInventory;
+    public RecipeSaveData recipes;
 
     public string sceneName;
     public int saveVersion = 1;

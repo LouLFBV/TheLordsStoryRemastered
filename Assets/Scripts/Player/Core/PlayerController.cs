@@ -166,27 +166,30 @@ public class PlayerController : MonoBehaviour, ICombatant
             Input.UseInventoryInput();
         }
 
-        // --- LOGIQUE DE FERMETURE ---
+        // --- LOGIQUE DE FERMETURE 
         else if (StateMachine.CurrentState == UIState)
         {
-            if (Input.CloseMenuPressed || Input.CloseInventoryPressed)
+            if (RequestedPanelType == UIPanelType.PauseMenu || RequestedPanelType == UIPanelType.Inventory)
             {
-                // Si on avait un dialogue en cours avant la pause
-                if (_previousPanelType == UIPanelType.Dialogue)
+                if (Input.CloseMenuPressed || Input.CloseInventoryPressed)
                 {
-                    RequestedPanelType = UIPanelType.Dialogue;
-                    _previousPanelType = null;
+                    // Si on avait un dialogue en cours avant la pause
+                    if (_previousPanelType == UIPanelType.Dialogue)
+                    {
+                        RequestedPanelType = UIPanelType.Dialogue;
+                        _previousPanelType = null;
 
-                    // On force le rafraîchissement de l'UIState sans repasser par Idle
-                    UIState.Enter();
-                }
-                else if (RequestedPanelType != UIPanelType.Dialogue)
-                {
-                    StateMachine.ChangeState(PlayerStateType.Idle);
-                }
+                        // On force le rafraîchissement de l'UIState sans repasser par Idle
+                        UIState.Enter();
+                    }
+                    else
+                    {
+                        StateMachine.ChangeState(PlayerStateType.Idle);
+                    }
 
-                Input.UseCloseInventoryInput();
-                Input.UseCloseMenuInput();
+                    Input.UseCloseInventoryInput();
+                    Input.UseCloseMenuInput();
+                }
             }
         }
     }

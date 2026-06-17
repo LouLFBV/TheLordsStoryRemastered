@@ -43,6 +43,6 @@ public class UIProduitMarchand : MonoBehaviour, IPointerEnterHandler, IPointerEx
         actionButtonsGroup.SetActive(false);
         // On prévient le marchand qu'on ne le survole plus
         if (_marchandScript != null) _marchandScript.SetCurrentHoveredItem(null);
-        if (_pnjAcheteur != null) _pnjAcheteur.SetCurrentHoveredItem(this);
+        if (_pnjAcheteur != null) _pnjAcheteur.SetCurrentHoveredItem(null);
     }
 }

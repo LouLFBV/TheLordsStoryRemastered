@@ -203,12 +203,15 @@ public class NewQuestManager : MonoBehaviour
         finishedQuests.Clear();
         globalKillHistory.Clear();
 
-        // 🔄 CORRECTION : Restauration de l'historique global
         foreach (var entry in data.globalKillHistorySave)
         {
             globalKillHistory[entry.enemyType] = entry.count;
         }
-        globalInteractionHistory = new HashSet<string>(data.globalInteractionHistorySave);
+
+        // Sécurité anti-crash si la liste de sauvegarde est nulle
+        globalInteractionHistory = data.globalInteractionHistorySave != null
+            ? new HashSet<string>(data.globalInteractionHistorySave)
+            : new HashSet<string>();
 
         // Chargement des quêtes actives et complétées
         foreach (var questData in data.activeQuests)

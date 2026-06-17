@@ -50,6 +50,14 @@ public class PNJAcheteur : PNJParent
     {
         if (animatorPanelProduits.GetBool("PanelIsOpen"))
         {
+            if (player.Input.MenuPressed || player.Input.CloseMenuPressed || player.Input.CancelPressed)
+            {
+                Debug.Log("[PNJAcheteur] Fermeture du panel de produits");
+                EndCommerce();
+                player.Input.UseMenuInput();
+                player.Input.UseCloseMenuInput();
+            }
+
             if (currentSlotProduit != null)
             {
                 // Vendre 1 unité (Touche E)
@@ -82,29 +90,31 @@ public class PNJAcheteur : PNJParent
                 if (player.Input == null)
                 {
                     Debug.LogWarning("[PNJAcheteur] Player.Input est null dans Update() alors que le panel de produits est ouvert.");
-                    if (player.Input.MenuPressed)
-                    {
-                        Debug.LogWarning("[PNJAcheteur] Player.Input.MenuPressed est true dans Update() alors que le panel de produits est ouvert.");
-                    }
-                    if (player.Input.CloseMenuPressed)
-                    {
-                        Debug.LogWarning("[PNJAcheteur] Player.Input.CloseMenuPressed est true dans Update() alors que le panel de produits est ouvert.");
-                    }
-                    if (player.Input.CancelPressed)
-                    {
-                        Debug.LogWarning("[PNJAcheteur] Player.Input.CancelPressed est true dans Update() alors que le panel de produits est ouvert.");
-                    }
+                    
                 }
             }
-            else 
-            Debug.Log("[PNJAcheteur] Panel de produits ouvert, attente d'une action du joueur...");
-
-            if (player.Input.MenuPressed || player.Input.CloseMenuPressed || player.Input.CancelPressed)
+            else
             {
-                Debug.Log("[PNJAcheteur] Fermeture du panel de produits");
-                EndCommerce();
-                player.Input.UseMenuInput();
-                player.Input.UseCloseMenuInput();
+                Debug.Log("[PNJAcheteur] Panel de produits ouvert, attente d'une action du joueur...");
+                if (player.Input.MenuPressed)
+                {
+                    Debug.LogWarning("[PNJAcheteur] Player.Input.MenuPressed est true dans Update() alors que le panel de produits est ouvert.");
+                }
+                if (player.Input.CloseMenuPressed)
+                {
+                    Debug.LogWarning("[PNJAcheteur] Player.Input.CloseMenuPressed est true dans Update() alors que le panel de produits est ouvert.");
+                }
+                if (player.Input.CancelPressed)
+                {
+                    Debug.LogWarning("[PNJAcheteur] Player.Input.CancelPressed est true dans Update() alors que le panel de produits est ouvert.");
+                }
+            }
+
+            
+            // TEST DE DEBUG TEMPORAIRE
+            if (Input.GetKeyDown(KeyCode.Escape)) // Remplace par la touche physique que tu utilises
+            {
+                Debug.LogWarning("[DEBUG] La touche physique fonctionne ! C'est donc bien ton script d'input personnalisé ou un autre Manager qui remet la variable à false avant le PNJ.");
             }
         }
     }
