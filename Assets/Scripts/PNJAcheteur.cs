@@ -76,12 +76,12 @@ public class PNJAcheteur : PNJParent
                 }
             }
 
-            // Fermeture
-            if (player.Input.CancelPressed || player.Input.CloseMenuPressed)
+            
+            if (player.Input.MenuPressed || player.Input.CloseMenuPressed || player.Input.CancelPressed)
             {
                 Debug.Log("[PNJAcheteur] Fermeture du panel de produits");
                 EndCommerce();
-                player.Input.UseCancelInput();
+                player.Input.UseMenuInput();
                 player.Input.UseCloseMenuInput();
             }
         }
