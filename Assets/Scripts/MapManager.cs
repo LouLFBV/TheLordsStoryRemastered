@@ -10,6 +10,8 @@ public class MapManager : MonoBehaviour
     [SerializeField] private ListeMorceauxDeMap[] allListMap = new ListeMorceauxDeMap[5];
     [SerializeField] private GameObject iconeIfNoMap;
 
+    [SerializeField] private GameObject legendeGameObject;
+
     private void Awake()
     {
         if (instance == null)
@@ -35,8 +37,21 @@ public class MapManager : MonoBehaviour
     {
         Debug.Log("Nouvelle scène chargée : " + scene.name);
         SetMapActive(scene.name);
+        ActiveLegendeGameObject();
     }
 
+    private void ActiveLegendeGameObject()
+    {
+        if (legendeGameObject != null)
+        {
+            legendeGameObject.SetActive(SceneManager.GetActiveScene().name == "Jeu");
+            Debug.Log("Legende GameObject actif : " + legendeGameObject.activeSelf);
+        }
+        else
+        {
+            Debug.LogWarning("Legende GameObject n'est pas assigné dans l'inspecteur.");
+        }
+    }
     private void SetMapActive(string sceneName)
     {
         bool found = false;
