@@ -23,7 +23,7 @@ public class PanneauDeConstruction : InteractableBase
         {
             if (PlayerController.Instance != null && PlayerController.Instance.Input != null)
             {
-                if (PlayerController.Instance.StateMachine.CurrentState == PlayerController.Instance.IdleState)
+                if (PlayerController.Instance.Input.CloseMenuPressed || PlayerController.Instance.Input.MenuPressed)
                 {
                     // On ne log que lorsque l'action de fermeture est validée !
                     Debug.Log("[CONSTRUCTION] Touche de fermeture détectée. Fermeture du panneau.");
@@ -61,6 +61,12 @@ public class PanneauDeConstruction : InteractableBase
     public void ClosePanel()
     {
         if (craftPanel != null) craftPanel.SetActive(false);
+
+        foreach (Transform child in ingredientContainer)
+        {
+            child.SetParent(null);
+            Destroy(child.gameObject);
+        }
 
         // Sécurité UI : On désactive l'interactivité du bouton à la fermeture
         if (destroyButton != null) destroyButton.interactable = false;

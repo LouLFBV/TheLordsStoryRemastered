@@ -27,6 +27,8 @@ public class Menu : MonoBehaviour
     [SerializeField]
     private Toggle fullScreenToggle;
 
+    [SerializeField] private AllRecipeData playerRecipesAsset;
+
     [Header("Settings Panel")]
     [SerializeField] private GameObject settingsPanel;
     [SerializeField] private GameObject optionsPanel;
@@ -289,6 +291,12 @@ private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         }
         if (isTransitioning) return;
         isTransitioning = true;
+
+        if (playerRecipesAsset != null && playerRecipesAsset.unlockedRecipes != null)
+        {
+            playerRecipesAsset.unlockedRecipes.Clear();
+            Debug.Log("[CRAFT] Liste des recettes réinitialisée pour une nouvelle partie.");
+        }
 
         pendingSlot = slot;
         isNewGame = true;

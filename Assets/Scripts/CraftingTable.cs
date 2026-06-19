@@ -154,7 +154,6 @@ public class CraftingTable : InteractableBase
     {
         _currentSelectedTargetItem = selectedItem;
 
-        if (descriptionPanel != null) descriptionPanel.SetActive(true);
 
         // Mise à jour des textes et visuels globaux de l'item ciblé
         if (itemName != null) itemName.text = selectedItem.itemName;
@@ -163,6 +162,7 @@ public class CraftingTable : InteractableBase
 
         // Logique de rafraîchissement des ingrédients requis
         RefreshRequiredIngredients(selectedItem);
+        if (descriptionPanel != null) descriptionPanel.SetActive(true);
     }
 
     private void RefreshRequiredIngredients(ItemData targetItem)
@@ -227,7 +227,7 @@ public class CraftingTable : InteractableBase
         }
 
         // 2. On donne l'objet crafté au joueur
-        InventorySystem.instance.AddItem(_currentSelectedTargetItem);
+        InventorySystem.instance.AddItem(_currentSelectedTargetItem, _currentSelectedTargetItem.recipe.craftableAmount);
         Debug.Log($"<color=green>[CRAFT] Réussite ! +1 {_currentSelectedTargetItem.itemName} ajouté à l'inventaire.</color>");
 
         // 3. On actualise l'UI globale et les stocks restants pour voir si on peut en fabriquer un deuxième
