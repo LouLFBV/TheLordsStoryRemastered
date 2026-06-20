@@ -204,10 +204,34 @@ public class NewQuestLog : MonoBehaviour
     #region Save/Load
     public QuestLogSaveData GetSaveData()
     {
+        bool hudActive = false;
+        if (panelQuestActive != null)
+        {
+            hudActive = panelQuestActive.activeSelf;
+        }
+        else
+        {
+            Debug.LogError("[Save System] 'panelQuestActive' n'est pas assigné dans l'Inspecteur de NewQuestLog !", this);
+        }
+
+        string questID = string.Empty;
+        if (currentlyTrackedQuest != null)
+        {
+            if (currentlyTrackedQuest.data != null)
+            {
+                questID = currentlyTrackedQuest.data.questID;
+            }
+            else
+            {
+                Debug.LogError("[Save System] 'currentlyTrackedQuest' existe mais son champ 'data' est NULL !", this);
+            }
+        }
+
+        // 3. Retour des données sécurisées
         return new QuestLogSaveData
         {
-            trackedQuestID = currentlyTrackedQuest != null ? currentlyTrackedQuest.data.questID : string.Empty,
-            isHUDPanelActive = panelQuestActive.activeSelf
+            trackedQuestID = questID,
+            isHUDPanelActive = hudActive
         };
     }
 

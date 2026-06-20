@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -278,4 +279,6 @@ public class PlayerInputHandler : MonoBehaviour
         AttackSpecialPressed = false;
         AttackSpecialHeld = false;
     }
+
+    public void UseDestroyActionInput() => DestroyActionPressed = false;
 }

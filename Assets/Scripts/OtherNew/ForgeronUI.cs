@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
+using System.Linq;
 
 public class ForgeronUI : MonoBehaviour
 {
@@ -73,6 +74,7 @@ public class ForgeronUI : MonoBehaviour
         else if (player.Input.DestroyActionPressed)
         {
             DestroyItem(_currentItem);
+            player.Input.UseDestroyActionInput();
         }
         else if (player.Input.CancelPressed || player.Input.CloseMenuPressed)
         {
@@ -131,14 +133,6 @@ public class ForgeronUI : MonoBehaviour
             {
                 allEligibleItems.Add(slotPalette.item);
             }
-        }
-
-
-        // AJOUTER : La flèche équipée (si on cherche des armes à distance ou munitions)
-        var arrowItem = EquipmentSystem.instance.arrowItemInInventory;
-        if (arrowItem != null && arrowItem.itemData != null && arrowItem.itemData.equipmentType == equipmentType)
-        {
-            allEligibleItems.Add(arrowItem.itemData);
         }
 
 
@@ -244,17 +238,17 @@ public class ForgeronUI : MonoBehaviour
 
         if (itemData.equipmentType == EquipmentType.Weapon || itemData.equipmentType == EquipmentType.Arrow)
         {
-            resistanceItem.text = "Degats : " + itemData.attackPoints.ToString();
+            resistanceItem.text = "Dégats : " + itemData.attackPoints.ToString();
             resistanceItemUpgrade.text = (itemData.attackPoints + 10).ToString();
         }
         else if (itemData.handWeaponType == HandWeapon.Bow)
         {
-            resistanceItem.text = "Portee : " + itemData.rangeMax.ToString();
+            resistanceItem.text = "Portée : " + itemData.rangeMax.ToString();
             resistanceItemUpgrade.text = (itemData.rangeMax + 5).ToString();
         }
         else
         {
-            resistanceItem.text = "Resistance : " + itemData.armorPoints.ToString();
+            resistanceItem.text = "Résistance : " + itemData.armorPoints.ToString();
             resistanceItemUpgrade.text = (itemData.armorPoints + 10).ToString();
         }
 
@@ -303,24 +297,24 @@ public class ForgeronUI : MonoBehaviour
             return;
         }
 
-        // 1. Donner les composants de recyclage (métal)
-        for (int i = 0; i < itemData.metalCost; i++)
-            inventory.AddItem(metalItemData);
-
-        // 2. Retirer de l'inventaire principal
-        inventory.RemoveItem(itemData);
+        inventory.AddItem(metalItemData, itemData.metalCost);
 
         // 3. Retirer de la Palette de raccourcis si présent dedans
         if (PaletteSystem.instance != null && PaletteSystem.instance.slotManager != null)
         {
             bool aEteRetireDeLaPalette = false;
+            var weaponsList = PaletteSystem.instance.slotManager.weapons;
 
-            foreach (var slotPalette in PaletteSystem.instance.slotManager.weapons)
+            // On utilise une boucle for pour obtenir l'index exact du slot
+            for (int i = 0; i < weaponsList.Length; i++) 
             {
-                if (slotPalette != null && slotPalette.itemData == itemData)
+                if (weaponsList[i] != null && weaponsList[i].itemData == itemData)
                 {
-                    slotPalette.itemData = null;
+                    int slotNumber = i + 1;
+
+                    PaletteSystem.instance.equipmentManager.DesequipWeapon(slotNumber);
                     aEteRetireDeLaPalette = true;
+                    break; // On a trouvé et traité l'arme, on peut stopper la boucle
                 }
             }
 
@@ -331,7 +325,7 @@ public class ForgeronUI : MonoBehaviour
         }
 
         // 4. Retirer des slots d'équipement (Armures/Armes portées)
-        if (EquipmentSystem.instance != null)
+        if (EquipmentSystem.instance != null && itemData.equipmentType != EquipmentType.Weapon)
         {
             EquipmentSystem.instance.DesequipEquipment(itemData.equipmentType);
 
@@ -350,6 +344,9 @@ public class ForgeronUI : MonoBehaviour
                 EquipmentSystem.instance.arrowItemInInventory.itemData = null;
             }
         }
+
+        // 2. Retirer de l'inventaire principal
+        inventory.RemoveItem(itemData);
 
         // 6. Rafraîchir l'UI du forgeron
         UpdateForgeronUI(itemData.equipmentType);

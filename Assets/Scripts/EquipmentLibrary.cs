@@ -26,7 +26,7 @@ public class EquipmentLibrary : MonoBehaviour
     {
         if (item == null)
         {
-            Debug.LogError("EquipmentLibrary.Get called with NULL ItemData");
+            Debug.LogWarning("EquipmentLibrary.Get called with NULL ItemData");
             return null;
         }
 
