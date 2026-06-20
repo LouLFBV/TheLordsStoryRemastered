@@ -302,9 +302,56 @@ public class ForgeronUI : MonoBehaviour
             Debug.LogWarning("Aucun item sélectionné pour la destruction");
             return;
         }
+
+        // 1. Donner les composants de recyclage (métal)
         for (int i = 0; i < itemData.metalCost; i++)
             inventory.AddItem(metalItemData);
+
+        // 2. Retirer de l'inventaire principal
         inventory.RemoveItem(itemData);
+
+        // 3. Retirer de la Palette de raccourcis si présent dedans
+        if (PaletteSystem.instance != null && PaletteSystem.instance.slotManager != null)
+        {
+            bool aEteRetireDeLaPalette = false;
+
+            foreach (var slotPalette in PaletteSystem.instance.slotManager.weapons)
+            {
+                if (slotPalette != null && slotPalette.itemData == itemData)
+                {
+                    slotPalette.itemData = null;
+                    aEteRetireDeLaPalette = true;
+                }
+            }
+
+            if (aEteRetireDeLaPalette)
+            {
+                PaletteSystem.instance.slotManager.RefreshAffichage();
+            }
+        }
+
+        // 4. Retirer des slots d'équipement (Armures/Armes portées)
+        if (EquipmentSystem.instance != null)
+        {
+            EquipmentSystem.instance.DesequipEquipment(itemData.equipmentType);
+
+            // Sécurité : Au cas où DesequipEquipment ne vide pas le slot de données lui-même
+            foreach (var slotEquip in EquipmentSystem.instance.equipmentSlots)
+            {
+                if (slotEquip != null && slotEquip.item == itemData)
+                {
+                    slotEquip.item = null;
+                }
+            }
+
+            // Vérification pour les flèches équipées
+            if (EquipmentSystem.instance.arrowItemInInventory != null && EquipmentSystem.instance.arrowItemInInventory.itemData == itemData)
+            {
+                EquipmentSystem.instance.arrowItemInInventory.itemData = null;
+            }
+        }
+
+        // 6. Rafraîchir l'UI du forgeron
         UpdateForgeronUI(itemData.equipmentType);
         upgradePanel.SetActive(false);
         _currentItem = null;
