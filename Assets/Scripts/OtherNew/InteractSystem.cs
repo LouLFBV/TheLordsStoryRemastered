@@ -228,18 +228,6 @@ public class InteractSystem : MonoBehaviour
         RespawnObject(currentItem.transform);
     }
 
-    //private void EnableToolGameObjectFromTool(Tool toolType)
-    //{
-    //    switch (toolType)
-    //    {
-    //        case Tool.Pickaxe:
-    //            audioSource.clip = pickaxeSound;
-    //            break;
-    //        case Tool.Axe:
-    //            audioSource.clip = axeSound;
-    //            break;
-    //    }
-    //}
 
     public void PlayHarvestingSoundEffect()
     {

@@ -451,6 +451,7 @@ private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
             PlayerController.Instance.Input.mouseSensitivity = value;
             // Optionnel : Sauvegarder immédiatement
             PlayerPrefs.SetFloat("MouseSensi", value);
+            Debug.Log($"Mouse sensitivity changed to {value}");
         }
     }
 

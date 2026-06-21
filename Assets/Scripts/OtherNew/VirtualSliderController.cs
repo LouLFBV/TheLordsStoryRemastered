@@ -7,6 +7,8 @@ public class VirtualSliderController : MonoBehaviour, IPointerEnterHandler, IPoi
     private Slider _slider;
     private bool _isHovered = false;
 
+    [SerializeField] private float _sensitivity = 2f;
+
     void Awake() => _slider = GetComponent<Slider>();
 
     public void OnPointerEnter(PointerEventData eventData) => _isHovered = true;
@@ -21,7 +23,7 @@ public class VirtualSliderController : MonoBehaviour, IPointerEnterHandler, IPoi
             if (Mathf.Abs(inputX) > 0.1f)
             {
                 // On ajuste la valeur directement
-                _slider.value += inputX * Time.unscaledDeltaTime * 2f;
+                _slider.value += inputX * Time.unscaledDeltaTime * _sensitivity;
             }
         }
     }

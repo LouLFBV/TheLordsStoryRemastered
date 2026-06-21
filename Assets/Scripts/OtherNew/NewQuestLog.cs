@@ -32,8 +32,8 @@ public class NewQuestLog : MonoBehaviour
     [SerializeField] private GameObject buttonQuestPrefab;
     [SerializeField] private GameObject rewardQuestPrefab;
 
-    [HideInInspector] public QuestInstance currentlyTrackedQuest;  
-    [HideInInspector] public QuestInstance currentlySelectedQuest; 
+    [System.NonSerialized] public QuestInstance currentlyTrackedQuest;
+    [System.NonSerialized] public QuestInstance currentlySelectedQuest; 
 
     private void Awake()
     {
