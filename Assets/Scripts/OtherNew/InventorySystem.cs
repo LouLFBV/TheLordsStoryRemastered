@@ -346,13 +346,11 @@ public class InventorySystem : MonoBehaviour
         List<ItemInInventorySave> savedList = new List<ItemInInventorySave>();
         for (int i = 0; i < array.Length; i++)
         {
-            // On sauvegarde même les cases vides en mettant un ID à "" ou null 
-            // pour mémoriser l'emplacement exact (l'index) de chaque objet !
             savedList.Add(new ItemInInventorySave
             {
                 itemID = array[i].itemData != null ? array[i].itemData.itemID : "",
                 count = array[i].count,
-                slotIndex = i // 🟢 On stocke l'index de la case !
+                slotIndex = i 
             });
         }
         return savedList;

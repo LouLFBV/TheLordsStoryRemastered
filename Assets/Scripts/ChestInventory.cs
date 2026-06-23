@@ -321,7 +321,8 @@ public class ChestInventory : MonoBehaviour
             data.ressourcesItems.Add(new ItemInInventorySave
             {
                 itemID = contentRessourcesChest[i].itemData.itemID,
-                count = contentRessourcesChest[i].count
+                count = contentRessourcesChest[i].count,
+                slotIndex = i
             });
         }
 
@@ -332,7 +333,8 @@ public class ChestInventory : MonoBehaviour
             data.craftItems.Add(new ItemInInventorySave
             {
                 itemID = contentCraftChest[i].itemData.itemID,
-                count = contentCraftChest[i].count
+                count = contentCraftChest[i].count,
+                slotIndex = i
             });
         }
         return data;
@@ -345,25 +347,21 @@ public class ChestInventory : MonoBehaviour
         System.Array.Clear(contentRessourcesChest, 0, contentRessourcesChest.Length);
         System.Array.Clear(contentCraftChest, 0, contentCraftChest.Length);
 
-        if (data.ressourcesItems != null)
+        foreach (var savedItem in data.ressourcesItems) // Utilise un foreach ici
         {
-            for (int i = 0; i < Mathf.Min(data.ressourcesItems.Count, contentRessourcesChest.Length); i++)
+            ItemData itemData = ItemDataDatabase.Instance.GetItemByID(savedItem.itemID);
+            if (itemData != null && savedItem.slotIndex < contentRessourcesChest.Length)
             {
-                ItemData itemData = ItemDataDatabase.Instance.GetItemByID(data.ressourcesItems[i].itemID);
-                if (itemData == null) continue;
-
-                contentRessourcesChest[i] = new ItemInInventory { itemData = itemData, count = data.ressourcesItems[i].count };
+                contentRessourcesChest[savedItem.slotIndex] = new ItemInInventory { itemData = itemData, count = savedItem.count };
             }
         }
 
-        if (data.craftItems != null)
+        foreach (var savedItem in data.craftItems) // Utilise un foreach ici
         {
-            for (int i = 0; i < Mathf.Min(data.craftItems.Count, contentCraftChest.Length); i++)
+            ItemData itemData = ItemDataDatabase.Instance.GetItemByID(savedItem.itemID);
+            if (itemData != null && savedItem.slotIndex < contentCraftChest.Length)
             {
-                ItemData itemData = ItemDataDatabase.Instance.GetItemByID(data.craftItems[i].itemID);
-                if (itemData == null) continue;
-
-                contentCraftChest[i] = new ItemInInventory { itemData = itemData, count = data.craftItems[i].count };
+                contentCraftChest[savedItem.slotIndex] = new ItemInInventory { itemData = itemData, count = savedItem.count };
             }
         }
     }
