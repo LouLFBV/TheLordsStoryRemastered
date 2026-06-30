@@ -51,5 +51,10 @@ public class HarvestableInteractable : InteractableBase
 
         Debug.Log("Harvesting...");
         interactBehaviour.DoHarvest(harvestable);
+        if (TryGetComponent<WorldObjectID>(out var id))
+        {
+            WorldStateManager.Instance.RegisterCollectedObject(id.UniqueID);
+            Debug.Log($"<color=yellow> Registering collected object with ID: {id.UniqueID} </color>");
+        }
     }
 }

@@ -159,13 +159,11 @@ public class PanneauDeConstruction : InteractableBase
         else
         {
             // --- CAS DESTRUCTION (Ex: Mur à casser) ---
-            if (gameObjectToDestroy != null && gameObjectToDestroy.TryGetComponent<WorldObjectID>(out var obstacleID))
+            if (gameObjectToDestroy != null && TryGetComponent<WorldObjectID>(out var obstacleID))
             {
                 // On enregistre l'obstacle comme "Collecté/Détruit" pour qu'il ne réapparaisse jamais
                 WorldStateManager.Instance.RegisterCollectedObject(obstacleID.UniqueID);
 
-                // Sauvegarde immédiate sur le disque
-                if (SaveManager.Instance != null) SaveManager.Instance.SaveGame();
             }
         }
 

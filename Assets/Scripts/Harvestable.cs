@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Harvestable : /*WorldDisappearOnCollected*/ MonoBehaviour
+public class Harvestable : WorldDisappearOnCollected
 {
     public Ressource[] harvestableItems;
 

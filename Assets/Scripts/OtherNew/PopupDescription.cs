@@ -48,6 +48,8 @@ public class PopupDescription : WorldDisappearOnCollected
     {
         if (UIManagerSystem.Instance != null)
             UIManagerSystem.Instance.hudElements.Add(popupDescriptionPanel);
+        if (PopupParent.Instance != null)
+            popupDescriptionPanel.transform.SetParent(PopupParent.Instance.parentPopup, false);
 
         popupDescriptionPanel.SetActive(true);
 
@@ -139,5 +141,10 @@ public class PopupDescription : WorldDisappearOnCollected
 
         popupCanvasGroup.alpha = 0;
         popupDescriptionPanel.SetActive(false);
+        if (TryGetComponent<WorldObjectID>(out var id))
+        {
+            WorldStateManager.Instance.RegisterCollectedObject(id.UniqueID);
+            Debug.Log($"<color=yellow> Registering collected object with ID: {id.UniqueID} </color>");
+        }
     }
 }
