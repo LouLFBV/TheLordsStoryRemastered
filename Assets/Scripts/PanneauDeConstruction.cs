@@ -122,6 +122,7 @@ public class PanneauDeConstruction : InteractableBase
     {
         if (destroyButton == null || !destroyButton.interactable) return;
 
+        // 1. CONSOMMATION DES RESSOURCES
         foreach (var recipe in requiredIngredients)
         {
             if (recipe.itemNeeded == null) continue;
@@ -133,18 +134,54 @@ public class PanneauDeConstruction : InteractableBase
         }
 
         Debug.Log("<color=green>[CONSTRUCTION] Passage validé et ressources consommées !</color>");
-
         InventorySystem.instance.RefreshContent();
         ClosePanel();
+
+        // 2. LOGIQUE DE CONSTRUCTION OU DE DESTRUCTION
         if (isConstructible)
         {
             if (gameObjectToActive != null)
             {
                 Debug.Log("<color=green>[CONSTRUCTION] Activation du bâtiment !</color>");
                 gameObjectToActive.SetActive(true);
+
+                // SÉCURITÉ : On cherche le BuildingState sur le bâtiment activé OU sur le panneau
+                if (gameObjectToActive.TryGetComponent<BuildingState>(out var building))
+                {
+                    building.ConstructBuilding();
+                }
+                else if (TryGetComponent<BuildingState>(out var panelBuilding))
+                {
+                    panelBuilding.ConstructBuilding();
+                }
             }
         }
-        Destroy(gameObjectToDestroy);
+        else
+        {
+            // --- CAS DESTRUCTION (Ex: Mur à casser) ---
+            if (gameObjectToDestroy != null && gameObjectToDestroy.TryGetComponent<WorldObjectID>(out var obstacleID))
+            {
+                // On enregistre l'obstacle comme "Collecté/Détruit" pour qu'il ne réapparaisse jamais
+                WorldStateManager.Instance.RegisterCollectedObject(obstacleID.UniqueID);
+
+                // Sauvegarde immédiate sur le disque
+                if (SaveManager.Instance != null) SaveManager.Instance.SaveGame();
+            }
+        }
+
+        // 3. NETTOYAGE DE LA SCÈNE ACTIVE
+        // On détruit l'objet ciblé (l'obstacle ou le panneau lui-même)
+        if (gameObjectToDestroy != null)
+        {
+            Destroy(gameObjectToDestroy);
+        }
+
+        // Si le panneau n'était pas l'objet à détruire direct, on le détruit quand même 
+        // car il ne sert plus à rien une fois l'action faite.
+        if (gameObjectToDestroy != gameObject)
+        {
+            Destroy(gameObject);
+        }
     }
 
 }

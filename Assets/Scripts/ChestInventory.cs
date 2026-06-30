@@ -116,7 +116,7 @@ public class ChestInventory : MonoBehaviour
             SlotChest currentSlot = slotsParent.GetChild(i).GetComponent<SlotChest>();
             if (currentSlot == null) continue;
 
-            currentSlot.button.onClick.RemoveAllListeners();
+            currentSlot.button?.onClick.RemoveAllListeners();
 
             ItemInInventory itemInInv = dataArray[i];
 
@@ -151,7 +151,7 @@ public class ChestInventory : MonoBehaviour
                 currentSlot.SetSlotState(true);
 
                 int index = i;
-                currentSlot.button.onClick.AddListener(() => HandleSlotClick(index, isChest, isResource));
+                currentSlot.button?.onClick.AddListener(() => HandleSlotClick(index, isChest, isResource));
             }
         }
     }

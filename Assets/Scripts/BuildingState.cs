@@ -42,4 +42,30 @@ public class BuildingState : MonoBehaviour
             Debug.Log($"<color=yellow>[BuildingState] Building {worldID.UniqueID} remains inactive.</color>");
         }
     }
+
+    /// <summary>
+    /// Appelle cette méthode lorsque le joueur donne les ressources pour construire cet élément.
+    /// </summary>
+    public void ConstructBuilding()
+    {
+        if (worldID == null) worldID = GetComponent<WorldObjectID>();
+
+        // 1. On l'enregistre dans le Manager de l'état du monde
+        WorldStateManager.Instance.RegisterActivedBuilding(worldID.UniqueID);
+
+        // 2. On applique visuellement le changement immédiatement
+        ApplyWorldState();
+
+        // 3. SAUVEGARDE IMMÉDIATE SUR LE DISQUE
+        // Ici, tu appelles ton script global de sauvegarde (ex: SaveManager)
+        if (SaveManager.Instance != null)
+        {
+            SaveManager.Instance.SaveGame();
+            Debug.Log($"<color=cyan>[BuildingState] Sauvegarde automatique réussie pour : {gameObject.name}</color>");
+        }
+        else
+        {
+            Debug.LogWarning("SaveManager.Instance introuvable. Le bâtiment est actif en mémoire mais pas encore écrit sur le disque.");
+        }
+    }
 }
