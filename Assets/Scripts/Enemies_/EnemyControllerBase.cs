@@ -53,7 +53,6 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     [Header("Other")]
     [SerializeField] private bool canRespawn = false;
     [SerializeField] private GameObject itemToDrop;
-    private WorldObjectID _worldID;
     private Dictionary<AttackSO, float> _attackCooldownTimers = new Dictionary<AttackSO, float>();
     public bool isScreaming = false;
 
@@ -62,6 +61,8 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     public float nextBlockTime { get; set; } // Traque le moment où le prochain blocage est autorisé
     protected override void Awake()
     {
+        if (!canRespawn) base.Awake();
+
         // 1. Initialisation des composants physiques
         Agent = GetComponent<NavMeshAgent>();
         Animator = GetComponent<Animator>();
@@ -120,22 +121,13 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         }
 
 
-        _worldID = GetComponent<WorldObjectID>();
+        worldID = GetComponent<WorldObjectID>();
         if (itemToDrop != null)
             itemToDrop.SetActive(false);
     }
 
     protected virtual void Start()
     {
-        // On vérifie immédiatement l'état au démarrage, sans attendre l'event
-        if (worldID != null && WorldStateManager.Instance != null && !canRespawn)
-        {
-            if (WorldStateManager.Instance.IsCollected(worldID.UniqueID))
-            {
-                Debug.Log($"<color=red>[{name}] Détection immédiate : déjà mort, destruction.</color>");
-                Destroy(gameObject);
-            }
-        }
         // 1. Recherche du joueur
         if (target == null && PlayerController.Instance != null)
             target = PlayerController.Instance.transform;
@@ -340,6 +332,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
 
     protected override void OnDisable()
     {
+        base.OnDisable();
         if (Health != null)
         {
             Health.OnDeath -= HandleDeath;
@@ -353,10 +346,10 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         NewQuestManager.instance.UpdateQuestProgress(AIManager.GetData().enemyType.ToString(), 1);
         StateMachine.ChangeState(EnemyStateType.Death);
 
-        if (_worldID != null && !canRespawn)
+        if (worldID != null && !canRespawn)
         {
-            WorldStateManager.Instance.RegisterCollectedObject(_worldID.UniqueID);
-            Debug.LogWarning($"<color=purple>[{name}] registered as collected in WorldStateManager, with ID : {_worldID.UniqueID}.</color>");
+            WorldStateManager.Instance.RegisterCollectedObject(worldID.UniqueID);
+            Debug.LogWarning($"<color=purple>[{name}] registered as collected in WorldStateManager, with ID : {worldID.UniqueID}.</color>");
         }
         if (barriereDeCombat != null)
         {

@@ -33,11 +33,6 @@ public abstract class WorldDisappearOnCollected : MonoBehaviour
 
     protected void ApplyWorldState()
     {
-        EnemyControllerBase enemyController = GetComponent<EnemyControllerBase>();
-        if (enemyController != null)
-        {
-            Debug.LogWarning($"<color=yellow>[{name}] ApplyWorldState called, with ID : {worldID.UniqueID}</color>");
-        }
         if (worldID != null && WorldStateManager.Instance.IsCollected(worldID.UniqueID))
         {
             StartCoroutine(DestroyNextFrame());

@@ -23,11 +23,13 @@ public class PopupDescription : WorldDisappearOnCollected
 
     protected override void OnEnable()
     {
+        base.OnEnable(); 
         PopupEvent.OnPopupRequested += ShowDescriptionPanel;
     }
 
     protected override void OnDisable()
     {
+        base.OnDisable(); 
         PopupEvent.OnPopupRequested -= ShowDescriptionPanel;
     }
 
@@ -141,10 +143,5 @@ public class PopupDescription : WorldDisappearOnCollected
 
         popupCanvasGroup.alpha = 0;
         popupDescriptionPanel.SetActive(false);
-        if (TryGetComponent<WorldObjectID>(out var id))
-        {
-            WorldStateManager.Instance.RegisterCollectedObject(id.UniqueID);
-            Debug.Log($"<color=yellow> Registering collected object with ID: {id.UniqueID} </color>");
-        }
     }
 }
