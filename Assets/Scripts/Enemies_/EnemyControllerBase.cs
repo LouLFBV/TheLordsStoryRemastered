@@ -51,6 +51,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
     public bool HasAggroedOnce { get; set; } = false;
 
     [Header("Other")]
+    [SerializeField] private bool canRespawn = false;
     [SerializeField] private GameObject itemToDrop;
     private WorldObjectID _worldID;
     private Dictionary<AttackSO, float> _attackCooldownTimers = new Dictionary<AttackSO, float>();
@@ -126,6 +127,15 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
 
     protected virtual void Start()
     {
+        // On vérifie immédiatement l'état au démarrage, sans attendre l'event
+        if (worldID != null && WorldStateManager.Instance != null && !canRespawn)
+        {
+            if (WorldStateManager.Instance.IsCollected(worldID.UniqueID))
+            {
+                Debug.Log($"<color=red>[{name}] Détection immédiate : déjà mort, destruction.</color>");
+                Destroy(gameObject);
+            }
+        }
         // 1. Recherche du joueur
         if (target == null && PlayerController.Instance != null)
             target = PlayerController.Instance.transform;
@@ -343,7 +353,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         NewQuestManager.instance.UpdateQuestProgress(AIManager.GetData().enemyType.ToString(), 1);
         StateMachine.ChangeState(EnemyStateType.Death);
 
-        if (_worldID != null)
+        if (_worldID != null && !canRespawn)
         {
             WorldStateManager.Instance.RegisterCollectedObject(_worldID.UniqueID);
             Debug.LogWarning($"<color=purple>[{name}] registered as collected in WorldStateManager, with ID : {_worldID.UniqueID}.</color>");

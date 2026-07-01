@@ -13,7 +13,9 @@ public abstract class WorldDisappearOnCollected : MonoBehaviour
 
     protected virtual void OnEnable()
     {
-       //Debug.Log($"[OnEnable] {name}, with ID : {worldID.UniqueID}");
+
+        //Debug.Log($"[OnEnable] {name}, with ID : {worldID.UniqueID}");
+
 
         if (worldID == null || WorldStateManager.Instance == null)
             return;
@@ -31,7 +33,11 @@ public abstract class WorldDisappearOnCollected : MonoBehaviour
 
     protected void ApplyWorldState()
     {
-
+        EnemyControllerBase enemyController = GetComponent<EnemyControllerBase>();
+        if (enemyController != null)
+        {
+            Debug.LogWarning($"<color=yellow>[{name}] ApplyWorldState called, with ID : {worldID.UniqueID}</color>");
+        }
         if (worldID != null && WorldStateManager.Instance.IsCollected(worldID.UniqueID))
         {
             StartCoroutine(DestroyNextFrame());
@@ -39,7 +45,7 @@ public abstract class WorldDisappearOnCollected : MonoBehaviour
         }
         else if (worldID != null)
         {
-            Debug.LogWarning($"<color=cyan>[{name}] checked world state: Collected = {WorldStateManager.Instance.IsCollected(worldID.UniqueID)}, with ID : {worldID.UniqueID}</color>");
+            //Debug.LogWarning($"<color=cyan>[{name}] checked world state: Collected = {WorldStateManager.Instance.IsCollected(worldID.UniqueID)}, with ID : {worldID.UniqueID}</color>");
         }
         else
         {
