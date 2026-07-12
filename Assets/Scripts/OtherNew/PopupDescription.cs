@@ -143,6 +143,8 @@ public class PopupDescription : WorldDisappearOnCollected
 
         popupCanvasGroup.alpha = 0;
         popupDescriptionPanel.SetActive(false);
-        Destroy(popupDescriptionPanel);
+
+        if (UIManagerSystem.Instance != null)
+            UIManagerSystem.Instance.hudElements.Remove(popupDescriptionPanel);
     }
 }

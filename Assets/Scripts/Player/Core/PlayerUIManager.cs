@@ -101,4 +101,11 @@ public class PlayerUIManager : MonoBehaviour
         deathPanelAnimator.SetTrigger("Open");
         player.StateMachine.ChangeState(PlayerStateType.UI);
     }
+
+    public void CloseDeathPanel()
+    {
+        deathPanel.SetActive(false);
+        player.Animator.SetTrigger("Relive");
+        player.StateMachine.ChangeState(PlayerStateType.Idle);
+    }
 }

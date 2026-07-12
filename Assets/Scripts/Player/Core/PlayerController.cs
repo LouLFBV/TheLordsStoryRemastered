@@ -345,6 +345,8 @@ public class PlayerController : MonoBehaviour, ICombatant
 
     public void LoadSaveData(PlayerControllerSaveData data)
     {
+        PlayerUIManager.Instance.CloseDeathPanel();
+        IsDead = false;
         Health.SetHealth(data.currentHealth);
         Stamina.SetStamania(data.currentEndurance);
         Wallet.SetGoldAmount(data.gold);
