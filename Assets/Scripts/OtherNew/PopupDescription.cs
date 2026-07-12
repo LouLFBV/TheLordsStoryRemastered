@@ -143,5 +143,6 @@ public class PopupDescription : WorldDisappearOnCollected
 
         popupCanvasGroup.alpha = 0;
         popupDescriptionPanel.SetActive(false);
+        Destroy(popupDescriptionPanel);
     }
 }

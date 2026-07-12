@@ -295,11 +295,22 @@ public class EquipmentSystem : MonoBehaviour
         return new EquipmentSaveData
         {
             headID = headSlot.item ? headSlot.item.itemID : null,
+            headLevel = headSlot.item ? headSlot.item.levelAmelioration : 0,
+
             chestID = chestSlot.item ? chestSlot.item.itemID : null,
+            chestLevel = chestSlot.item ? chestSlot.item.levelAmelioration : 0,
+
             handsID = handsSlot.item ? handsSlot.item.itemID : null,
+            handsLevel = handsSlot.item ? handsSlot.item.levelAmelioration : 0,
+
             legsID = legsSlot.item ? legsSlot.item.itemID : null,
+            legsLevel = legsSlot.item ? legsSlot.item.levelAmelioration : 0,
+
             feetID = feetSlot.item ? feetSlot.item.itemID : null,
+            feetLevel = feetSlot.item ? feetSlot.item.levelAmelioration : 0,
+
             arrowID = arrowItemInInventory.itemData ? arrowItemInInventory.itemData.itemID : null,
+            arrowLevel = arrowItemInInventory.itemData ? arrowItemInInventory.itemData.levelAmelioration : 0,
             arrowCount = arrowItemInInventory.count
         };
     }
@@ -330,36 +341,52 @@ public class EquipmentSystem : MonoBehaviour
             return;
         }
 
-        EquipByID(data.headID);
-        EquipByID(data.chestID);
-        EquipByID(data.handsID);
-        EquipByID(data.legsID);
-        EquipByID(data.feetID);
+        EquipByID(data.headID, data.headLevel);
+        EquipByID(data.chestID, data.chestLevel);
+        EquipByID(data.handsID, data.handsLevel);
+        EquipByID(data.legsID, data.legsLevel);
+        EquipByID(data.feetID, data.feetLevel);
 
         if (!string.IsNullOrEmpty(data.arrowID))
         {
-            ItemData arrow = ItemDataDatabase.Instance.GetItemByID(data.arrowID);
-            arrowItemInInventory.itemData = arrow;
+            ItemData arrowBase = ItemDataDatabase.Instance.GetItemByID(data.arrowID);
+            ItemData finalArrow = arrowBase;
+
+            // Si tes flèches peuvent être améliorées (et ne sont pas stackables), décommente ceci :
+            // if (!arrowBase.stackable) {
+            //     finalArrow = arrowBase.CreateInstance();
+            //     finalArrow.RestoreLevel(data.arrowLevel);
+            // }
+
+            arrowItemInInventory.itemData = finalArrow;
             arrowItemInInventory.count = data.arrowCount;
 
-            arrowSlot.itemVisual.sprite = arrow.visual;
+            arrowSlot.itemVisual.sprite = finalArrow.visual;
             UpdateArrowsText();
             BowBehaviour.instance.UpdateQuiverVisual(data.arrowCount);
         }
 
         isLoading = false;
-
         RefreshPlayerArmor();
     }
 
-    private void EquipByID(string id)
+    private void EquipByID(string id, int savedLevel)
     {
         if (string.IsNullOrEmpty(id)) return;
 
-        ItemData item = ItemDataDatabase.Instance.GetItemByID(id);
-        if (item != null)
+        ItemData baseItem = ItemDataDatabase.Instance.GetItemByID(id);
+        if (baseItem != null)
         {
-            EquipAction(item);
+            ItemData finalItem = baseItem;
+
+            // On clone si c'est un équipement unique
+            if (!baseItem.stackable)
+            {
+                finalItem = baseItem.CreateInstance();
+                finalItem.RestoreLevel(savedLevel);
+            }
+
+            EquipAction(finalItem); 
         }
     }
     #endregion
@@ -388,12 +415,12 @@ public class EquipmentSystem : MonoBehaviour
 [System.Serializable]
 public class EquipmentSaveData
 {
-    public string headID;
-    public string chestID;
-    public string handsID;
-    public string legsID;
-    public string feetID;
+    public string headID; public int headLevel;
+    public string chestID; public int chestLevel;
+    public string handsID; public int handsLevel;
+    public string legsID; public int legsLevel;
+    public string feetID; public int feetLevel;
 
-    public string arrowID;
+    public string arrowID; public int arrowLevel;
     public int arrowCount;
 }

@@ -82,6 +82,11 @@ public class InventorySystem : MonoBehaviour
     {
         Debug.Log("Adding item: " + item.itemName);
 
+        if (!item.stackable && !item.isInstance && item.itemType != ItemType.Key)
+        {
+            item = item.CreateInstance();
+        }
+
         ItemInInventory[] targetArray = GetTargetArray(item.itemType);
 
         // Cas spécial flèches (On garde ta logique)
@@ -350,7 +355,8 @@ public class InventorySystem : MonoBehaviour
             {
                 itemID = array[i].itemData != null ? array[i].itemData.itemID : "",
                 count = array[i].count,
-                slotIndex = i 
+                slotIndex = i,
+                levelAmelioration = array[i].itemData != null ? array[i].itemData.levelAmelioration : 0
             });
         }
         return savedList;
@@ -378,10 +384,21 @@ public class InventorySystem : MonoBehaviour
             if (savedItem.slotIndex < 0 || savedItem.slotIndex >= array.Length) continue;
             if (string.IsNullOrEmpty(savedItem.itemID)) continue;
 
-            ItemData itemData = itemDatabase.GetItemByID(savedItem.itemID);
-            if (itemData == null) continue;
+            // 1. On récupère le modèle de base (le fichier du projet)
+            ItemData baseItemData = itemDatabase.GetItemByID(savedItem.itemID);
+            if (baseItemData == null) continue;
 
-            array[savedItem.slotIndex].itemData = itemData;
+            ItemData finalItem = baseItemData;
+
+            // 2. Si c'est un équipement (non stackable), on crée une instance unique !
+            if (!baseItemData.stackable)
+            {
+                finalItem = baseItemData.CreateInstance();
+                finalItem.RestoreLevel(savedItem.levelAmelioration); // On applique le niveau sauvegardé
+            }
+
+            // 3. On place l'objet dans l'inventaire
+            array[savedItem.slotIndex].itemData = finalItem;
             array[savedItem.slotIndex].count = savedItem.count;
         }
     }
@@ -400,7 +417,8 @@ public class ItemInInventorySave
 {
     public string itemID;
     public int count;
-    public int slotIndex; 
+    public int slotIndex;
+    public int levelAmelioration;
 }
 
 [System.Serializable]

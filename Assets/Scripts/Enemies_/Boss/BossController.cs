@@ -17,9 +17,6 @@ public class BossController : EnemyControllerBase
     public BossAttackState AttackState { get; private set; }
     public BossScreamState ScreamState { get; private set; }
 
-
-
-
     [Header("Ranged Attack Transforms")]
     [SerializeField] private Transform forwardFirePoint;
     [SerializeField] private Transform downFirePoint;

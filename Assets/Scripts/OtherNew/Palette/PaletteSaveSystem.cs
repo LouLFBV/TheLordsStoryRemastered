@@ -9,7 +9,6 @@ public class PaletteSaveSystem : MonoBehaviour
 
     public PaletteSaveData GetSaveData()
     {
-        // CORRECTION : On utilise "CreateSlotSave" pour injecter le statut 'isEquipped' provenant des slots réels
         return new PaletteSaveData
         {
             weapon1 = CreateSlotSave(slotManager.weapons[0]?.itemData, slotManager.weapons[0], slotManager.weaponSlots[0].isEquipped),
@@ -28,7 +27,8 @@ public class PaletteSaveSystem : MonoBehaviour
         {
             itemID = item.itemID,
             count = slot.count,
-            isEquipped = equipped
+            isEquipped = equipped,
+            levelAmelioration = item.levelAmelioration
         };
     }
 
@@ -53,39 +53,55 @@ public class PaletteSaveSystem : MonoBehaviour
     {
         if (save == null) return;
 
-        ItemData item = InventorySystem.instance.itemDatabase.GetItemByID(save.itemID);
-        if (item == null) return;
+        ItemData baseItem = InventorySystem.instance.itemDatabase.GetItemByID(save.itemID);
+        if (baseItem == null) return;
+
+        //  NOUVEAU : Création de l'instance
+        ItemData finalItem = baseItem;
+        if (!baseItem.stackable)
+        {
+            finalItem = baseItem.CreateInstance();
+            finalItem.RestoreLevel(save.levelAmelioration);
+        }
 
         int index = slot - 1;
 
         slotManager.weapons[index] = new ItemInInventory
         {
-            itemData = item,
+            itemData = finalItem, //  Utilise le clone
             count = save.count
         };
 
         PaletteSlot slotData = slotManager.weaponSlots[index];
-        slotData.slotItemData = item;
-        slotData.isEquipped = save.isEquipped; // Récupère enfin le vrai état !
+        slotData.slotItemData = finalItem; //  Utilise le clone
+        slotData.isEquipped = save.isEquipped;
     }
 
     private void LoadObjectSlot(int slot, PaletteSlotSave save)
     {
         if (save == null) return;
 
-        ItemData item = InventorySystem.instance.itemDatabase.GetItemByID(save.itemID);
-        if (item == null) return;
+        ItemData baseItem = InventorySystem.instance.itemDatabase.GetItemByID(save.itemID);
+        if (baseItem == null) return;
+
+        //  NOUVEAU : Création de l'instance
+        ItemData finalItem = baseItem;
+        if (!baseItem.stackable)
+        {
+            finalItem = baseItem.CreateInstance();
+            finalItem.RestoreLevel(save.levelAmelioration);
+        }
 
         int index = slot - 1;
 
         slotManager.objects[index] = new ItemInInventory
         {
-            itemData = item,
+            itemData = finalItem, //  Utilise le clone
             count = save.count
         };
 
         PaletteSlot slotData = slotManager.objectSlots[index];
-        slotData.slotItemData = item;
+        slotData.slotItemData = finalItem; //  Utilise le clone
         slotData.isEquipped = save.isEquipped;
         slotManager.UpdateSlotUI(index, save.count);
     }

@@ -50,6 +50,9 @@ public class ItemData : ScriptableObject
     public float cameraShakeIntensity = 0.15f;
     public float cameraShakeDuration = 0.2f;
 
+
+    [HideInInspector] public bool isInstance = false; // Permet de savoir si c'est une copie
+
     private void OnValidate()
     {
         // Si l'ID est vide, null ou composé uniquement d'espaces
@@ -58,6 +61,35 @@ public class ItemData : ScriptableObject
             GenerateUniqueID();
         }
     }
+
+
+    // Fonction pour créer une copie unique
+    public ItemData CreateInstance()
+    {
+        ItemData clone = Instantiate(this);
+        clone.name = this.itemName; // Nettoie le nom (enlève le "(Clone)")
+        clone.isInstance = true;
+        return clone;
+    }
+
+    // Fonction pour recalculer les stats quand on charge une sauvegarde
+    public void RestoreLevel(int savedLevel)
+    {
+        // On simule les améliorations du forgeron pour retomber sur les bonnes stats
+        for (int i = 0; i < savedLevel; i++)
+        {
+            levelAmelioration++;
+            if (equipmentType != EquipmentType.Weapon)
+                armorPoints += 10;
+            else
+                attackPoints += 10;
+
+            // Si tu as d'autres stats qui montent (comme la portée de l'arc), ajoute-les ici
+            if (handWeaponType == HandWeapon.Bow)
+                rangeMax += 5;
+        }
+    }
+
 
     [ContextMenu("Forcer la génération d'un nouvel ID")]
     public void GenerateUniqueID()

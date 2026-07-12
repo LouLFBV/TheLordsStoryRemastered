@@ -171,7 +171,7 @@ public class NewItemActionsSystem : MonoBehaviour
         if (item.armorPoints > 0)
         {
 
-            itemDegatsText.text = $"Pourcentage de réduction : {item.attackPoints}";
+            itemDegatsText.text = $"Pourcentage de réduction : {item.armorPoints}";
             itemDegatsText.gameObject.SetActive(true);
             itemTypeDeResistanceText.text = $"Type de Résistance : {item.armorType}";
             itemTypeDeResistanceText.gameObject.SetActive(true);

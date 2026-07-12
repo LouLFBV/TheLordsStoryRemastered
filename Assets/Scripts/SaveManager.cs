@@ -46,6 +46,7 @@ public class SaveManager : MonoBehaviour
         data.map = MapManager.instance.GetSaveData();
         data.quests = NewQuestManager.instance.GetSaveData();
         data.questLog = NewQuestLog.instance.GetSaveData();
+        data.progression = ProgressionManager.Instance.GetSaveData();
 
         if (RecipeDatabase.Instance != null)
             data.recipes = RecipeDatabase.Instance.GetSaveData();
@@ -79,11 +80,19 @@ public class SaveManager : MonoBehaviour
 
     private IEnumerator LoadRoutine(SaveData data)
     {
-
+        // 1. On charge d'abord le Bootstrap (qui contient tes managers globaux)
         yield return SceneManager.LoadSceneAsync("Bootstrap");
-        yield return SceneManager.LoadSceneAsync(data.sceneName);
-        yield return null;
 
+        //  NOUVEAU & CRITIQUE : On charge la progression TOUT DE SUITE.
+        // Comme ça, le ProgressionManager est à jour AVANT que la scène de jeu ne se lance.
+        if (data.progression != null)
+            ProgressionManager.Instance.LoadSaveData(data.progression);
+
+        // 2. On charge la scène de jeu
+        yield return SceneManager.LoadSceneAsync(data.sceneName);
+        yield return null; // On attend que la scène s'initialise (Start() s'exécute ici avec les bonnes données !)
+
+        // 3. On applique les données du joueur et du monde
         PlayerController.Instance.LoadSaveData(data.playerController);
 
         if (data.inventory != null)
@@ -109,7 +118,7 @@ public class SaveManager : MonoBehaviour
 
         if (data.questLog != null)
             NewQuestLog.instance.LoadSaveData(data.questLog);
-        
+
 
         while (ChestInventory.Instance == null)
         {
@@ -118,6 +127,7 @@ public class SaveManager : MonoBehaviour
 
         if (data.chestInventory != null)
             ChestInventory.Instance.LoadSaveData(data.chestInventory);
+
         Debug.Log("Game Loaded");
     }
 
@@ -158,6 +168,7 @@ public class SaveData
     public QuestLogSaveData questLog;
     public ChestInventoryData chestInventory;
     public RecipeSaveData recipes;
+    public ProgressionSaveData progression;
 
     public string sceneName;
     public int saveVersion = 1;

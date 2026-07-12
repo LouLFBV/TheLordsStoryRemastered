@@ -13,7 +13,7 @@ public class CombatMusicTracker : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // Survit aux changements de scènes
+            //DontDestroyOnLoad(gameObject); // Survit aux changements de scènes
         }
         else
         {

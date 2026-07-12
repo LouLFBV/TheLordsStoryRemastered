@@ -57,6 +57,7 @@ public class PaletteSlotSave
     public string itemID;
     public int count;
     public bool isEquipped;
+    public int levelAmelioration;
 }
 
 [System.Serializable]

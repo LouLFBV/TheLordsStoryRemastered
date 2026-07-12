@@ -4,12 +4,15 @@ using System.Collections.Generic;
 
 public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatant
 {
-
     [Header("Core Components")]
     public EnemyStateMachine StateMachine { get; private set; }
     public NavMeshAgent Agent { get; private set; }
     public Animator Animator { get; private set; }
     public Rigidbody Rigidbody { get; private set; }
+
+    [Header("Progression")]
+    [Tooltip("Laissez vide si cet ennemi n'est pas lié à un événement d'histoire")]
+    public string deathEventID;
 
     [Header("Combat Settings")]
     [SerializeField] private List<EnemyWeaponSetup> weaponSetups;

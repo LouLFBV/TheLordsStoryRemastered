@@ -17,7 +17,7 @@ public class RecipeDatabase : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // Optionnel : si tu veux qu'il survive entre les scènes
+            //DontDestroyOnLoad(gameObject); // Optionnel : si tu veux qu'il survive entre les scènes
         }
         else
         {

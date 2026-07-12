@@ -1,4 +1,5 @@
 using UnityEngine;
+
 public class EnemyDeathState : EnemyState
 {
     public EnemyDeathState(EnemyControllerBase enemy) : base(enemy) { }
@@ -27,6 +28,11 @@ public class EnemyDeathState : EnemyState
             source.Stop(); // On coupe définitivement les boucles
             source.loop = false;
             source.PlayOneShot(enemy.enemyData.deathSound); // Dernier râle
+        }
+
+        if (!string.IsNullOrEmpty(enemy.deathEventID))
+        {
+            ProgressionManager.Instance.MarkEventAsCompleted(enemy.deathEventID);
         }
     }
 

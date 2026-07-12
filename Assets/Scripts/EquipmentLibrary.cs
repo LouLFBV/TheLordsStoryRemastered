@@ -4,11 +4,13 @@ using System.Collections.Generic;
 public class EquipmentLibrary : MonoBehaviour
 {
     public List<EquipmentLibraryItem> content = new List<EquipmentLibraryItem>();
-    private Dictionary<ItemData, EquipmentLibraryItem> lookup;
+
+    //  On change la clé en 'string' (qui correspondra à l'itemID)
+    private Dictionary<string, EquipmentLibraryItem> lookup;
 
     void Awake()
     {
-        lookup = new Dictionary<ItemData, EquipmentLibraryItem>();
+        lookup = new Dictionary<string, EquipmentLibraryItem>();
 
         foreach (var item in content)
         {
@@ -18,7 +20,14 @@ public class EquipmentLibrary : MonoBehaviour
                 continue;
             }
 
-            lookup[item.itemData] = item;
+            if (string.IsNullOrEmpty(item.itemData.itemID))
+            {
+                Debug.LogWarning($"L'objet {item.itemData.name} n'a pas d'itemID !");
+                continue;
+            }
+
+            // On enregistre la librairie en utilisant l'ID comme clé
+            lookup[item.itemData.itemID] = item;
         }
     }
 
@@ -30,12 +39,19 @@ public class EquipmentLibrary : MonoBehaviour
             return null;
         }
 
-        if (lookup.TryGetValue(item, out var result))
+        if (string.IsNullOrEmpty(item.itemID))
+        {
+            Debug.LogWarning($"EquipmentLibrary.Get : L'item {item.name} n'a pas d'itemID !");
+            return null;
+        }
+
+        //  On cherche dans le dictionnaire via l'ID de l'item (clone ou original, l'ID sera le même !)
+        if (lookup.TryGetValue(item.itemID, out var result))
         {
             return result;
         }
 
-        Debug.LogWarning($"Item {item.itemName} not found in EquipmentLibrary.");
+        Debug.LogWarning($"Item {item.itemName} (ID: {item.itemID}) not found in EquipmentLibrary.");
         return null;
     }
 }
