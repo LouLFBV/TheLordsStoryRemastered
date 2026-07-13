@@ -15,6 +15,7 @@ public class PlayerUIManager : MonoBehaviour
     [Header("Stamina UI")]
     [SerializeField] private Image staminaBarFill;
     [SerializeField] private Animator staminaBarAnimator;
+    [SerializeField] private Animator lowHealthVolume;
 
     [Header("Colors")]
     private Color colorFull = new Color32(0x2F, 0x62, 0x26, 0xFF);   // Vert
@@ -42,6 +43,7 @@ public class PlayerUIManager : MonoBehaviour
 
         // On s'abonne aussi au "Hit" pour l'animation de la barre
         player.Health.OnHit += () => healthBarAnimator.SetTrigger("TakeDamage");
+        player.Health.OnHit += UpdateLowHealthVolume;
     }
     private void Update()
     {
@@ -57,9 +59,14 @@ public class PlayerUIManager : MonoBehaviour
         // On ne joue l'animation que si le feedback n'est pas verrouillé
         if (!_feedbackLocked)
         {
-            staminaBarAnimator.SetTrigger("StaminaLow");
             _feedbackLocked = true; // On verrouille jusqu'à ce qu'il lâche la touche
         }
+    }
+
+    private void UpdateLowHealthVolume()
+    {
+        if (lowHealthVolume == null || player.Health.CurrentHealth >= player.Health.MaxHealth/2) return;
+        lowHealthVolume.SetTrigger("TakeDamage");
     }
 
     private void UpdateHealth(float current, float max)
@@ -75,6 +82,7 @@ public class PlayerUIManager : MonoBehaviour
         UpdateHealthBarColor(ratio);
 
     }
+
     private void UpdateHealthBarColor(float ratio)
     {
         // Ta logique de dégradé de couleurs
