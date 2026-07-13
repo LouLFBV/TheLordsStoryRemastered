@@ -163,17 +163,45 @@ public class BowBehaviour : MonoBehaviour
 
     private void AlignArrowSpawnToCamera()
     {
+        //  SÉCURITÉ 1 : Si playerCamera est null (ce qui arrive quand on charge le préfab),
+        // on récupère automatiquement la caméra principale du jeu.
+        if (playerCamera == null)
+        {
+            playerCamera = Camera.main;
+        }
+
+        if (playerCamera == null)
+        {
+            Debug.LogError("[BowBehaviour] Impossible de tirer : Aucune caméra principale trouvée dans la scène !");
+            return;
+        }
+
         // Ray depuis le centre de l’écran
         Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
         int layerMask = ~LayerMask.GetMask("Player");
 
-        // On regarde si on touche quelque chose (en ignorant le joueur)
         Vector3 targetPoint;
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f, layerMask))
-            targetPoint = hit.point;
+
+        //  SÉCURITÉ 2 : On ajoute 'QueryTriggerInteraction.Ignore' à la fin du Raycast.
+        // Cela empêche le tir de s'aligner sur des colliders invisibles (triggers de zone, etc.)
+        if (Physics.Raycast(ray, out RaycastHit hit, 100f, layerMask, QueryTriggerInteraction.Ignore))
+        {
+            //  SÉCURITÉ 3 : Si le Raycast touche un objet trop proche du joueur (comme l'arc lui-même ou un obstacle au corps à corps)
+            // on force la cible à être loin devant pour éviter que l'arc ne louche vers le sol.
+            if (Vector3.Distance(arrowSpawnPoint.position, hit.point) < 2f)
+            {
+                targetPoint = ray.origin + ray.direction * 100f;
+            }
+            else
+            {
+                targetPoint = hit.point;
+            }
+        }
         else
+        {
             targetPoint = ray.origin + ray.direction * 100f;
+        }
 
         // Oriente le spawn vers ce point
         arrowSpawnPoint.LookAt(targetPoint);
