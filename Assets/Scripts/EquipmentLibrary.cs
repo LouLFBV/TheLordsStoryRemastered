@@ -63,11 +63,11 @@ public class EquipmentLibraryItem
 
     [Header("Player In Game")]
     public GameObject itemPrefab;
-    public GameObject[] bobyPartToEnable;
+    public GameObject[] bodyPartsToEnable;
     public GameObject[] elementsToDisable;
 
     [Header("Player In Equipment Panel")]
     public GameObject itemPrefabEquipment;
-    public GameObject[] bobyPartToEnableEquipment;
+    public GameObject[] bodyPartsToEnableEquipment;
     public GameObject[] elementsToDisableEquipment;
 }

@@ -393,22 +393,53 @@ public class EquipmentSystem : MonoBehaviour
 
     private void ActiveItemVisuel(EquipmentLibraryItem equipmentLibraryItem, bool actived = true)
     {
-        foreach (GameObject element in equipmentLibraryItem.elementsToDisable)
+        if (equipmentLibraryItem.elementsToDisable != null)
         {
-            element.SetActive(!actived);
+            foreach (GameObject element in equipmentLibraryItem.elementsToDisable)
+            {
+                if (element != null)
+                    element.SetActive(!actived);
+            }
         }
-        equipmentLibraryItem.itemPrefab.SetActive(actived);
+        if (equipmentLibraryItem.bodyPartsToEnable != null)
+        {
+            foreach (GameObject bodyPart in equipmentLibraryItem.bodyPartsToEnable)
+            {
+                if (bodyPart != null)
+                    bodyPart.SetActive(actived);
+            }
+        }
+        if (equipmentLibraryItem.itemPrefab != null)
+        {
+            equipmentLibraryItem.itemPrefab.SetActive(actived);
+        }
 
         ActiveItemVisuelInEquipment(equipmentLibraryItem, actived);
     }
 
     private void ActiveItemVisuelInEquipment(EquipmentLibraryItem equipmentLibraryItem, bool actived)
     {
-        foreach (GameObject element in equipmentLibraryItem.elementsToDisableEquipment)
+        if (equipmentLibraryItem.elementsToDisableEquipment != null)
         {
-            element.SetActive(!actived);
+            foreach (GameObject element in equipmentLibraryItem.elementsToDisableEquipment)
+            {
+                if (element != null)
+                    element.SetActive(!actived);
+            }
         }
-        equipmentLibraryItem.itemPrefabEquipment.SetActive(actived);
+
+        if (equipmentLibraryItem.bodyPartsToEnableEquipment != null)
+        {
+            foreach (GameObject bodyPart in equipmentLibraryItem.bodyPartsToEnableEquipment)
+            {
+                if (bodyPart != null)
+                    bodyPart.SetActive(actived);
+            }
+        }
+        if (equipmentLibraryItem.itemPrefabEquipment != null)
+        {
+            equipmentLibraryItem.itemPrefabEquipment.SetActive(actived);
+        }
     }
 }
 
