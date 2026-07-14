@@ -242,6 +242,8 @@ public class BowBehaviour : MonoBehaviour
         }
         EquipmentSystem.instance.UpdateQuiverVisual(currentArrowCount);
     }
+
+
     public void ActiveArrow()
     {
         arrow.SetActive(true);

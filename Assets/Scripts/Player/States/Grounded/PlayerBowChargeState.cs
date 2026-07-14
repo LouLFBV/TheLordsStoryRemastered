@@ -3,7 +3,7 @@ using UnityEngine;
 public class PlayerBowChargeState : PlayerGroundedState
 {
 
-    private float currentChargeTime;
+    private float currentChargeTime; 
     private float chargeDuration = 2.067f;
 
     public PlayerBowChargeState(PlayerController player) : base(player) { }
@@ -46,7 +46,7 @@ public class PlayerBowChargeState : PlayerGroundedState
 
         // FOV : Zoom progressif seulement si on vise ? 
         // Ou zoom léger constant ? Ici, zoom progressif uniquement si AimPressed
-        if (player.Input.AimHeld)
+        if (player.Input.AimHeld )
         {
             float dynamicFOV = Mathf.Lerp(ThirdPersonCameraController.Instance.DefaultFOV, 40f, t);
             UIManagerSystem.Instance.ShowCrosshair(true);
@@ -70,20 +70,27 @@ public class PlayerBowChargeState : PlayerGroundedState
         player.Animator.SetFloat(AnimatorHashes.speedHash, input.magnitude * moveSpeedFactor, 0.1f, Time.deltaTime);
 
         // 5. Condition de tir (Ce qui était dans "HandleShooting")
-        if (!player.Input.AttackAnyHeld)
+        // On stocke si le joueur a relâché le bouton
+        bool autoShootBuffered = !player.Input.AttackAnyHeld;
+
+        if (autoShootBuffered)
         {
+            // Dès que l'animation de l'arc est prête (via ton Animation Event "ActiveCanShoot")
+            // on tire automatiquement !
             if (player.Bow.canShoot)
             {
                 player.Bow.ShootArrow();
                 player.StateMachine.ChangeState(PlayerStateType.Idle);
             }
-            else
+            // Sécurité : si pour une raison quelconque l'animation est bloquée plus de 1.5s, on reset
+            else if (currentChargeTime > 1.5f)
             {
-                player.Bow.chargeBow = false;
                 player.StateMachine.ChangeState(PlayerStateType.Idle);
             }
         }
     }
+
+
 
     public override void Exit()
     {
