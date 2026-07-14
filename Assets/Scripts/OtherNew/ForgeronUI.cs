@@ -258,6 +258,12 @@ public class ForgeronUI : MonoBehaviour
         UpdateButtons();
     }
 
+    public void CloseUpgradePanel()
+    {
+        upgradePanel.SetActive(false);
+        _currentItem = null;
+    }
+
     public void UpgradeItem(ItemData itemData)
     {
         Debug.Log("Tentative d'amélioration de l'item : " + (itemData != null ? itemData.itemName : "null"));
