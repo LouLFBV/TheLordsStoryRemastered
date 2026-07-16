@@ -14,10 +14,10 @@ public class HitBoxWeapon : MonoBehaviour
                 if (itemData.equipmentType != EquipmentType.Arrow)
                 {
                    // enemyAI.TakeDamage(itemData.attackPoints, itemData.damageType);
-                    CameraEvents.OnCameraShake?.Invoke(
-                        itemData.cameraShakeIntensity,
-                        itemData.cameraShakeDuration
-                    );
+                    //CameraEvents.OnCameraShake?.Invoke(
+                    //    itemData.cameraShakeIntensity,
+                    //    itemData.cameraShakeDuration
+                    //);
                 }
                 //else if(other.TryGetComponent<EnemyParent>(out var enemyAI1))
                     //StartCoroutine(ApplyArrowEffect(enemyAI1));

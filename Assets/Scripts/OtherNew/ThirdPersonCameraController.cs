@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class ThirdPersonCameraController : MonoBehaviour
@@ -94,6 +95,16 @@ public class ThirdPersonCameraController : MonoBehaviour
         UpdateCameraPosition();
     }
 
+    private void OnEnable()
+    {
+        CameraEvents.OnCameraShake += PlayCameraShake;
+    }
+
+    private void OnDisable()
+    {
+        CameraEvents.OnCameraShake -= PlayCameraShake;
+    }
+
     private void HandleInput()
     {
         if (_playerController.LockOn != null && _playerController.LockOn.IsLocked)
@@ -176,7 +187,7 @@ public class ThirdPersonCameraController : MonoBehaviour
         Vector3 finalPos = pivotPos + direction * currentCollisionDistance;
 
         // 6. Application
-        transform.position = finalPos;
+        transform.position = finalPos + rot * shakeOffset;
 
         // Optionnel : Un LookAt plus précis ou simplement utiliser la rotation rot
         transform.rotation = rot;
@@ -211,6 +222,40 @@ public class ThirdPersonCameraController : MonoBehaviour
         yaw = newYaw;
         pitch = newPitch;
     }
+
+
+    #region CameraShake
+
+    private Coroutine shakeRoutine;
+    private Vector3 shakeOffset;
+
+    private void PlayCameraShake(float intensity, float duration)
+    {
+        if (shakeRoutine != null)
+            StopCoroutine(shakeRoutine);
+
+        shakeRoutine = StartCoroutine(CameraShake(intensity, duration));
+    }
+
+    private IEnumerator CameraShake(float intensity, float duration)
+    {
+        float time = 0f;
+
+        while (time < duration)
+        {
+            time += Time.deltaTime;
+
+            float strength = Mathf.Lerp(intensity, 0f, time / duration);
+            shakeOffset = UnityEngine.Random.insideUnitSphere * strength;
+            shakeOffset = Vector3.ClampMagnitude(shakeOffset, intensity);
+
+
+            yield return null;
+        }
+        shakeOffset = Vector3.zero;
+        shakeRoutine = null;
+    }
+    #endregion
 }
 
 public static class CameraEvents
