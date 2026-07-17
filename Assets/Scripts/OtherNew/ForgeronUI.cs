@@ -2,7 +2,6 @@ using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
-using System.Linq;
 
 public class ForgeronUI : MonoBehaviour
 {
@@ -23,25 +22,18 @@ public class ForgeronUI : MonoBehaviour
 
     [Header("Upgrade Panel")]
     [SerializeField] private GameObject upgradePanel;
-
     [SerializeField] private Image iconeLevelItem;
     [SerializeField] private TextMeshProUGUI nameItem;
-
     [SerializeField] private TextMeshProUGUI levelItem;
     [SerializeField] private TextMeshProUGUI levelItemUpgrade;
     [SerializeField] private GameObject levelItemUpgradeGameObject;
-
     [SerializeField] private TextMeshProUGUI resistanceItem;
     [SerializeField] private TextMeshProUGUI resistanceItemUpgrade;
     [SerializeField] private GameObject resistanceItemUpgradeGameObject;
-
     [SerializeField] private TextMeshProUGUI prixUpgradeItem;
     [SerializeField] private GameObject prixUpgradeItemGameObject;
-
-
     [SerializeField] private TextMeshProUGUI amountMetal;
     [SerializeField] private Image iconeItem;
-
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Button destroyButton;
 
@@ -52,38 +44,35 @@ public class ForgeronUI : MonoBehaviour
 
     private void Start()
     {
-        if (equipment == null)
-            equipment = EquipmentSystem.instance;
-        if (inventory == null)
-            inventory = InventorySystem.instance;
-        if(player == null)
-            player = PlayerController.Instance;
-        if (_forgeron == null)
-            _forgeron = GetComponent<Forgeron>();
+        if (equipment == null) equipment = EquipmentSystem.instance;
+        if (inventory == null) inventory = InventorySystem.instance;
+        if (player == null) player = PlayerController.Instance;
+        if (_forgeron == null) _forgeron = GetComponent<Forgeron>();
     }
 
     private void Update()
     {
         if (!isOpen) return;
 
+        // On consomme l'input dès la détection pour éviter les déclenchements en boucle
         if (player.Input.EquipActionPressed)
         {
-            UpgradeItem(_currentItem);
-            player.Input. UseEquipActionInput();
+            player.Input.UseEquipActionInput();
+            if (_currentItem != null) UpgradeItem(_currentItem);
         }
         else if (player.Input.DestroyActionPressed)
         {
-            DestroyItem(_currentItem);
             player.Input.UseDestroyActionInput();
+            if (_currentItem != null) DestroyItem(_currentItem);
         }
         else if (player.Input.CancelPressed || player.Input.CloseMenuPressed)
         {
-            Debug.Log("Fermeture du forgeron UI via input Cancel ou Menu");
-            CloseForgeronUI();
             player.Input.UseCancelInput();
             player.Input.UseCloseMenuInput();
+            CloseForgeronUI();
         }
     }
+
     public void OpenForgeonUI()
     {
         isOpen = true;
@@ -91,8 +80,7 @@ public class ForgeronUI : MonoBehaviour
         upgradePanel.SetActive(false);
         UpdateGoldText();
         UpdateForgeronUI(EquipmentType.Weapon);
-        PlayerController.Instance.StateMachine.ChangeState(PlayerStateType.UI);
-
+        player.StateMachine.ChangeState(PlayerStateType.UI);
     }
 
     public void CloseForgeronUI()
@@ -102,44 +90,41 @@ public class ForgeronUI : MonoBehaviour
         forgeronUIPanel.SetActive(false);
         upgradePanel.SetActive(false);
         _forgeron.EndCommerce();
-
     }
 
     public void UpdateForgeronUI(EquipmentType equipmentType)
     {
-        Debug.Log($"Mise à jour de l'UI du forgeron : {equipmentType}");
-
-        // 1. On prépare une liste globale qui va contenir TOUT ce qui est éligible à la forge
         List<ItemData> allEligibleItems = new List<ItemData>();
 
-        // AJOUTER : Les items de l'inventaire filtrés par type
+        // 1. Items de l'inventaire filtrés (Utilisation de ta variable locale 'inventory')
         var inventoryItems = inventory.GetContentEquipment();
         foreach (var item in GetContentForEquipment(inventoryItems, equipmentType))
         {
             if (item.itemData != null) allEligibleItems.Add(item.itemData);
         }
 
-        foreach (var slotPalette in PaletteSystem.instance.slotManager.weapons)
+        // 2. Items de la Palette
+        if (PaletteSystem.instance != null && PaletteSystem.instance.slotManager != null)
         {
-            if (slotPalette != null && slotPalette.itemData != null && slotPalette.itemData.equipmentType == equipmentType)
+            foreach (var slotPalette in PaletteSystem.instance.slotManager.weapons)
             {
-                allEligibleItems.Add(slotPalette.itemData);
+                if (slotPalette != null && slotPalette.itemData != null && slotPalette.itemData.equipmentType == equipmentType)
+                {
+                    allEligibleItems.Add(slotPalette.itemData);
+                }
             }
         }
 
-        foreach (var slotPalette in EquipmentSystem.instance.equipmentSlots)
+        // 3. Items équipés (Utilisation de ta variable locale 'equipment')
+        foreach (var slotEquip in equipment.equipmentSlots)
         {
-            if (slotPalette != null && slotPalette.item != null && slotPalette.item.equipmentType == equipmentType)
+            if (slotEquip != null && slotEquip.item != null && slotEquip.item.equipmentType == equipmentType)
             {
-                allEligibleItems.Add(slotPalette.item);
+                allEligibleItems.Add(slotEquip.item);
             }
         }
 
-
-        // 2. On nettoie l'UI
-        CleanForgeronUI();
-
-        // 3. On remplit les slots UI à partir de notre liste consolidée
+        // 4. Remplissage ou nettoyage des slots d'un seul coup (Pas besoin de CleanForgeronUI)
         for (int i = 0; i < slotForgeronUIs.Count; i++)
         {
             if (i < allEligibleItems.Count)
@@ -153,7 +138,6 @@ public class ForgeronUI : MonoBehaviour
         }
     }
 
-    // Méthode helper pour remplir un slot (évite la répétition)
     private void FillForgeronSlot(SlotForgeronUI slot, ItemData data)
     {
         slot.itemData = data;
@@ -161,31 +145,19 @@ public class ForgeronUI : MonoBehaviour
         slot.equipmentIcone.enabled = true;
     }
 
-    // Méthode helper pour vider un slot
     private void ClearForgeronSlot(SlotForgeronUI slot)
     {
         slot.itemData = null;
         slot.equipmentIcone.sprite = null;
         slot.equipmentIcone.enabled = false;
     }
-    private void CleanForgeronUI()
-    {
-        foreach (var slot in slotForgeronUIs)
-        {
-            slot.itemData = null;
-            slot.equipmentIcone.sprite = null;
-        }
-    }
+
     private List<ItemInInventory> GetContentForEquipment(ItemInInventory[] items, EquipmentType equipmentType)
     {
         List<ItemInInventory> filteredItems = new List<ItemInInventory>();
-
         foreach (ItemInInventory item in items)
         {
-            if (item == null || item.itemData == null)
-                continue;
-
-            if (item.itemData.equipmentType == equipmentType)
+            if (item != null && item.itemData != null && item.itemData.equipmentType == equipmentType)
             {
                 filteredItems.Add(item);
             }
@@ -200,41 +172,31 @@ public class ForgeronUI : MonoBehaviour
             upgradePanel.SetActive(false);
             return;
         }
+
         upgradePanel.SetActive(true);
         _currentItem = itemData;
+
         levelItemUpgradeGameObject.SetActive(true);
         resistanceItemUpgradeGameObject.SetActive(true);
         prixUpgradeItemGameObject.SetActive(true);
 
         switch (itemData.levelAmelioration)
         {
-            case 0:
-                iconeLevelItem.sprite = iconeLevel1;
-                break;
-            case 1:
-                iconeLevelItem.sprite = iconeLevel2;
-                break;
+            case 0: iconeLevelItem.sprite = iconeLevel1; break;
+            case 1: iconeLevelItem.sprite = iconeLevel2; break;
             case 2:
-                iconeLevelItem.sprite = iconeLevel3;
-                levelItemUpgradeGameObject.SetActive(false);
-                resistanceItemUpgradeGameObject.SetActive(false);
-                prixUpgradeItemGameObject.SetActive(false);
-                break;
             case 3:
                 iconeLevelItem.sprite = iconeLevel3;
                 levelItemUpgradeGameObject.SetActive(false);
                 resistanceItemUpgradeGameObject.SetActive(false);
                 prixUpgradeItemGameObject.SetActive(false);
                 break;
-            default:
-                Debug.LogWarning("Niveau d'amélioration inattendu : " + itemData.levelAmelioration);
-                break;
         }
 
         nameItem.text = itemData.itemName;
         iconeItem.sprite = itemData.visual;
-        levelItem.text = (itemData.levelAmelioration+1).ToString()+"/3";
-        levelItemUpgrade.text = (itemData.levelAmelioration+2).ToString() + "/3";
+        levelItem.text = (itemData.levelAmelioration + 1).ToString() + "/3";
+        levelItemUpgrade.text = (itemData.levelAmelioration + 2).ToString() + "/3";
 
         if (itemData.equipmentType == EquipmentType.Weapon || itemData.equipmentType == EquipmentType.Arrow)
         {
@@ -266,95 +228,86 @@ public class ForgeronUI : MonoBehaviour
 
     public void UpgradeItem(ItemData itemData)
     {
-        Debug.Log("Tentative d'amélioration de l'item : " + (itemData != null ? itemData.itemName : "null"));
-        if (itemData == null)
+        if (itemData == null || itemData.levelAmelioration >= 2) return;
+
+        int cost = itemData.prix * (itemData.levelAmelioration + 1);
+
+        if (player.Wallet.CanSpendGold(cost))
         {
-            Debug.LogWarning("Aucun item sélectionné pour l'amélioration");
-            return;
-        }
-        if (itemData.levelAmelioration >= 2)
-        {
-            Debug.LogWarning("L'item est déjà au niveau maximum d'amélioration");
-            return;
-        }
-        if (player.Wallet.CanSpendGold(itemData.prix * (itemData.levelAmelioration + 1)))
-        {
-            player.Wallet.SpendGold(itemData.prix * (itemData.levelAmelioration + 1));
+            player.Wallet.SpendGold(cost);
         }
         else
         {
             Debug.LogWarning("Pas assez de gold pour améliorer cet item");
             return;
         }
+
         itemData.levelAmelioration++;
-        if (itemData.equipmentType != EquipmentType.Weapon)
-            itemData.armorPoints += 10; 
+
+        if (itemData.equipmentType == EquipmentType.Weapon || itemData.equipmentType == EquipmentType.Arrow)
+            itemData.attackPoints += 10;
+        else if (itemData.handWeaponType == HandWeapon.Bow)
+            itemData.rangeMax += 5;
         else
-            itemData.attackPoints += 10; 
+            itemData.armorPoints += 10;
+
         UpdateUpgradePanel(itemData);
         UpdateGoldText();
+        UpdateForgeronUI(itemData.equipmentType); //  Optionnel mais propre : rafraîchit la liste principale
     }
 
     public void DestroyItem(ItemData itemData)
     {
-        if (itemData == null)
-        {
-            Debug.LogWarning("Aucun item sélectionné pour la destruction");
-            return;
-        }
+        if (itemData == null) return;
 
+        // 1. On donne les composants recyclés
         inventory.AddItem(metalItemData, itemData.metalCost);
 
-        // 3. Retirer de la Palette de raccourcis si présent dedans
+        // 2. Retirer de la Palette de raccourcis si présent dedans
         if (PaletteSystem.instance != null && PaletteSystem.instance.slotManager != null)
         {
-            bool aEteRetireDeLaPalette = false;
             var weaponsList = PaletteSystem.instance.slotManager.weapons;
-
-            // On utilise une boucle for pour obtenir l'index exact du slot
-            for (int i = 0; i < weaponsList.Length; i++) 
+            for (int i = 0; i < weaponsList.Length; i++)
             {
                 if (weaponsList[i] != null && weaponsList[i].itemData == itemData)
                 {
-                    int slotNumber = i + 1;
-
-                    PaletteSystem.instance.equipmentManager.DesequipWeapon(slotNumber);
-                    aEteRetireDeLaPalette = true;
-                    break; // On a trouvé et traité l'arme, on peut stopper la boucle
+                    PaletteSystem.instance.equipmentManager.DesequipWeapon(i + 1);
+                    PaletteSystem.instance.slotManager.RefreshAffichage();
+                    break;
                 }
-            }
-
-            if (aEteRetireDeLaPalette)
-            {
-                PaletteSystem.instance.slotManager.RefreshAffichage();
             }
         }
 
-        // 4. Retirer des slots d'équipement (Armures/Armes portées)
-        if (EquipmentSystem.instance != null && itemData.equipmentType != EquipmentType.Weapon)
+        // 3.  FIX CRITIQUE : Retirer des slots d'équipement SEULEMENT si cet item précis est actuellement équipé
+        if (equipment != null && itemData.equipmentType != EquipmentType.Weapon)
         {
-            EquipmentSystem.instance.DesequipEquipment(itemData.equipmentType);
-
-            // Sécurité : Au cas où DesequipEquipment ne vide pas le slot de données lui-même
-            foreach (var slotEquip in EquipmentSystem.instance.equipmentSlots)
+            bool isCurrentlyWorn = false;
+            foreach (var slotEquip in equipment.equipmentSlots)
             {
                 if (slotEquip != null && slotEquip.item == itemData)
                 {
-                    slotEquip.item = null;
+                    isCurrentlyWorn = true;
+                    slotEquip.item = null; // Désassignation manuelle préventive
                 }
             }
 
-            // Vérification pour les flèches équipées
-            if (EquipmentSystem.instance.arrowItemInInventory != null && EquipmentSystem.instance.arrowItemInInventory.itemData == itemData)
+            if (equipment.arrowItemInInventory != null && equipment.arrowItemInInventory.itemData == itemData)
             {
-                EquipmentSystem.instance.arrowItemInInventory.itemData = null;
+                isCurrentlyWorn = true;
+                equipment.arrowItemInInventory.itemData = null;
+            }
+
+            // On ne déclenche le déséquipement global (visuel/stats du joueur) que s'il le portait vraiment !
+            if (isCurrentlyWorn)
+            {
+                equipment.DesequipEquipment(itemData.equipmentType);
             }
         }
 
-        // 2. Retirer de l'inventaire principal
+        // 4. Retirer de l'inventaire principal
         inventory.RemoveItem(itemData);
 
-        // 6. Rafraîchir l'UI du forgeron
+        // 5. Rafraîchir l'UI
         UpdateForgeronUI(itemData.equipmentType);
         upgradePanel.SetActive(false);
         _currentItem = null;
@@ -362,8 +315,7 @@ public class ForgeronUI : MonoBehaviour
 
     private void UpdateGoldText()
     {
-        if (player == null)
-            player = PlayerController.Instance;
+        if (player == null) player = PlayerController.Instance;
         goldText.text = player.Wallet.GetGoldAmount().ToString();
     }
 
@@ -375,7 +327,9 @@ public class ForgeronUI : MonoBehaviour
             destroyButton.interactable = false;
             return;
         }
-        upgradeButton.interactable = _currentItem.levelAmelioration < 3 && player.Wallet.CanSpendGold(_currentItem.prix * (_currentItem.levelAmelioration + 1));
+
+        //  FIX : Vérification stricte '< 2' pour correspondre à la sécurité de UpgradeItem
+        upgradeButton.interactable = _currentItem.levelAmelioration < 2 && player.Wallet.CanSpendGold(_currentItem.prix * (_currentItem.levelAmelioration + 1));
         destroyButton.interactable = true;
 
         upgradeButton.onClick.RemoveAllListeners();

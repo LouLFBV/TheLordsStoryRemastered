@@ -36,11 +36,7 @@ public class ItemData : ScriptableObject
 
     [Header("Bow Stats")]
     public float rangeMin;
-    public float damageMin;
     public float rangeMax;
-    public float damageMax;
-    [HideInInspector] public float range;
-    [HideInInspector] public float damage;
 
     [Header("Types")]
     public ItemType itemType;
