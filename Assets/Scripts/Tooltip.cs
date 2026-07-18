@@ -30,7 +30,7 @@ public class Tooltip : MonoBehaviour
         SetText(itemData, stock);
         tooltipPanel.SetActive(true);
         chestButton.SetActive(isInChest);
-        inventoryButton.SetActive(!isInChest);
+        inventoryButton.SetActive(!isInChest && itemData.isVendable);
     }
 
     public void Hide()

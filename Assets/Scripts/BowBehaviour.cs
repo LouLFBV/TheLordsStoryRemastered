@@ -143,7 +143,7 @@ public class BowBehaviour : MonoBehaviour
 
         AlignArrowSpawnToCamera();
 
-        arrow.transform.rotation = arrowSpawnPoint.rotation;
+        arrow.transform.rotation = arrowSpawnPoint.rotation * Quaternion.Euler(0f, 90f, 0f);
         arrow.transform.parent = null;
 
         Rigidbody rb = arrow.GetComponent<Rigidbody>();

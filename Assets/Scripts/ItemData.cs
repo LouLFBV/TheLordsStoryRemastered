@@ -6,8 +6,7 @@ public class ItemData : ScriptableObject
     [Header("Data")]
     public string itemID;
     public string itemName;
-    [TextArea]
-    public string description;
+    [TextArea] public string description;
     public Sprite visual;
     public GameObject prefab;
     public bool stackable;
@@ -17,6 +16,7 @@ public class ItemData : ScriptableObject
     public int metalCost = 15;
     public RecipeData recipe;
     public GameObject iconeMap;
+    public bool isVendable = true;
 
     [Header("Effects")]
     public float healthEffect;

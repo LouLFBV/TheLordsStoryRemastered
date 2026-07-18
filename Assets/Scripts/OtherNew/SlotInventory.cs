@@ -50,7 +50,7 @@ public class SlotInventory : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private void Update()
     {
         // Si la souris est sur ce slot, qu'il y a un item, et qu'on appuie sur Jeter
-        if (_isHovered && item != null && PlayerController.Instance.Input.DropActionPressed && item.itemType != ItemType.Key)
+        if (_isHovered && item != null && PlayerController.Instance.Input.DropActionPressed && item.isVendable)
         {
             // Code pour instancier l'objet au sol...
             GameObject instantiatedItem = Instantiate(item.prefab);

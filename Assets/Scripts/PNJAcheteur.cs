@@ -214,7 +214,7 @@ public class PNJAcheteur : PNJParent
         // 1. INVENTAIRE (Cumul)
         foreach (ItemInInventory produit in InventorySystem.instance.GetContent())
         {
-            if (!itemsTraites.Contains(produit.itemData))
+            if (!itemsTraites.Contains(produit.itemData) && produit.itemData.isVendable)
             {
                 VerifItemData(produit.itemData, Vendre);
                 itemsTraites.Add(produit.itemData);
