@@ -1,4 +1,4 @@
-using System.Collections;
+Ôªøusing System.Collections;
 using UnityEngine;
 
 public class PersonalChest : InteractableBase
@@ -22,12 +22,12 @@ public class PersonalChest : InteractableBase
 
     private BoxCollider chestCollider;
 
+    private Coroutine activeChestCoroutine = null;
+
     private void Start()
     {
         closedRotation = topChest.transform.rotation;
         openRotation = closedRotation * Quaternion.Euler(openEulerAngles);
-
-        // Cache du composant pour Èviter le transform.GetComponent<> dans les Coroutines
         chestCollider = GetComponent<BoxCollider>();
     }
 
@@ -35,13 +35,14 @@ public class PersonalChest : InteractableBase
     {
         Debug.Log("Interacted with chest");
 
-        // SÈcuritÈ : si on est en train d'animer, on ignore l'input
-        if (isAnimating) return;
-
-        // AM…LIORATION : Permet d'ouvrir ET de fermer le coffre avec la touche d'interaction
+        // Si le coffre est ferm√© (ou en train de se fermer), on l'ouvre
         if (!isOpen)
         {
             OpenChestSequence();
+        }
+        else // Si le coffre est ouvert (ou en train d'ouvrir), on le ferme
+        {
+            CloseChestButton();
         }
     }
 
@@ -51,7 +52,7 @@ public class PersonalChest : InteractableBase
         {
             if (PlayerController.Instance != null && PlayerController.Instance.Input != null)
             {
-                if (PlayerController.Instance.Input.CloseMenuPressed || PlayerController.Instance.Input.MenuPressed)
+                if (PlayerController.Instance.Input.CloseMenuPressed || PlayerController.Instance.Input.MenuPressed || PlayerController.Instance.Input.CancelPressed)
                 {
                     CloseChestButton();
                     PlayerController.Instance.Input.UseCloseMenuInput();
@@ -62,31 +63,35 @@ public class PersonalChest : InteractableBase
 
     public void OpenChestSequence()
     {
+        if (activeChestCoroutine != null)
+        {
+            StopCoroutine(activeChestCoroutine);
+        }
+
         if (chestPanel != null)
         {
             Debug.Log("Activating chest panel");
             chestPanel.SetActive(true);
         }
 
-        // Le coffre lit et peuple les 4 listes (Craft & Ressources pour le Coffre et le Joueur)
         if (chestInventory != null)
         {
             chestInventory.RefreshContentChestInventory();
             chestInventory.RefreshContentPlayerInventory();
         }
 
-        StartCoroutine(OpenChest());
+        // On lance et on stocke la coroutine d'ouverture
+        activeChestCoroutine = StartCoroutine(OpenChest());
     }
 
     private IEnumerator OpenChest()
     {
         PlayerController.Instance.RequestedPanelType = UIPanelType.Dialogue;
         PlayerController.Instance.StateMachine.ChangeState(PlayerStateType.UI);
-        if (isAnimating || isOpen) yield break;
+
         isAnimating = true;
         isOpen = true;
 
-        // DÈsactive le collider pour Èviter qu'on puisse rÈinteragir pendant l'animation physique
         if (chestCollider != null) chestCollider.enabled = false;
 
         if (Opensound != null && Opensound.clip != null)
@@ -106,22 +111,26 @@ public class PersonalChest : InteractableBase
 
         topChest.transform.rotation = openRotation;
         isAnimating = false;
+        activeChestCoroutine = null; // On vide la r√©f√©rence quand c'est fini
     }
 
     public void CloseChestButton()
     {
-        if (!isOpen || isAnimating)
-            return;
+        if (!isOpen) return;
 
         Debug.Log("Closing chest");
-        StartCoroutine(CloseChest());
+
+        if (activeChestCoroutine != null)
+        {
+            StopCoroutine(activeChestCoroutine);
+        }
+
+        // On lance et on stocke la coroutine de fermeture
+        activeChestCoroutine = StartCoroutine(CloseChest());
     }
 
     private IEnumerator CloseChest()
     {
-        if (isAnimating || !isOpen)
-            yield break;
-
         PlayerController.Instance.StateMachine.ChangeState(PlayerStateType.Idle);
         isAnimating = true;
         isOpen = false;
@@ -129,17 +138,12 @@ public class PersonalChest : InteractableBase
         if (chestPanel != null)
             chestPanel.SetActive(false);
 
-        // --- CORRECTION ET SYNCHRONISATION DES SYST»MES ---
-        // On demande ‡ ton PaletteSystem ou InventorySystem de mettre ‡ jour son visuel (HUD principal de jeu)
-        // en se basant sur ce qui est maintenant dans le portefeuille du joueur
         if (PaletteSystem.instance != null && PaletteSystem.instance.slotManager != null)
         {
             PaletteSystem.instance.slotManager.UpdateImageSeleted();
         }
 
-        // Si ton InventorySystem possËde une fonction pour synchroniser ses donnÈes globales, appelle-la ici.
-        // Sinon, la modification est dÈj‡ enregistrÈe dans les listes Player de 'chestInventory' pendant les transferts.
-
+        // Le Slerp va partir fluidement de l'angle actuel (m√™me s'il √©tait √† moiti√© ouvert !)
         while (Quaternion.Angle(topChest.transform.rotation, closedRotation) > 0.1f)
         {
             topChest.transform.rotation = Quaternion.Slerp(
@@ -152,9 +156,9 @@ public class PersonalChest : InteractableBase
 
         topChest.transform.rotation = closedRotation;
 
-        // On rÈactive le collider pour permettre une future ouverture
         if (chestCollider != null) chestCollider.enabled = true;
 
         isAnimating = false;
+        activeChestCoroutine = null; // On vide la r√©f√©rence quand c'est fini
     }
 }

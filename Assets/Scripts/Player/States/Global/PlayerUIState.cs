@@ -26,7 +26,7 @@ public class PlayerUIState : PlayerState
     public override void Update()
     {
         // Si on réappuie sur Inventaire ou Cancel pendant qu'on est dans cet état
-        if (player.Input.InventoryPressed || player.Input.CancelPressed)
+        if (player.Input.InventoryPressed/* || player.Input.CancelPressed*/)
         {
             player.StateMachine.ChangeState(PlayerStateType.Idle);
         }
