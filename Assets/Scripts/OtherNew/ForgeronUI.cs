@@ -100,7 +100,7 @@ public class ForgeronUI : MonoBehaviour
         var inventoryItems = inventory.GetContentEquipment();
         foreach (var item in GetContentForEquipment(inventoryItems, equipmentType))
         {
-            if (item.itemData != null) allEligibleItems.Add(item.itemData);
+            if (item.itemData != null && item.itemData.isVendable) allEligibleItems.Add(item.itemData);
         }
 
         // 2. Items de la Palette
@@ -108,7 +108,7 @@ public class ForgeronUI : MonoBehaviour
         {
             foreach (var slotPalette in PaletteSystem.instance.slotManager.weapons)
             {
-                if (slotPalette != null && slotPalette.itemData != null && slotPalette.itemData.equipmentType == equipmentType)
+                if (slotPalette != null && slotPalette.itemData != null && slotPalette.itemData.equipmentType == equipmentType && slotPalette.itemData.isVendable)
                 {
                     allEligibleItems.Add(slotPalette.itemData);
                 }
@@ -118,7 +118,7 @@ public class ForgeronUI : MonoBehaviour
         // 3. Items équipés (Utilisation de ta variable locale 'equipment')
         foreach (var slotEquip in equipment.equipmentSlots)
         {
-            if (slotEquip != null && slotEquip.item != null && slotEquip.item.equipmentType == equipmentType)
+            if (slotEquip != null && slotEquip.item != null && slotEquip.item.equipmentType == equipmentType && slotEquip.item.isVendable)
             {
                 allEligibleItems.Add(slotEquip.item);
             }
