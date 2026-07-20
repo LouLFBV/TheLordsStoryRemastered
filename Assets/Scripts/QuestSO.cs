@@ -72,7 +72,6 @@ public class QuestSO : ScriptableObject
 [System.Serializable]
 public class QuestReward
 {
-    public int reputation;
     public int gold;
     public ItemData[] items;
 }
