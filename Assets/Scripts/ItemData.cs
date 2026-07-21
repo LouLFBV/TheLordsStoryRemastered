@@ -18,6 +18,10 @@ public class ItemData : ScriptableObject
     public GameObject iconeMap;
     public bool isVendable = true;
 
+    [SerializeField] private int purchaseAmount = 1;
+    public int PurchaseAmount => purchaseAmount;
+    public int TotalPrice => prix * PurchaseAmount;
+
     [Header("Effects")]
     public float healthEffect;
 

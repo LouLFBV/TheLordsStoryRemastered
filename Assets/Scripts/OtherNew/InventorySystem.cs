@@ -27,6 +27,7 @@ public class InventorySystem : MonoBehaviour
     public Sprite emptySlotVisual;
 
     public Sprite itemLevel1Icon, itemLevel2Icon, itemLevel3Icon;
+    public Sprite itemLevel1IconWhite, itemLevel2IconWhite, itemLevel3IconWhite;
 
     // Constantes de tailles
     const int InventoryRessourcesCraftSize = 20;
@@ -143,12 +144,13 @@ public class InventorySystem : MonoBehaviour
 
     public void RemoveItem(ItemData item)
     {
+        if (item == null) return;
         ItemInInventory[] targetArray = GetTargetArray(item.itemType);
 
-        // On cherche le premier objet correspondant en partant de la fin (ou du début, au choix)
         for (int i = 0; i < targetArray.Length; i++)
         {
-            if (targetArray[i].itemData == item)
+            if (targetArray[i].itemData != null &&
+               (targetArray[i].itemData == item || targetArray[i].itemData.itemID == item.itemID))
             {
                 if (targetArray[i].count > 1)
                 {
@@ -156,7 +158,6 @@ public class InventorySystem : MonoBehaviour
                 }
                 else
                 {
-                    // Vrai nettoyage de la case : on remet à blanc sans détruire l'index
                     targetArray[i].itemData = null;
                     targetArray[i].count = 0;
                 }
@@ -165,6 +166,52 @@ public class InventorySystem : MonoBehaviour
         }
 
         RefreshContent();
+    }
+
+    public bool CanAddItem(ItemData item, int quantity)
+    {
+        ItemInInventory[] targetArray = GetTargetArray(item.itemType);
+
+        int remaining = quantity;
+
+        // 1) Vérifier si on peut remplir des stacks existants
+        if (item.stackable)
+        {
+            for (int i = 0; i < targetArray.Length; i++)
+            {
+                if (targetArray[i].itemData == item)
+                {
+                    int space = item.maxStack - targetArray[i].count;
+
+                    if (space > 0)
+                    {
+                        remaining -= space;
+
+                        if (remaining <= 0)
+                            return true;
+                    }
+                }
+            }
+        }
+
+
+        // 2) Vérifier combien de nouveaux slots sont nécessaires
+        int emptySlots = 0;
+
+        for (int i = 0; i < targetArray.Length; i++)
+        {
+            if (targetArray[i].itemData == null)
+                emptySlots++;
+        }
+
+
+        // Chaque nouveau slot peut accueillir :
+        // - 1 objet si non stackable
+        // - maxStack objets si stackable
+        int capacity = emptySlots * (item.stackable ? item.maxStack : 1);
+
+
+        return remaining <= capacity;
     }
 
     // Fonction de déplacement manuel (Crucial pour le glisser-déposer ou l'indexation comme dans ton coffre !)
@@ -215,8 +262,14 @@ public class InventorySystem : MonoBehaviour
         int total = 0;
         for (int i = 0; i < targetArray.Length; i++)
         {
-            if (targetArray[i].itemData == item)
-                total += targetArray[i].count;
+            if (targetArray[i].itemData != null)
+            {
+                // On compare soit la référence, soit l'itemID si c'est une instance
+                if (targetArray[i].itemData == item || targetArray[i].itemData.itemID == item.itemID)
+                {
+                    total += targetArray[i].count;
+                }
+            }
         }
         return total;
     }
@@ -330,8 +383,9 @@ public class InventorySystem : MonoBehaviour
 
     public bool KeyIsInInventory(ItemData itemData)
     {
+        if (itemData == null) return false;
         Debug.Log($"Checking if item {itemData.itemName} is in inventory...");
-        return contentRessources.Any(i => i.itemData == itemData);
+        return contentRessources.Any(i => i.itemData != null && (i.itemData == itemData || i.itemData.itemID == itemData.itemID));
     }
 
     #region SaveSystem (Index-Safe)

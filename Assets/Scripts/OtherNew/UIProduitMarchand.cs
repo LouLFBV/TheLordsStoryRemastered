@@ -10,10 +10,14 @@ public class UIProduitMarchand : MonoBehaviour, IPointerEnterHandler, IPointerEx
     public Image iconeItem;
     public TextMeshProUGUI priceItem;
     public TextMeshProUGUI stockItemInInventory;
-    public TextMeshProUGUI priceFillStock;
-    public Button buyButton;
-    public Button fillStockButton;
+    public TextMeshProUGUI purchaseAmountText;
     public GameObject actionButtonsGroup;
+    public Button buyButton;
+
+    [Header("Fill Stock")]
+    public TextMeshProUGUI priceFillStock;
+    public Button fillStockButton;
+    public Image levelIcon;
 
     private Marchand _marchandScript;
     private PNJAcheteur _pnjAcheteur;
@@ -22,11 +26,31 @@ public class UIProduitMarchand : MonoBehaviour, IPointerEnterHandler, IPointerEx
     {
         itemData = data;
         _marchandScript = marchand;
+        if (data.PurchaseAmount != 1) purchaseAmountText.text = $"x {itemData.PurchaseAmount}";
+        else purchaseAmountText.text = "";
     }
     public void SetupPNJAcheteur(ItemData data, PNJAcheteur pnjAchetuer)
     {
         itemData = data;
         _pnjAcheteur = pnjAchetuer;
+        if (levelIcon != null && data.equipmentType != EquipmentType.None)
+        {
+            switch(itemData.levelAmelioration)
+            {
+                case 0:
+                    levelIcon.sprite = InventorySystem.instance.itemLevel1IconWhite;
+                    break;
+                case 1:
+                    levelIcon.sprite = InventorySystem.instance.itemLevel2IconWhite;
+                    break;
+                case 2:
+                    levelIcon.sprite = InventorySystem.instance.itemLevel3IconWhite;
+                    break;
+                default:
+                    levelIcon.sprite = InventorySystem.instance.itemLevel1IconWhite;
+                    break;
+            }
+        }
     }
 
     public void OnPointerEnter(PointerEventData eventData)

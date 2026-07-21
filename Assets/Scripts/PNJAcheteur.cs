@@ -11,6 +11,7 @@ public class PNJAcheteur : PNJParent
 
     private UIProduitMarchand currentSlotProduit;
     [SerializeField] private TextMeshProUGUI goldPlayer;
+
     public override void OnInteract(PlayerInteractor player)
     {
         if (isOnDial && Time.time - dialogueStartTime > inputCooldown && !animatorPanelProduits.GetBool("PanelIsOpen"))
@@ -25,7 +26,6 @@ public class PNJAcheteur : PNJParent
         }
     }
 
-
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
@@ -35,6 +35,7 @@ public class PNJAcheteur : PNJParent
             isPlayerInZone = true;
         }
     }
+
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Player"))
@@ -43,8 +44,6 @@ public class PNJAcheteur : PNJParent
             player = null;
         }
     }
-    // GESTION DU DIALOGUE
-
 
     private void Update()
     {
@@ -52,7 +51,6 @@ public class PNJAcheteur : PNJParent
         {
             if (player.Input.MenuPressed || player.Input.CloseMenuPressed || player.Input.CancelPressed)
             {
-                Debug.Log("[PNJAcheteur] Fermeture du panel de produits");
                 EndCommerce();
                 player.Input.UseMenuInput();
                 player.Input.UseCloseMenuInput();
@@ -63,86 +61,49 @@ public class PNJAcheteur : PNJParent
                 // Vendre 1 unité (Touche E)
                 if (player.Input.EquipActionPressed)
                 {
-                    currentSlotProduit.buyButton.onClick.Invoke(); // Utilise la bonne méthode (Vendre, VendreWeapons, etc.)
+                    currentSlotProduit.buyButton.onClick.Invoke();
                     player.Input.UseEquipActionInput();
                 }
 
-                // Vendre TOUT le stock (Touche F / UseAction)
+                // Vendre TOUT le stock (Touche F)
                 if (player.Input.UseActionPressed)
                 {
-                    // On vérifie si le bouton "Vendre tout" est actif sur ce slot
                     if (currentSlotProduit.fillStockButton != null && currentSlotProduit.fillStockButton.gameObject.activeSelf)
                     {
                         currentSlotProduit.fillStockButton.onClick.Invoke();
                     }
                     else
                     {
-                        // S'il n'y a qu'un exemplaire, on vend juste celui-là
                         currentSlotProduit.buyButton.onClick.Invoke();
                     }
                     player.Input.UseUseActionInput();
                 }
             }
-
-            if (player == null)
-            {
-                Debug.LogWarning("[PNJAcheteur] Player est null dans Update() alors que le panel de produits est ouvert.");
-                if (player.Input == null)
-                {
-                    Debug.LogWarning("[PNJAcheteur] Player.Input est null dans Update() alors que le panel de produits est ouvert.");
-                    
-                }
-            }
-            else
-            {
-                Debug.Log("[PNJAcheteur] Panel de produits ouvert, attente d'une action du joueur...");
-                if (player.Input.MenuPressed)
-                {
-                    Debug.LogWarning("[PNJAcheteur] Player.Input.MenuPressed est true dans Update() alors que le panel de produits est ouvert.");
-                }
-                if (player.Input.CloseMenuPressed)
-                {
-                    Debug.LogWarning("[PNJAcheteur] Player.Input.CloseMenuPressed est true dans Update() alors que le panel de produits est ouvert.");
-                }
-                if (player.Input.CancelPressed)
-                {
-                    Debug.LogWarning("[PNJAcheteur] Player.Input.CancelPressed est true dans Update() alors que le panel de produits est ouvert.");
-                }
-            }
-
-            
-            // TEST DE DEBUG TEMPORAIRE
-            if (Input.GetKeyDown(KeyCode.Escape)) // Remplace par la touche physique que tu utilises
-            {
-                Debug.LogWarning("[DEBUG] La touche physique fonctionne ! C'est donc bien ton script d'input personnalisé ou un autre Manager qui remet la variable à false avant le PNJ.");
-            }
         }
     }
+
     public void StartDialogue(List<DialogueResponse> sentence)
     {
         if (index == 0 && leghthSentences == sentences.Count)
         {
             if (VerifIfEmpty())
             {
-                sentence.Add(
-                    new DialogueResponse
-                    {
-                        pnjDialogues = new string[] { "Oh mais je vois que vous n'avez rien à vendre. Revenez me voir lorsque vous aurez quelque chose pour moi !" },
-                        playerResponses = new string[] { "D'accord, à une prochaine fois !" }
-                    }
-                    );
+                sentence.Add(new DialogueResponse
+                {
+                    pnjDialogues = new string[] { "Oh mais je vois que vous n'avez rien à vendre. Revenez me voir lorsque vous aurez quelque chose pour moi !" },
+                    playerResponses = new string[] { "D'accord, à une prochaine fois !" }
+                });
             }
             else
             {
-                sentence.Add(
-                new DialogueResponse
+                sentence.Add(new DialogueResponse
                 {
                     pnjDialogues = new string[] { },
                     playerResponses = new string[] { "Proposez moi vos prix !" }
-                }
-                );
+                });
             }
         }
+
         if (!isOnDial)
         {
             StartCoroutine(RotateTowardsPlayer());
@@ -153,7 +114,7 @@ public class PNJAcheteur : PNJParent
             DialogueManager.instance.ActiveDesactiveDialoguePanel(DialogueManager.instance.animatorDialoguePanel);
 
             index = 0;
-            dialogueStartTime = Time.time; // Enregistrer le temps de début du dialogue
+            dialogueStartTime = Time.time;
             currentDialogue = sentence;
         }
         else if (!animatorPanelProduits.GetBool("PanelIsOpen") && index >= sentences.Count)
@@ -169,11 +130,9 @@ public class PNJAcheteur : PNJParent
 
         var dialogueGroup = currentDialogue[index];
 
-        // Affiche le dialogue PNJ ou la réponse du joueur selon l'index
         if (sentenceIndex < dialogueGroup.pnjDialogues.Length)
         {
             currentSpeaker = DialogueManager.Speaker.PNJ;
-
             DialogueManager.instance.SetSpeakerName(DialogueManager.Speaker.PNJ, namePNJ, nicknamePNJ);
             DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ);
             animator.SetBool("isTalking", true);
@@ -188,15 +147,14 @@ public class PNJAcheteur : PNJParent
         }
         sentenceIndex++;
 
-        // Si on a fini toutes les lignes du groupe, passe au groupe suivant
         if (sentenceIndex >= dialogueGroup.pnjDialogues.Length + dialogueGroup.playerResponses.Length)
         {
             sentenceIndex = 0;
             index++;
-        }        
+        }
     }
 
-    // GESTION DES PRODUITS
+    // ==================== GESTION DES PRODUITS ====================
 
     private void RefreshProduits()
     {
@@ -208,54 +166,63 @@ public class PNJAcheteur : PNJParent
             Destroy(child.gameObject);
         }
 
-        // Liste pour garder une trace des items déjà affichés dans le shop
-        List<ItemData> itemsTraites = new List<ItemData>();
+        // 1. Récupération de TOUS les objets vendables du joueur
+        List<ItemData> tousLesObjets = new List<ItemData>();
 
-        // 1. INVENTAIRE (Cumul)
+        // Inventaire
         foreach (ItemInInventory produit in InventorySystem.instance.GetContent())
         {
-            if (!itemsTraites.Contains(produit.itemData) && produit.itemData.isVendable)
-            {
-                VerifItemData(produit.itemData, Vendre);
-                itemsTraites.Add(produit.itemData);
-            }
+            if (produit.itemData != null && produit.itemData.isVendable)
+                tousLesObjets.Add(produit.itemData);
         }
 
-        // 2. ARMES (Cumul)
+        // Armes Palette
         foreach (ItemInInventory produit in PaletteSystem.instance.slotManager.weapons)
         {
-            if (produit.itemData != null && !itemsTraites.Contains(produit.itemData))
-            {
-                VerifItemData(produit.itemData, VendreWeapons);
-                itemsTraites.Add(produit.itemData);
-            }
+            if (produit.itemData != null && produit.itemData.isVendable)
+                tousLesObjets.Add(produit.itemData);
         }
 
-        // 3. OBJETS RAPIDES (Cumul)
+        // Objets Rapides Palette
         foreach (ItemInInventory produit in PaletteSystem.instance.slotManager.objects)
         {
-            if (produit.itemData != null && !itemsTraites.Contains(produit.itemData))
+            if (produit.itemData != null && produit.itemData.isVendable)
+                tousLesObjets.Add(produit.itemData);
+        }
+
+        // Flèches
+        ItemData arrows = EquipmentSystem.instance.arrowItemInInventory.itemData;
+        if (arrows != null && arrows.isVendable)
+            tousLesObjets.Add(arrows);
+
+        // Armures équipées
+        AddIfVendable(tousLesObjets, EquipmentSystem.instance.headSlot.item);
+        AddIfVendable(tousLesObjets, EquipmentSystem.instance.chestSlot.item);
+        AddIfVendable(tousLesObjets, EquipmentSystem.instance.handsSlot.item);
+        AddIfVendable(tousLesObjets, EquipmentSystem.instance.legsSlot.item);
+        AddIfVendable(tousLesObjets, EquipmentSystem.instance.feetSlot.item);
+
+        // 2. TRI : On regroupe par NOM puis par NIVEAU d'amélioration croissant !
+        tousLesObjets.Sort((a, b) =>
+        {
+            int nameCompare = string.Compare(a.itemName, b.itemName, StringComparison.Ordinal);
+            if (nameCompare != 0) return nameCompare;
+            return a.levelAmelioration.CompareTo(b.levelAmelioration);
+        });
+
+        // 3. Affichage dans l'interface (une case par ID + Niveau)
+        Dictionary<string, ItemData> itemsTraites = new Dictionary<string, ItemData>();
+
+        foreach (ItemData item in tousLesObjets)
+        {
+            string key = GetItemSellKey(item);
+
+            if (!itemsTraites.ContainsKey(key))
             {
-                VerifItemData(produit.itemData, VendreObjects);
-                itemsTraites.Add(produit.itemData);
+                itemsTraites.Add(key, item);
+                VerifItemData(item, VendreUnitaire);
             }
         }
-
-        // 4. ÉQUIPEMENT (Cumul)
-        // On vérifie les flèches
-        ItemData arrows = EquipmentSystem.instance.arrowItemInInventory.itemData;
-        if (arrows != null && !itemsTraites.Contains(arrows))
-        {
-            VerifItemData(arrows, VendreWeapons);
-            itemsTraites.Add(arrows);
-        }
-
-        // On vérifie chaque slot d'armure
-        VerifSlotEquipement(EquipmentSystem.instance.headSlot.item, itemsTraites);
-        VerifSlotEquipement(EquipmentSystem.instance.chestSlot.item, itemsTraites);
-        VerifSlotEquipement(EquipmentSystem.instance.handsSlot.item, itemsTraites);
-        VerifSlotEquipement(EquipmentSystem.instance.legsSlot.item, itemsTraites);
-        VerifSlotEquipement(EquipmentSystem.instance.feetSlot.item, itemsTraites);
 
         if (VerifIfEmpty())
         {
@@ -263,58 +230,56 @@ public class PNJAcheteur : PNJParent
         }
     }
 
-    // Petite méthode d'aide pour l'équipement
-    private void VerifSlotEquipement(ItemData item, List<ItemData> liste)
+    private void AddIfVendable(List<ItemData> list, ItemData item)
     {
-        if (item != null && !liste.Contains(item))
-        {
-            VerifItemData(item, VendreEquipment);
-            liste.Add(item);
-        }
+        if (item != null && item.isVendable)
+            list.Add(item);
     }
+
     private void VerifItemData(ItemData item, Action<ItemData> methode)
     {
         if (item == null || item.prix <= 0) return;
 
+        string key = GetItemSellKey(item);
         GameObject produitItem = Instantiate(produitItemPrefab, parentsProduits.transform);
 
         if (produitItem.TryGetComponent<UIProduitMarchand>(out var slot))
         {
             slot.SetupPNJAcheteur(item, this);
-            slot.nameItem.text = item.itemName;
+
             slot.iconeItem.sprite = item.visual;
 
-            // --- CORRECTION DU STOCK ---
-            // 1. On compte dans l'inventaire
-            int currentStock = InventorySystem.instance.GetItemCount(item);
+            // --- CALCUL DU STOCK D'OBJETS DE MÊME CLÉ/NIVEAU ---
+            int currentStock = GetSellStock(item);
 
-            // 2. On ajoute +1 si l'item est équipé dans la palette d'armes
+            // Armes équipées dans la palette
             foreach (var weaponSlot in PaletteSystem.instance.slotManager.weapons)
             {
-                if (weaponSlot.itemData == item) currentStock++;
+                if (weaponSlot.itemData != null && GetItemSellKey(weaponSlot.itemData) == key)
+                    currentStock++;
             }
 
-            // 3. On ajoute +1 si l'item est dans les objets rapides
+            // Objets rapides équipés
             foreach (var objectSlot in PaletteSystem.instance.slotManager.objects)
             {
-                if (objectSlot.itemData == item) currentStock++;
+                if (objectSlot.itemData != null && GetItemSellKey(objectSlot.itemData) == key)
+                    currentStock++;
             }
 
-            // 4. On ajoute +1 si l'item est porté en armure
-            if (EquipmentSystem.instance.headSlot.item == item) currentStock++;
-            if (EquipmentSystem.instance.chestSlot.item == item) currentStock++;
-            if (EquipmentSystem.instance.handsSlot.item == item) currentStock++;
-            if (EquipmentSystem.instance.legsSlot.item == item) currentStock++;
-            if (EquipmentSystem.instance.feetSlot.item == item) currentStock++;
+            // Armures équipées
+            if (GetItemSellKey(EquipmentSystem.instance.headSlot.item) == key) currentStock++;
+            if (GetItemSellKey(EquipmentSystem.instance.chestSlot.item) == key) currentStock++;
+            if (GetItemSellKey(EquipmentSystem.instance.handsSlot.item) == key) currentStock++;
+            if (GetItemSellKey(EquipmentSystem.instance.legsSlot.item) == key) currentStock++;
+            if (GetItemSellKey(EquipmentSystem.instance.feetSlot.item) == key) currentStock++;
 
-            // 5. Cas spécial des flèches (si elles sont équipées)
-            if (EquipmentSystem.instance.arrowItemInInventory.itemData == item) currentStock++;
+            // Flèches
+            if (GetItemSellKey(EquipmentSystem.instance.arrowItemInInventory.itemData) == key) currentStock++;
 
-            // Affichage du stock total réel
             if (slot.stockItemInInventory != null)
                 slot.stockItemInInventory.text = $"Stock : {currentStock}";
-            // ---------------------------
 
+            // Calcul du prix
             int prixUnitaireRachat = Mathf.RoundToInt(item.prix * pourcentageDeRachat);
             slot.priceItem.text = prixUnitaireRachat.ToString();
 
@@ -330,9 +295,7 @@ public class PNJAcheteur : PNJParent
                     slot.priceFillStock.text = prixTotalRachat.ToString();
 
                     slot.fillStockButton.onClick.RemoveAllListeners();
-                    slot.fillStockButton.onClick.AddListener(() => {
-                        for (int i = 0; i < currentStock; i++) methode(item);
-                    });
+                    slot.fillStockButton.onClick.AddListener(() => VendreTout(item));
                 }
                 else
                 {
@@ -343,50 +306,139 @@ public class PNJAcheteur : PNJParent
             slot.actionButtonsGroup.SetActive(false);
         }
     }
-    private void Vendre(ItemData produit)
+
+    private string GetItemSellKey(ItemData item)
     {
-        PlayerController.Instance.Wallet.AddGold(Mathf.RoundToInt(produit.prix * pourcentageDeRachat));
-        InventorySystem.instance.RemoveItem(produit);
-        RefreshProduits();
+        if (item == null) return "";
+
+        if (item.stackable)
+        {
+            return item.itemID;
+        }
+
+        // Identifiant unique combinant l'ID de l'objet et son Niveau d'Amélioration
+        return item.itemID + "_LEVEL_" + item.levelAmelioration;
     }
-    private void VendreObjects(ItemData produit)
+
+    private void VendreUnitaire(ItemData produit)
     {
-        PlayerController.Instance.Wallet.AddGold(Mathf.RoundToInt(produit.prix * pourcentageDeRachat));
-        if (produit == PaletteSystem.instance.slotManager.objects[0].itemData)
-            PaletteSystem.instance.equipmentManager.RemoveObject(1);
-        else if (produit == PaletteSystem.instance.slotManager.objects[1].itemData)
-            PaletteSystem.instance.equipmentManager.RemoveObject(2);
-        InventorySystem.instance.RemoveItem(produit);
-        RefreshProduits();
-    }
-    private void VendreWeapons(ItemData produit)
-    {
-        PlayerController.Instance.Wallet.AddGold(Mathf.RoundToInt(produit.prix * pourcentageDeRachat));
-        if (produit == PaletteSystem.instance.slotManager.weapons[0].itemData)
-            PaletteSystem.instance.equipmentManager.DesequipWeapon(1);
-        else if (produit == PaletteSystem.instance.slotManager.weapons[1].itemData)
-            PaletteSystem.instance.equipmentManager.DesequipWeapon(2);
-        InventorySystem.instance.RemoveItem(produit);
+        if (produit == null) return;
+
+        int gain = Mathf.RoundToInt(produit.prix * pourcentageDeRachat);
+        PlayerController.Instance.Wallet.AddGold(gain);
+
+        // Supprime 1 instance (dans l'inventaire ou équipé)
+        SupprimerUneInstance(produit);
+
         RefreshProduits();
     }
 
-    private void VendreEquipment(ItemData produit)
+    private void VendreTout(ItemData produit)
     {
-        PlayerController.Instance.Wallet.AddGold(Mathf.RoundToInt(produit.prix * pourcentageDeRachat));
-        EquipmentSystem.instance.DesequipEquipment(produit.equipmentType);
-        InventorySystem.instance.RemoveItem(produit);
+        int quantite = GetSellStock(produit);
+
+        // Compter aussi les équipés si nécessaire
+        string key = GetItemSellKey(produit);
+        foreach (var weaponSlot in PaletteSystem.instance.slotManager.weapons)
+            if (weaponSlot.itemData != null && GetItemSellKey(weaponSlot.itemData) == key) quantite++;
+        foreach (var objectSlot in PaletteSystem.instance.slotManager.objects)
+            if (objectSlot.itemData != null && GetItemSellKey(objectSlot.itemData) == key) quantite++;
+        if (GetItemSellKey(EquipmentSystem.instance.headSlot.item) == key) quantite++;
+        if (GetItemSellKey(EquipmentSystem.instance.chestSlot.item) == key) quantite++;
+        if (GetItemSellKey(EquipmentSystem.instance.handsSlot.item) == key) quantite++;
+        if (GetItemSellKey(EquipmentSystem.instance.legsSlot.item) == key) quantite++;
+        if (GetItemSellKey(EquipmentSystem.instance.feetSlot.item) == key) quantite++;
+
+        if (quantite <= 0) return;
+
+        int gain = Mathf.RoundToInt(produit.prix * pourcentageDeRachat * quantite);
+        PlayerController.Instance.Wallet.AddGold(gain);
+
+        for (int i = 0; i < quantite; i++)
+        {
+            SupprimerUneInstance(produit);
+        }
+
         RefreshProduits();
+    }
+
+    private void SupprimerUneInstance(ItemData produit)
+    {
+        string targetKey = GetItemSellKey(produit);
+
+        // 1. Chercher dans l'inventaire
+        foreach (ItemInInventory item in InventorySystem.instance.GetContent())
+        {
+            if (item.itemData != null && GetItemSellKey(item.itemData) == targetKey)
+            {
+                InventorySystem.instance.RemoveItem(item.itemData);
+                return;
+            }
+        }
+
+        // 2. Chercher dans les armes équipées
+        for (int i = 0; i < PaletteSystem.instance.slotManager.weapons.Length; i++)
+        {
+            var weapon = PaletteSystem.instance.slotManager.weapons[i];
+            if (weapon.itemData != null && GetItemSellKey(weapon.itemData) == targetKey)
+            {
+                PaletteSystem.instance.equipmentManager.DesequipWeapon(i + 1);
+                return;
+            }
+        }
+
+        // 3. Chercher dans les objets rapides
+        for (int i = 0; i < PaletteSystem.instance.slotManager.objects.Length; i++)
+        {
+            var obj = PaletteSystem.instance.slotManager.objects[i];
+            if (obj.itemData != null && GetItemSellKey(obj.itemData) == targetKey)
+            {
+                PaletteSystem.instance.equipmentManager.RemoveObject(i + 1);
+                return;
+            }
+        }
+
+        // 4. Chercher dans les pièces d'armure
+        if (GetItemSellKey(EquipmentSystem.instance.headSlot.item) == targetKey)
+            EquipmentSystem.instance.DesequipEquipment(EquipmentType.Head);
+        else if (GetItemSellKey(EquipmentSystem.instance.chestSlot.item) == targetKey)
+            EquipmentSystem.instance.DesequipEquipment(EquipmentType.Chest);
+        else if (GetItemSellKey(EquipmentSystem.instance.handsSlot.item) == targetKey)
+            EquipmentSystem.instance.DesequipEquipment(EquipmentType.Hands);
+        else if (GetItemSellKey(EquipmentSystem.instance.legsSlot.item) == targetKey)
+            EquipmentSystem.instance.DesequipEquipment(EquipmentType.Legs);
+        else if (GetItemSellKey(EquipmentSystem.instance.feetSlot.item) == targetKey)
+            EquipmentSystem.instance.DesequipEquipment(EquipmentType.Feet);
+    }
+
+    private int GetSellStock(ItemData item)
+    {
+        int count = 0;
+        string key = GetItemSellKey(item);
+
+        foreach (ItemInInventory inv in InventorySystem.instance.GetContent())
+        {
+            if (inv.itemData != null && GetItemSellKey(inv.itemData) == key)
+            {
+                count += inv.count;
+            }
+        }
+
+        return count;
     }
 
     private bool VerifIfEmpty()
     {
-        return PaletteSystem.instance.slotManager.weapons[0].itemData == null && PaletteSystem.instance.slotManager.weapons[1].itemData == null &&
-                EquipmentSystem.instance.headSlot.item == null && EquipmentSystem.instance.chestSlot.item == null &&
-                EquipmentSystem.instance.handsSlot.item == null && EquipmentSystem.instance.legsSlot.item == null &&
-                EquipmentSystem.instance.feetSlot.item == null && InventorySystem.instance.GetContent().Count == 0;
+        return PaletteSystem.instance.slotManager.weapons[0].itemData == null &&
+               PaletteSystem.instance.slotManager.weapons[1].itemData == null &&
+               EquipmentSystem.instance.headSlot.item == null &&
+               EquipmentSystem.instance.chestSlot.item == null &&
+               EquipmentSystem.instance.handsSlot.item == null &&
+               EquipmentSystem.instance.legsSlot.item == null &&
+               EquipmentSystem.instance.feetSlot.item == null &&
+               InventorySystem.instance.GetContent().Count == 0;
     }
 
-    // Cette méthode sera appelée par UIProduitMarchand
     public void SetCurrentHoveredItem(UIProduitMarchand slot)
     {
         currentSlotProduit = slot;

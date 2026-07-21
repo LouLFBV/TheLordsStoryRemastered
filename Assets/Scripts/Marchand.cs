@@ -7,7 +7,6 @@ public class Marchand : InteractableBase
 {
     [Header("Panel")]
     [SerializeField] private GameObject parentsProduits;
-    [SerializeField] private GameObject panelProduits;
     [SerializeField] private ItemData[] produits;
     [SerializeField] private GameObject produitItemPrefab;
     [SerializeField] private Animator animatorPanelProduits;
@@ -24,7 +23,7 @@ public class Marchand : InteractableBase
     private int index = 0;
     private int sentenceIndex = 0;
     private DialogueResponse[] currentDialogue; // tableau actif
-    private Transform playerTransform;
+    //private Transform playerTransform;
     private PlayerController player;
     //private bool isPlayerInZone;
     private Animator animator;
@@ -32,9 +31,6 @@ public class Marchand : InteractableBase
 
     [HideInInspector] public float inputCooldown = 0.2f; // Temps d'attente après lancement du dialogue
     [HideInInspector] public float dialogueStartTime, dialogueEndTime;
-
-
-    [SerializeField] private UINavigationManager navManager;
 
     private void Start()
     {       
@@ -59,7 +55,7 @@ public class Marchand : InteractableBase
         if (other.CompareTag("Player"))
         {
             player = other.GetComponent<PlayerController>();
-            playerTransform = other.transform;
+            //playerTransform = other.transform;
             //isPlayerInZone = true;
         }
     }
@@ -132,10 +128,6 @@ public class Marchand : InteractableBase
         animatorPanelProduits.SetBool("PanelIsOpen", false);
         isActive.SetActive(false);
         player.StateMachine.ChangeState(PlayerStateType.Idle);
-        if (navManager != null)
-        {
-            navManager.onCancel = null;
-        }
     }
     public void EndDiscussion()
     {
@@ -153,10 +145,6 @@ public class Marchand : InteractableBase
         animatorPanelProduits.SetBool("PanelIsOpen", true);
         RefreshProduits();
         isActive.SetActive(true);
-        if (navManager != null)
-        {
-            navManager.onCancel = EndCommerce;
-        }
     }
     // GESTION DES PRODUITS
     private void Update()
@@ -169,18 +157,15 @@ public class Marchand : InteractableBase
                 // Achat simple (Touche E / EquipAction)
                 if (player.Input.EquipActionPressed)
                 {
-                    Acheter(currentSlotProduit.itemData);
-                    player.Input.UseEquipActionInput(); // Consomme l'input
-                }
-                // Remplir le stock (Touche 1 / UseAction)
-                else if (player.Input.UseActionPressed)
-                {
-                    int remainingToFill = currentSlotProduit.itemData.maxStack - InventorySystem.instance.GetItemCount(currentSlotProduit.itemData);
-                    if (remainingToFill > 0)
+                    ItemData produit = currentSlotProduit.itemData;
+
+                    if (player.Wallet.CanSpendGold(produit.TotalPrice)
+                        && InventorySystem.instance.CanAddItem(produit, produit.PurchaseAmount))
                     {
-                        Acheter(currentSlotProduit.itemData, remainingToFill);
+                        Acheter(produit);
                     }
-                    player.Input.UseUseActionInput();
+
+                    player.Input.UseEquipActionInput();
                 }
             }
             if (player.Input.CancelPressed || player.Input.CloseMenuPressed)
@@ -211,80 +196,58 @@ public class Marchand : InteractableBase
                 produitMarchand.Setup(produit, this);
 
                 int currentStock = InventorySystem.instance.GetItemCount(produit);
-                int remainingStock = produit.maxStack - currentStock;
 
                 produitMarchand.nameItem.text = produit.itemName;
                 produitMarchand.iconeItem.sprite = produit.visual;
-                produitMarchand.priceItem.text = "Prix : " + produit.prix;
-                produitMarchand.stockItemInInventory.text = $"Stock : {currentStock}/{produit.maxStack}";
-                produitMarchand.priceFillStock.text = (remainingStock * produit.prix).ToString();
+                produitMarchand.priceItem.text = "Prix : " + produit.TotalPrice;
+                produitMarchand.stockItemInInventory.text = $"Stock : {currentStock}";
 
                 // On vide et on met UN SEUL listener (Acheter simple par exemple sur le bouton)
                 produitMarchand.buyButton.onClick.RemoveAllListeners();
-                produitMarchand.buyButton.onClick.AddListener(() => Acheter(produit));
+                produitMarchand.buyButton.onClick.AddListener(() =>
+                {
+                    if (CanBuy(produit))
+                    {
+                        Acheter(produit);
+                    }
+                });
                 VerfifButtonAcheter(produit, produitMarchand.buyButton);
-
-                produitMarchand.fillStockButton.onClick.RemoveAllListeners();
-                produitMarchand.fillStockButton.onClick.AddListener(() => Acheter(produit, remainingStock));
-                VerfifButtonAcheter(produit, produitMarchand.fillStockButton, remainingStock);
 
                 produitMarchand.actionButtonsGroup.SetActive(false);
             }
         }
     }
 
-    private void Acheter(ItemData produit, int amount = 1)
+    private void Acheter(ItemData produit)
     {
-        for (int i = 0; i < amount; i++)
-        {        
-            if (player.Wallet.SpendGold(produit.prix) && !InventorySystem.instance.IsFullEquipment())
-            {
-                InventorySystem.instance.AddItem(produit);
-            }
-        }
+        if (!player.Wallet.CanSpendGold(produit.TotalPrice))
+            return;
+
+        if (!InventorySystem.instance.CanAddItem(produit, produit.PurchaseAmount))
+            return;
+
+        player.Wallet.SpendGold(produit.TotalPrice);
+        InventorySystem.instance.AddItem(produit, produit.PurchaseAmount);
+
         RefreshProduits();
     }
 
-    private void VerfifButtonAcheter(ItemData produit, Button buyButton, int amount = 1)
+    private void VerfifButtonAcheter(ItemData produit, Button buyButton)
     {
         Image buttonImage = buyButton.GetComponent<Image>();
-        if (player.Wallet.CanSpendGold(produit.prix*amount)  && VerifInInventoryAndPalette(produit) && InventorySystem.instance.GetItemCount(produit) < produit.maxStack)
-        {
-            buttonImage.color = Color.green; // Set button color to white if affordable
-            buyButton.interactable = true;
-        }
-        else
-        {
-            buttonImage.color = Color.red; // Set button color to red if not affordable
-            buyButton.interactable = false;
-        }
+
+        bool canBuy = CanBuy(produit);
+
+        buttonImage.color = canBuy ? Color.green : Color.red;
+        buyButton.interactable = canBuy;
+    }
+    private bool CanBuy(ItemData produit)
+    {
+        return
+            player.Wallet.CanSpendGold(produit.TotalPrice) &&
+            InventorySystem.instance.CanAddItem(produit, produit.PurchaseAmount);
     }
 
-    private bool VerifInInventoryAndPalette(ItemData produit)
-    {
-        foreach (ItemInInventory item in InventorySystem.instance.GetContent())
-        {
-            if ((item.itemData.itemType == ItemType.Equipment  || item.itemData.itemType == ItemType.Key || item.itemData.itemType == ItemType.QuestItem) && item.itemData == produit)
-            {
-                return false; // Item is already in the inventory
-            }
-        }
-        if (PaletteSystem.instance.slotManager.weapons[0].itemData == produit || PaletteSystem.instance.slotManager.weapons[1].itemData)
-        {
-            return false; // Item is already equipped in weapon slot 1
-        }
-        else if (PaletteSystem.instance.slotManager.objects[0].itemData == produit  && (PaletteSystem.instance.slotManager.objects[0].itemData.itemType == ItemType.Equipment ||
-            PaletteSystem.instance.slotManager.objects[0].itemData.itemType == ItemType.Key ||
-            PaletteSystem.instance.slotManager.objects[0].itemData.itemType == ItemType.QuestItem) 
-            ||
-            (PaletteSystem.instance.slotManager.objects[1].itemData == produit && (PaletteSystem.instance.slotManager.objects[1].itemData.itemType == ItemType.Equipment ||
-            PaletteSystem.instance.slotManager.objects[1].itemData.itemType == ItemType.Key ||
-            PaletteSystem.instance.slotManager.objects[1].itemData.itemType == ItemType.QuestItem)))
-        {
-            return false; // Item is already equipped in armor slots
-        }
-        return true; // Item is not in the inventory
-    }
 
 
     // Cette méthode sera appelée par UIProduitMarchand
