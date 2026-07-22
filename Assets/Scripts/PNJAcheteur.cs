@@ -247,7 +247,7 @@ public class PNJAcheteur : PNJParent
         if (produitItem.TryGetComponent<UIProduitMarchand>(out var slot))
         {
             slot.SetupPNJAcheteur(item, this);
-
+            slot.nameItem.text = item.itemName;
             slot.iconeItem.sprite = item.visual;
 
             // --- CALCUL DU STOCK D'OBJETS DE MÊME CLÉ/NIVEAU ---
