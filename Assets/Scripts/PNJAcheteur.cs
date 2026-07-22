@@ -135,6 +135,7 @@ public class PNJAcheteur : PNJParent
             currentSpeaker = DialogueManager.Speaker.PNJ;
             DialogueManager.instance.SetSpeakerName(DialogueManager.Speaker.PNJ, namePNJ, nicknamePNJ);
             DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ);
+            animator.SetInteger("talkIndex", UnityEngine.Random.Range(0, 3));
             animator.SetBool("isTalking", true);
         }
         else

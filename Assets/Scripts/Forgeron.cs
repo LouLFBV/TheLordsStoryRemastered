@@ -75,6 +75,7 @@ public class Forgeron : PNJParent
             player.RequestedPanelType = UIPanelType.Dialogue;
             player.StateMachine.ChangeState(PlayerStateType.UI);
             isOnDial = true;
+            animator.SetInteger("talkIndex", Random.Range(0, 3));
             animator.SetBool("isTalking", true);
 
 
@@ -104,6 +105,7 @@ public class Forgeron : PNJParent
 
             DialogueManager.instance.SetSpeakerName(DialogueManager.Speaker.PNJ, namePNJ, nicknamePNJ);
             DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ);
+            animator.SetInteger("talkIndex", Random.Range(0, 3));
             animator.SetBool("isTalking", true);
         }
         else

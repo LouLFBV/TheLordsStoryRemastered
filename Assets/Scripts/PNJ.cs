@@ -251,6 +251,7 @@ public class PNJ : InteractableBase
 
             DialogueManager.instance.SetSpeakerName(DialogueManager.Speaker.PNJ, namePNJ, nicknamePNJ);
             DialogueManager.instance.ShowLine(dialogueGroup.pnjDialogues[sentenceIndex], DialogueManager.Speaker.PNJ);
+            animator.SetInteger("talkIndex", Random.Range(0, 3));
             animator.SetBool("isTalking", true);
         }
         else
@@ -278,7 +279,7 @@ public class PNJ : InteractableBase
         activeQuestInstance = NewQuestManager.instance.GetQuestInstance(currentQuestSO);
 
         DialogueManager.instance.HideQuestButtons();
-
+        animator.SetInteger("talkIndex", Random.Range(0, 3));
         animator.SetBool("isTalking", true);
         index = 0;
         currentDialogue = currentQuestSO.sentencesQuestAccepted;
@@ -292,6 +293,7 @@ public class PNJ : InteractableBase
     {
 
         DialogueManager.instance.HideQuestButtons();
+        animator.SetInteger("talkIndex", Random.Range(0, 3));
         animator.SetBool("isTalking", true);
         index = 0;
         currentDialogue = currentQuestSO.sentencesQuestRefused;
