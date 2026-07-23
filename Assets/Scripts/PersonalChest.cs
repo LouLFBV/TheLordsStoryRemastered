@@ -16,7 +16,6 @@ public class PersonalChest : InteractableBase
     private Quaternion closedRotation;
     private Quaternion openRotation;
     public bool isOpen = false;
-    private bool isAnimating = false;
 
     [SerializeField] private GameObject chestPanel;
 
@@ -89,7 +88,6 @@ public class PersonalChest : InteractableBase
         PlayerController.Instance.RequestedPanelType = UIPanelType.Dialogue;
         PlayerController.Instance.StateMachine.ChangeState(PlayerStateType.UI);
 
-        isAnimating = true;
         isOpen = true;
 
         if (chestCollider != null) chestCollider.enabled = false;
@@ -110,7 +108,6 @@ public class PersonalChest : InteractableBase
         }
 
         topChest.transform.rotation = openRotation;
-        isAnimating = false;
         activeChestCoroutine = null; // On vide la référence quand c'est fini
     }
 
@@ -132,7 +129,6 @@ public class PersonalChest : InteractableBase
     private IEnumerator CloseChest()
     {
         PlayerController.Instance.StateMachine.ChangeState(PlayerStateType.Idle);
-        isAnimating = true;
         isOpen = false;
 
         if (chestPanel != null)
@@ -158,7 +154,6 @@ public class PersonalChest : InteractableBase
 
         if (chestCollider != null) chestCollider.enabled = true;
 
-        isAnimating = false;
         activeChestCoroutine = null; // On vide la référence quand c'est fini
     }
 }
