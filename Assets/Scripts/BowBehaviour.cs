@@ -57,11 +57,45 @@ public class BowBehaviour : MonoBehaviour
         return arrowItem != null && arrowItem.count > 0;
     }
 
+    private ItemData GetEquippedBow()
+    {
+        if (PaletteSystem.instance == null || PaletteSystem.instance.slotManager == null) return null;
+
+        var weapons = PaletteSystem.instance.slotManager.weapons;
+        if (weapons == null) return null;
+
+        foreach (var slot in weapons)
+        {
+            if (slot != null && slot.itemData != null)
+            {
+                // Vérifie si l'arme est un arc ou si sa portée maximale est supérieure à 0
+                if (slot.itemData.handWeaponType == HandWeapon.Bow || slot.itemData.rangeMax > 0)
+                {
+                    return slot.itemData;
+                }
+            }
+        }
+        return null;
+    }
     public void PrepareArrow()
     {
-        Debug.Log("Tirer une fleche");
+        Debug.Log("<color=yellow>[BOW DEBUG] PrepareArrow() appelé</color>");
 
-        weaponActive = PaletteSystem.instance.slotManager.weapons[0].itemData ? PaletteSystem.instance.slotManager.weapons[0].itemData : PaletteSystem.instance.slotManager.weapons[1].itemData;
+        weaponActive = GetEquippedBow();
+
+        if (weaponActive == null)
+        {
+            Debug.LogError("[BOW DEBUG] ERREUR : Aucun Arc trouvé dans la palette d'armes équipées !");
+            return;
+        }
+
+        Debug.Log($"<color=cyan>[BOW DEBUG] Arc sélectionné : {weaponActive.itemName} (Min: {weaponActive.rangeMin}, Max: {weaponActive.rangeMax})</color>");
+
+        if (EquipmentSystem.instance == null || EquipmentSystem.instance.arrowItemInInventory == null || EquipmentSystem.instance.arrowItemInInventory.itemData == null)
+        {
+            Debug.LogError("[BOW DEBUG] ERREUR : Aucune flèche équipée dans EquipmentSystem !");
+            return;
+        }
 
         Quaternion flatRotation = Quaternion.Euler(0f, 0f, 0f);
 
@@ -139,30 +173,56 @@ public class BowBehaviour : MonoBehaviour
 
     public void ShootArrow()
     {
-        Debug.Log("Lacher la fleche");
+        Debug.Log($"<color=orange>[BOW DEBUG] ShootArrow() - Force appliquée : {currentArrowForce}</color>");
+
+        if (arrow == null)
+        {
+            Debug.LogError("[BOW DEBUG] ERREUR : L'objet 'arrow' est NULL au moment de tirer !");
+            return;
+        }
 
         AlignArrowSpawnToCamera();
 
         arrow.transform.rotation = arrowSpawnPoint.rotation * Quaternion.Euler(0f, 90f, 0f);
         arrow.transform.parent = null;
 
-        Rigidbody rb = arrow.GetComponent<Rigidbody>();
-        rb.isKinematic = false;
-        arrow.GetComponent<BoxCollider>().enabled = true;
+        if (arrow.TryGetComponent<Rigidbody>(out Rigidbody rb))
+        {
+            rb.isKinematic = false;
 
-        audioSource.PlayOneShot(bowShootSound);
+            //  SÉCURITÉ 1 : Si la force est 0, on met une force par défaut pour éviter qu'elle tombe
+            float forceToApply = currentArrowForce > 0f ? currentArrowForce : 30f;
 
-        rb.AddForce(arrowSpawnPoint.forward * currentArrowForce, ForceMode.Impulse);
+            rb.AddForce(arrowSpawnPoint.forward * forceToApply, ForceMode.Impulse);
+        }
+
+        if (arrow.TryGetComponent<Collider>(out Collider arrowCollider))
+        {
+            arrowCollider.enabled = true;
+
+            //  SÉCURITÉ 2 : Ignore les collisions physiques entre la flèche et le Joueur
+            Collider playerCollider = GetComponentInParent<Collider>();
+            if (playerCollider != null)
+            {
+                Physics.IgnoreCollision(arrowCollider, playerCollider);
+            }
+        }
+
+        if (audioSource != null && bowShootSound != null)
+            audioSource.PlayOneShot(bowShootSound);
 
         chargeBow = false;
         OnBowChargeStateChanged?.Invoke(false);
         OnBowChargeProgress?.Invoke(0f);
         changeLine = false;
 
-        animator.SetBool("ChargeBow", false);
-        animator.SetTrigger("ArrowShoot");
-        Destroy(arrow, 5f);
+        if (animator != null)
+        {
+            animator.SetBool("ChargeBow", false);
+            animator.SetTrigger("ArrowShoot");
+        }
 
+        Destroy(arrow, 5f);
         arrowSpawnPoint.localRotation = initialFlecheRotation;
     }
 

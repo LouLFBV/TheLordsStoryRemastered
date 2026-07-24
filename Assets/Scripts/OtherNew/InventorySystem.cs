@@ -93,7 +93,7 @@ public class InventorySystem : MonoBehaviour
         // Cas spécial flèches (On garde ta logique)
         if (equipment.arrowItemInInventory.itemData != null)
         {
-            if (item.damageType == equipment.arrowItemInInventory.itemData.damageType
+            if (item.effet == equipment.arrowItemInInventory.itemData.effet
                 && item.equipmentType == EquipmentType.Arrow)
             {
                 equipment.arrowItemInInventory.count++;
