@@ -34,6 +34,11 @@ public class UIManagerSystem : MonoBehaviour
     [SerializeField] private float scrollSpeed = 20f;
     [SerializeField] private float scrollSensitivity = 0.025f;
 
+
+    [Header("Click Settings")]
+    [SerializeField] private float clickCooldown = 0.2f; // Anti-rebond (200ms)
+    private float lastClickTime;
+
     void Awake()
     {
         if (Instance == null) Instance = this;
@@ -45,9 +50,11 @@ public class UIManagerSystem : MonoBehaviour
         ToggleCursor(false);
     }
 
+
     private void Update()
     {
         if (!_isCursorVisible || GamepadDetector.DetectCurrentGamepad() == GamepadType.None) return;
+
         Vector2 stickValue = PlayerController.Instance.Input.NavigateLook;
 
         if (stickValue.magnitude > 0.1f)
@@ -67,54 +74,48 @@ public class UIManagerSystem : MonoBehaviour
 
         if (PlayerController.Instance.Input.SubmitPressed)
         {
-            SimulateMouseClick();
-            Debug.Log("Click");
+            if (Time.unscaledTime - lastClickTime >= clickCooldown)
+            {
+                lastClickTime = Time.unscaledTime;
+                SimulateMouseClick();
+            }
             PlayerController.Instance.Input.UseSubmitInput();
         }
     }
 
     private void SimulateMouseClick()
     {
-        PointerEventData eventData = new PointerEventData(EventSystem.current);
-        eventData.position = Mouse.current.position.ReadValue();
+        PointerEventData eventData = new PointerEventData(EventSystem.current)
+        {
+            position = Mouse.current.position.ReadValue(),
+            button = PointerEventData.InputButton.Left
+        };
 
         List<RaycastResult> results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(eventData, results);
 
-        // Log pour voir si quelque chose est détecté
-        Debug.Log($"[UIManager] Tentative de clic à {eventData.position}. Objets trouvés : {results.Count}");
-
         if (results.Count > 0)
         {
             GameObject clickedObject = results[0].gameObject;
-            Debug.Log($"[UIManager] Objet cliqué : {clickedObject.name} (Tag: {clickedObject.tag})");
+            GameObject targetHandler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(clickedObject);
 
-            // Exécution de l'événement clic
-            ExecuteEvents.Execute(clickedObject, eventData, ExecuteEvents.pointerClickHandler);
-
-            // Sélection de l'objet
-            EventSystem.current.SetSelectedGameObject(clickedObject);
-            Debug.Log($"[UIManager] {clickedObject.name} a été défini comme SelectedGameObject.");
-
-            var rebindComp = clickedObject.GetComponentInParent<InputRebindUI>();
-
-            // Si on a trouvé le script de rebind, on utilise l'objet qui le porte
-            if (rebindComp != null)
+            if (targetHandler != null)
             {
-                clickedObject = rebindComp.gameObject;
+                Debug.Log($"[UIManager] Élément interactif ciblé : {targetHandler.name}");
 
-                // Simule le clic
-                ExecuteEvents.Execute(clickedObject, eventData, ExecuteEvents.pointerClickHandler);
+                // Uniquement l'exécution du clic pointeur
+                ExecuteEvents.Execute(targetHandler, eventData, ExecuteEvents.pointerClickHandler);
 
-                // Au lieu de laisser la sélection, on la retire immédiatement
+                // 🟢 On désélectionne l'objet pour empêcher EventSystem d'envoyer un OnSubmit natif en parallèle
                 EventSystem.current.SetSelectedGameObject(null);
 
-                Debug.Log($"[UIManager] Clic effectué sur {clickedObject.name} et sélection réinitialisée.");
+                var rebindComp = targetHandler.GetComponentInParent<InputRebindUI>();
+                if (rebindComp != null)
+                {
+                    ExecuteEvents.Execute(rebindComp.gameObject, eventData, ExecuteEvents.pointerClickHandler);
+                    Debug.Log($"[UIManager] Clic rebind effectué sur {rebindComp.gameObject.name}");
+                }
             }
-        }
-        else
-        {
-            Debug.LogWarning("[UIManager] Clic effectué mais aucun objet UI n'a été trouvé sous le curseur !");
         }
     }
 

@@ -15,15 +15,13 @@ public class PNJ : InteractableBase
     private DialogueResponse[] currentDialogue; // tableau actif
     private DialogueManager.Speaker currentSpeakerDisplaying;
 
-
     [Header("Quêtes")]
     public QuestSO[] questsDisponibles;
     private int currentQuestIndex = 0;
     private QuestSO currentQuestSO;
     [SerializeField] private QuestInstance activeQuestInstance;
     public bool canGiveQuest;
-    private bool isPnjInteraction; 
-
+    private bool isPnjInteraction;
 
     [Header("Wandering")]
     [SerializeField] private bool canWander = true;
@@ -33,9 +31,10 @@ public class PNJ : InteractableBase
     private bool canWanderOnStart;
     private float wanderTimer;
     private Vector3 targetPosition;
+    private Vector3 fixedWanderCenterPosition;
 
-    private Transform playerTransform; 
-    private PlayerController player; 
+    private Transform playerTransform;
+    private PlayerController player;
     private bool isPlayerInZone;
 
     private Animator animator;
@@ -56,10 +55,17 @@ public class PNJ : InteractableBase
         animator.SetBool("isTalking", false);
         wanderTimer = 0f;
 
-        if (wanderCenter == null) wanderCenter = transform;
+        if (wanderCenter != null)
+        {
+            fixedWanderCenterPosition = wanderCenter.position;
+        }
+        else
+        {
+            fixedWanderCenterPosition = transform.position;
+        }
+
         canWanderOnStart = canWander;
     }
-
 
     public override void OnInteract(PlayerInteractor player)
     {
@@ -75,6 +81,7 @@ public class PNJ : InteractableBase
             SetTargeted(false, playerTransform);
         }
     }
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
@@ -84,19 +91,25 @@ public class PNJ : InteractableBase
             isPlayerInZone = true;
         }
     }
+
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Player"))
         {
             isPlayerInZone = false;
-            player = null;
+            // On conserve la référence 'player' si on est en dialogue pour éviter les crashs dans EndDialogue
+            if (!isOnDial)
+            {
+                player = null;
+            }
         }
     }
+
     private void Update()
     {
         if (isPlayerInZone)
         {
-            agent.ResetPath();
+            if (agent.hasPath) agent.ResetPath(); // 🟢 Opti : appelé seulement si le PNJ avait une destination
             animator.SetFloat("Speed", 0f);
         }
 
@@ -114,8 +127,10 @@ public class PNJ : InteractableBase
         {
             if (wanderTimer <= 0f)
             {
+                Vector3 center = (wanderCenter != null) ? wanderCenter.position : fixedWanderCenterPosition;
+
                 Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
-                randomDirection += wanderCenter.position;
+                randomDirection += center;
 
                 if (NavMesh.SamplePosition(randomDirection, out NavMeshHit hit, wanderRadius, NavMesh.AllAreas))
                 {
@@ -127,6 +142,7 @@ public class PNJ : InteractableBase
             }
         }
     }
+
     #region Start/End Dialogue
     public void StartDialogue()
     {
@@ -141,7 +157,6 @@ public class PNJ : InteractableBase
         player.RequestedPanelType = UIPanelType.Dialogue;
         player.StateMachine.ChangeState(PlayerStateType.UI);
 
-        // 2. Logique propre au PNJ
         animator.SetFloat("Speed", 0f);
         canWander = false;
         isOnDial = true;
@@ -157,12 +172,10 @@ public class PNJ : InteractableBase
         VerifObjectsInInventory();
         AddEnemiesKilled();
 
-
         if (canGiveQuest && currentQuestSO != null && !isPnjInteraction)
         {
             if (activeQuestInstance == null)
             {
-                // Nouvelle quête
                 currentDialogue = currentQuestSO.sentencesBeforeQuest;
             }
             else
@@ -202,11 +215,19 @@ public class PNJ : InteractableBase
 
         animator.SetBool("isTalking", false);
         if (canWanderOnStart) canWander = true;
-        player.StateMachine.ChangeState(PlayerStateType.Idle);
+
+        // 🟢 Sécurité si le player est sorti du trigger pendant le dialogue
+        if (player != null)
+        {
+            player.StateMachine.ChangeState(PlayerStateType.Idle);
+            if (!isPlayerInZone) player = null; // Nettoyage différé
+        }
+
         agent.isStopped = false;
         if (isPnjInteraction) isPnjInteraction = false;
     }
-#endregion
+    #endregion
+
     public void NextLine()
     {
         Debug.Log("NextLine called for PNJ: " + namePNJ);
@@ -244,7 +265,6 @@ public class PNJ : InteractableBase
 
         var dialogueGroup = currentDialogue[index];
 
-        // Affiche le dialogue PNJ ou la réponse du joueur selon l'index
         if (sentenceIndex < dialogueGroup.pnjDialogues.Length)
         {
             currentSpeakerDisplaying = DialogueManager.Speaker.PNJ;
@@ -264,7 +284,6 @@ public class PNJ : InteractableBase
         }
         sentenceIndex++;
 
-        // Si on a fini toutes les lignes du groupe, passe au groupe suivant
         if (sentenceIndex >= dialogueGroup.pnjDialogues.Length + dialogueGroup.playerResponses.Length)
         {
             sentenceIndex = 0;
@@ -288,10 +307,8 @@ public class PNJ : InteractableBase
         NextLine();
     }
 
-
     public void RefuseQuest()
     {
-
         DialogueManager.instance.HideQuestButtons();
         animator.SetInteger("talkIndex", Random.Range(0, 3));
         animator.SetBool("isTalking", true);
@@ -301,6 +318,7 @@ public class PNJ : InteractableBase
         activeQuestInstance = null;
     }
     #endregion
+
     private void CompleteQuest()
     {
         if (activeQuestInstance == null) return;
@@ -321,7 +339,6 @@ public class PNJ : InteractableBase
         if (currentQuestIndex >= questsDisponibles.Length)
             canGiveQuest = false;
     }
-
 
     private void VerifObjectsInInventory()
     {
@@ -362,6 +379,7 @@ public class PNJ : InteractableBase
             InventorySystem.instance.RemoveItem(itemData);
         }
     }
+
     private void VerifIfIntercationQuest()
     {
         foreach (var quest in NewQuestManager.instance.activeQuests)
@@ -384,22 +402,19 @@ public class PNJ : InteractableBase
         activeQuestInstance = null;
         currentQuestSO = null;
 
-        //  On commence à l'index courant
         for (int i = currentQuestIndex; i < questsDisponibles.Length; i++)
         {
             var questSO = questsDisponibles[i];
             var instance = NewQuestManager.instance.GetQuestInstance(questSO);
 
-            // 1️⃣ Quête jamais acceptée
-            if (instance == null  && !NewQuestManager.instance.IsFinished(questSO))
+            if (instance == null && !NewQuestManager.instance.IsFinished(questSO))
             {
                 currentQuestSO = questSO;
-                currentQuestIndex = i; //  important
+                currentQuestIndex = i;
                 return;
             }
             if (instance == null) continue;
 
-            // 2️⃣ Quête en cours
             if (instance.status == QuestStatus.InProgress)
             {
                 activeQuestInstance = instance;
@@ -408,7 +423,6 @@ public class PNJ : InteractableBase
                 return;
             }
 
-            // 3️⃣ Quête terminée mais récompense pas encore donnée
             if (instance.status == QuestStatus.Completed && !instance.rewardsGiven)
             {
                 activeQuestInstance = instance;
@@ -416,15 +430,10 @@ public class PNJ : InteractableBase
                 currentQuestIndex = i;
                 return;
             }
-
-            // 4️⃣ Si elle est totalement terminée  on passe à la suivante
         }
 
-        // 5️⃣ Toutes les quêtes sont terminées
         canGiveQuest = false;
     }
-
-
 
     private IEnumerator RotateTowardsToPlayer()
     {
@@ -444,15 +453,13 @@ public class PNJ : InteractableBase
             }
         }
     }
+
     private void OnDrawGizmos()
     {
-        //Gizmos.color = Color.green;
-        //Gizmos.DrawWireSphere(transform.position, distanceToInteract);
+        Vector3 center = (wanderCenter != null) ? wanderCenter.position : fixedWanderCenterPosition;
+        if (!Application.isPlaying) center = (wanderCenter != null) ? wanderCenter.position : transform.position;
 
-        if (wanderCenter != null)
-        {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(wanderCenter.position, wanderRadius);
-        }
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(center, wanderRadius);
     }
 }

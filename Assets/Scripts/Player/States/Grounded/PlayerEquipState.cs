@@ -1,13 +1,19 @@
 using UnityEngine;
+
 public class PlayerEquipState : PlayerGroundedState
 {
+    private Vector2 cachedInput;
+    private float runSpeed = 4f;
+    private float sprintSpeed = 7f;
+    private bool isSprinting;
+    private bool changedFOV;
 
     public PlayerEquipState(PlayerController player) : base(player) { }
 
     public override void Enter()
     {
         base.Enter();
-        player.Rigidbody.linearVelocity = Vector3.zero;
+        player.Animator.applyRootMotion = true;
 
         if (player.PendingWeaponItem.itemType == ItemType.Consumable)
         {
@@ -15,6 +21,54 @@ public class PlayerEquipState : PlayerGroundedState
             return;
         }
         PlayEquipAnimation(player.PendingWeaponType);
+    }
+
+    public override void Update()
+    {
+        base.Update();
+
+        Vector2 input = player.Input.MoveInput;
+        cachedInput = input;
+
+        // --- GESTION DU DÉPLACEMENT & ROTATION ---
+        player.Motor.RotateTowardsInput(input);
+
+        // Sprint
+        isSprinting = CanSprint(input);
+        float animSpeed = isSprinting ? sprintSpeed : runSpeed;
+
+        // FOV Sprint
+        if (isSprinting && !changedFOV)
+        {
+            ThirdPersonCameraController.Instance.SetFOV(ThirdPersonCameraController.Instance.SprintFOV);
+            changedFOV = true;
+        }
+        else if (!isSprinting && changedFOV)
+        {
+            ThirdPersonCameraController.Instance.ResetFOV();
+            changedFOV = false;
+        }
+
+        // Mise à jour de l'Animator
+        player.Animator.SetFloat(AnimatorHashes.hHash, input.x, 0.1f, Time.deltaTime);
+        player.Animator.SetFloat(AnimatorHashes.vHash, input.y, 0.1f, Time.deltaTime);
+        player.Animator.SetFloat(AnimatorHashes.speedHash, input.magnitude * (animSpeed / sprintSpeed), 0.1f, Time.deltaTime);
+
+        // Stamina
+        if (isSprinting)
+        {
+            player.Stamina.Spend(player.Stamina.consommationRate * Time.deltaTime);
+        }
+        else if (player.Input.SprintHeld && !player.Stamina.HasStamina())
+        {
+            player.Stamina.RequestEmptyFeedback();
+        }
+    }
+
+    public override void FixedUpdate()
+    {
+        base.FixedUpdate();
+        player.Motor.RotateTowardsInput(cachedInput);
     }
 
     private void PlayEquipAnimation(HandWeapon type)
@@ -40,17 +94,13 @@ public class PlayerEquipState : PlayerGroundedState
     {
         if (player.PendingLibraryItem != null)
         {
-            // 1. Activer le nouveau prefab
             GameObject weaponObj = player.PendingLibraryItem.itemPrefab;
             weaponObj.SetActive(true);
 
-            // 2. EXTRACTION ET MISE À JOUR DU DETECTOR
-            // On récupère le detector sur le nouveau prefab
             WeaponDamageDetector newDetector = weaponObj.GetComponent<WeaponDamageDetector>();
 
             if (newDetector != null)
             {
-                // On informe le CombatSystem qu'il doit maintenant piloter cette hitbox
                 player.Combat.UpdateWeaponDetector(newDetector);
             }
             else if (player.PendingWeaponItem.itemType != ItemType.Consumable)
@@ -58,13 +108,11 @@ public class PlayerEquipState : PlayerGroundedState
                 Debug.LogWarning($"Le prefab {weaponObj.name} n'a pas de WeaponDamageDetector!");
             }
 
-            // 3. Désactiver les éléments visuels inutiles
             foreach (var element in player.PendingLibraryItem.elementsToDisable)
             {
                 element.SetActive(false);
             }
 
-            // 4. Transition
             player.StateMachine.ChangeState(player.Input.MoveInput != Vector2.zero
                 ? PlayerStateType.Move : PlayerStateType.Idle);
         }
@@ -73,9 +121,20 @@ public class PlayerEquipState : PlayerGroundedState
     public override void Exit()
     {
         base.Exit();
+
+        ThirdPersonCameraController.Instance.ResetFOV();
+        changedFOV = false;
+
         if (!player.PendingLibraryItem.itemPrefab.activeSelf)
         {
             player.PendingLibraryItem.itemPrefab.SetActive(true);
         }
+    }
+
+    private bool CanSprint(Vector2 input)
+    {
+        return input.magnitude > 0.1f
+               && player.Input.SprintHeld
+               && player.Stamina.HasStamina();
     }
 }
