@@ -14,7 +14,6 @@ public class InventorySystem : MonoBehaviour
     [SerializeField] private PlayerController player;
 
     [Header("Inventory System Variables (Fixed Arrays)")]
-    // 🔴 On utilise désormais des tableaux de taille fixe au lieu de listes dynamiques
     [SerializeField] private Transform inventoryRessourcesSlotsParent;
     [SerializeField] private ItemInInventory[] contentRessources;
 
@@ -44,7 +43,6 @@ public class InventorySystem : MonoBehaviour
             Destroy(gameObject);
         }
 
-        // Initialisation des tableaux avec leurs tailles fixes si ce n'est pas déjà fait dans l'inspecteur
         if (contentRessources == null || contentRessources.Length != InventoryRessourcesCraftSize)
             contentRessources = new ItemInInventory[InventoryRessourcesCraftSize];
 
@@ -54,7 +52,6 @@ public class InventorySystem : MonoBehaviour
         if (contentEquipment == null || contentEquipment.Length != EquipmentSize)
             contentEquipment = new ItemInInventory[EquipmentSize];
 
-        // Sécurité : On s'assure que chaque case du tableau contient bien une instance de classe (vide au début)
         InitializeArraySlots(contentRessources);
         InitializeArraySlots(contentCraft);
         InitializeArraySlots(contentEquipment);
@@ -72,6 +69,7 @@ public class InventorySystem : MonoBehaviour
     {
         RefreshContent();
     }
+
     public void AddItem(ItemData item, int quantity)
     {
         for (int i = 0; i < quantity; i++)
@@ -79,38 +77,60 @@ public class InventorySystem : MonoBehaviour
             AddItem(item);
         }
     }
+
+    // 🟢 1. Comparaison personnalisée pour les flèches et autres objets
+    public bool IsSameItem(ItemData a, ItemData b)
+    {
+        if (a == null || b == null) return false;
+
+        // Pour les flèches : Même Effet (ou même ID) ET Même Niveau d'amélioration
+        if (a.equipmentType == EquipmentType.Arrow && b.equipmentType == EquipmentType.Arrow)
+        {
+            return (a.effet == b.effet || a.itemID == b.itemID) && a.levelAmelioration == b.levelAmelioration;
+        }
+
+        // Pour les autres objets
+        return (a == b || a.itemID == b.itemID) && a.levelAmelioration == b.levelAmelioration;
+    }
+
     public void AddItem(ItemData item)
     {
         Debug.Log("Adding item: " + item.itemName);
 
+        // Si l'objet n'est pas stackable et pas une instance, on crée une instance
         if (!item.stackable && !item.isInstance && item.itemType != ItemType.Key)
         {
             item = item.CreateInstance();
         }
 
-        ItemInInventory[] targetArray = GetTargetArray(item.itemType);
-
-        // Cas spécial flèches (On garde ta logique)
-        if (equipment.arrowItemInInventory.itemData != null)
+        // Slot de flèches équipées sur l'arc
+        if (item.equipmentType == EquipmentType.Arrow && equipment != null && equipment.arrowItemInInventory != null && equipment.arrowItemInInventory.itemData != null)
         {
-            if (item.effet == equipment.arrowItemInInventory.itemData.effet
-                && item.equipmentType == EquipmentType.Arrow)
+            if (IsSameItem(item, equipment.arrowItemInInventory.itemData))
             {
+                Debug.Log("Flèche ajoutée directement dans le slot d'équipement d'arc !");
                 equipment.arrowItemInInventory.count++;
                 equipment.UpdateArrowsText();
-                BowBehaviour.instance.UpdateQuiverVisual(equipment.arrowItemInInventory.count);
+                if (BowBehaviour.instance != null)
+                {
+                    BowBehaviour.instance.UpdateQuiverVisual(equipment.arrowItemInInventory.count);
+                }
+                RefreshContent();
                 return;
             }
         }
 
+        ItemInInventory[] targetArray = GetTargetArray(item.itemType);
         bool itemAdded = false;
 
-        // 1. Recherche d'un stack existant non plein
+        // 1️⃣ Tentative d'empilement dans un stack déjà existant de MÊME effet et MÊME niveau
         if (item.stackable)
         {
             for (int i = 0; i < targetArray.Length; i++)
             {
-                if (targetArray[i].itemData == item && targetArray[i].count < item.maxStack)
+                if (targetArray[i].itemData != null &&
+                   IsSameItem(targetArray[i].itemData, item) &&
+                   targetArray[i].count < item.maxStack)
                 {
                     targetArray[i].count++;
                     itemAdded = true;
@@ -119,13 +139,20 @@ public class InventorySystem : MonoBehaviour
             }
         }
 
-        // 2. Si pas trouvé de stack, on cherche le PREMIER emplacement vide (index le plus bas)
+        // 2️⃣ Si aucun stack correspondant, placement dans une nouvelle case vide
         if (!itemAdded)
         {
             for (int i = 0; i < targetArray.Length; i++)
             {
-                if (targetArray[i].itemData == null) // Case libre !
+                if (targetArray[i].itemData == null)
                 {
+                    // 🔴 CRUCIAL : Si ce sont des flèches et qu'elles ne sont pas encore une instance runtime,
+                    // on crée une instance pour que leur niveau d'amélioration soit isolé !
+                    if (!item.isInstance && (item.equipmentType == EquipmentType.Arrow || !item.stackable))
+                    {
+                        item = item.CreateInstance();
+                    }
+
                     targetArray[i].itemData = item;
                     targetArray[i].count = 1;
                     itemAdded = true;
@@ -142,6 +169,53 @@ public class InventorySystem : MonoBehaviour
         RefreshContent();
     }
 
+    public bool CanAddItem(ItemData item, int quantity)
+    {
+        if (item == null) return false;
+
+        if (item.equipmentType == EquipmentType.Arrow && equipment != null && equipment.arrowItemInInventory != null && equipment.arrowItemInInventory.itemData != null)
+        {
+            if (IsSameItem(item, equipment.arrowItemInInventory.itemData))
+            {
+                return true;
+            }
+        }
+
+        ItemInInventory[] targetArray = GetTargetArray(item.itemType);
+        int remaining = quantity;
+
+        if (item.stackable)
+        {
+            for (int i = 0; i < targetArray.Length; i++)
+            {
+                if (targetArray[i].itemData != null && IsSameItem(targetArray[i].itemData, item))
+                {
+                    int space = item.maxStack - targetArray[i].count;
+
+                    if (space > 0)
+                    {
+                        remaining -= space;
+
+                        if (remaining <= 0)
+                            return true;
+                    }
+                }
+            }
+        }
+
+        int emptySlots = 0;
+
+        for (int i = 0; i < targetArray.Length; i++)
+        {
+            if (targetArray[i].itemData == null)
+                emptySlots++;
+        }
+
+        int capacity = emptySlots * (item.stackable ? item.maxStack : 1);
+
+        return remaining <= capacity;
+    }
+
     public void RemoveItem(ItemData item)
     {
         if (item == null) return;
@@ -149,8 +223,7 @@ public class InventorySystem : MonoBehaviour
 
         for (int i = 0; i < targetArray.Length; i++)
         {
-            if (targetArray[i].itemData != null &&
-               (targetArray[i].itemData == item || targetArray[i].itemData.itemID == item.itemID))
+            if (targetArray[i].itemData != null && IsSameItem(targetArray[i].itemData, item))
             {
                 if (targetArray[i].count > 1)
                 {
@@ -168,60 +241,28 @@ public class InventorySystem : MonoBehaviour
         RefreshContent();
     }
 
-    public bool CanAddItem(ItemData item, int quantity)
+    public int GetItemCount(ItemData item)
     {
+        if (item == null) return 0;
         ItemInInventory[] targetArray = GetTargetArray(item.itemType);
 
-        int remaining = quantity;
-
-        // 1) Vérifier si on peut remplir des stacks existants
-        if (item.stackable)
-        {
-            for (int i = 0; i < targetArray.Length; i++)
-            {
-                if (targetArray[i].itemData == item)
-                {
-                    int space = item.maxStack - targetArray[i].count;
-
-                    if (space > 0)
-                    {
-                        remaining -= space;
-
-                        if (remaining <= 0)
-                            return true;
-                    }
-                }
-            }
-        }
-
-
-        // 2) Vérifier combien de nouveaux slots sont nécessaires
-        int emptySlots = 0;
-
+        int total = 0;
         for (int i = 0; i < targetArray.Length; i++)
         {
-            if (targetArray[i].itemData == null)
-                emptySlots++;
+            if (targetArray[i].itemData != null && IsSameItem(targetArray[i].itemData, item))
+            {
+                total += targetArray[i].count;
+            }
         }
-
-
-        // Chaque nouveau slot peut accueillir :
-        // - 1 objet si non stackable
-        // - maxStack objets si stackable
-        int capacity = emptySlots * (item.stackable ? item.maxStack : 1);
-
-
-        return remaining <= capacity;
+        return total;
     }
 
-    // Fonction de déplacement manuel (Crucial pour le glisser-déposer ou l'indexation comme dans ton coffre !)
     public void MoveItem(ItemType type, int fromIndex, int toIndex)
     {
         ItemInInventory[] targetArray = GetTargetArray(type);
 
         if (fromIndex < 0 || fromIndex >= targetArray.Length || toIndex < 0 || toIndex >= targetArray.Length) return;
 
-        // Inversion classique de deux cases (Swap)
         ItemInInventory temp = targetArray[fromIndex];
         targetArray[fromIndex] = targetArray[toIndex];
         targetArray[toIndex] = temp;
@@ -242,7 +283,6 @@ public class InventorySystem : MonoBehaviour
 
     public List<ItemInInventory> GetContent()
     {
-        // On fusionne les tableaux en ignorant les slots vides pour les scripts tiers qui demandent tout d'un coup
         List<ItemInInventory> content = new List<ItemInInventory>();
         content.AddRange(contentRessources.Where(i => i.itemData != null));
         content.AddRange(contentCraft.Where(i => i.itemData != null));
@@ -254,37 +294,50 @@ public class InventorySystem : MonoBehaviour
     public ItemInInventory[] GetPlayerRessourcesList() => contentRessources;
     public ItemInInventory[] GetPlayerCraftList() => contentCraft;
 
-    public int GetItemCount(ItemData item)
+    public void ConsolidateStacks()
     {
-        if (item == null) return 0;
-        ItemInInventory[] targetArray = GetTargetArray(item.itemType);
+        ConsolidateArray(contentEquipment);
+        ConsolidateArray(contentRessources);
+        ConsolidateArray(contentCraft);
+        RefreshContent();
+    }
 
-        int total = 0;
-        for (int i = 0; i < targetArray.Length; i++)
+    private void ConsolidateArray(ItemInInventory[] array)
+    {
+        for (int i = 0; i < array.Length; i++)
         {
-            if (targetArray[i].itemData != null)
+            if (array[i].itemData == null || !array[i].itemData.stackable) continue;
+
+            for (int j = i + 1; j < array.Length; j++)
             {
-                // On compare soit la référence, soit l'itemID si c'est une instance
-                if (targetArray[i].itemData == item || targetArray[i].itemData.itemID == item.itemID)
+                if (array[j].itemData != null && IsSameItem(array[i].itemData, array[j].itemData))
                 {
-                    total += targetArray[i].count;
+                    int maxStack = array[i].itemData.maxStack;
+                    int spaceLeft = maxStack - array[i].count;
+
+                    if (spaceLeft > 0)
+                    {
+                        int transfer = Mathf.Min(spaceLeft, array[j].count);
+                        array[i].count += transfer;
+                        array[j].count -= transfer;
+
+                        if (array[j].count <= 0)
+                        {
+                            array[j].itemData = null;
+                            array[j].count = 0;
+                        }
+                    }
                 }
             }
         }
-        return total;
     }
-
     public void RefreshContent()
     {
-        // 1. Ressources et Craft utilisent le composant "SlotInventory" (Tooltip)
         RefreshResourcesAndCraftContent(inventoryRessourcesSlotsParent, contentRessources, true);
         RefreshResourcesAndCraftContent(inventoryCraftSlotsParent, contentCraft, false);
-
-        // 2. L'équipement utilise le composant "Slot" (Action Panel)
         RefreshEquipmentContent(inventoryEquipmentSlotsParent, contentEquipment);
     }
 
-    // 🟢 Gestion des slots de type "SlotInventory" (Ressources / Craft)
     private void RefreshResourcesAndCraftContent(Transform slotsParent, ItemInInventory[] contentArray, bool isResource)
     {
         int childCount = slotsParent.childCount;
@@ -294,7 +347,6 @@ public class InventorySystem : MonoBehaviour
             SlotInventory currentSlot = slotsParent.GetChild(i).GetComponent<SlotInventory>();
             if (currentSlot == null) continue;
 
-            // Liaison des données d'indexation fixe
             currentSlot.arrayIndex = i;
             currentSlot.isResource = isResource;
 
@@ -303,15 +355,13 @@ public class InventorySystem : MonoBehaviour
                 currentSlot.item = contentArray[i].itemData;
                 currentSlot.count = contentArray[i].count;
                 currentSlot.itemVisual.sprite = contentArray[i].itemData.visual;
-                currentSlot.SetSlotState(true); // Active le fond/contour si implémenté
-
+                currentSlot.SetSlotState(true);
 
                 currentSlot.countTexte.text = contentArray[i].count.ToString();
                 currentSlot.countTexte.enabled = true;
             }
             else
             {
-                // Case vide du tableau
                 currentSlot.item = null;
                 currentSlot.count = 0;
                 currentSlot.itemVisual.sprite = emptySlotVisual;
@@ -321,7 +371,6 @@ public class InventorySystem : MonoBehaviour
         }
     }
 
-    // 🟢 Gestion des slots de type "Slot" (Équipement)
     private void RefreshEquipmentContent(Transform slotsParent, ItemInInventory[] contentArray)
     {
         int childCount = slotsParent.childCount;
@@ -331,15 +380,11 @@ public class InventorySystem : MonoBehaviour
             Slot currentSlot = slotsParent.GetChild(i).GetComponent<Slot>();
             if (currentSlot == null) continue;
 
-            // Note : Si tu veux pouvoir déplacer tes équipements à l'index plus tard,
-            // tu pourras ajouter un "public int arrayIndex;" dans ton script Slot.cs
-
             if (i < contentArray.Length && contentArray[i] != null && contentArray[i].itemData != null)
             {
                 currentSlot.item = contentArray[i].itemData;
                 currentSlot.itemVisual.sprite = contentArray[i].itemData.visual;
 
-                // Gestion de l'affichage de la quantité (ex: consommables empilés dans l'onglet équipement)
                 if (contentArray[i].itemData.stackable && contentArray[i].count > 1)
                 {
                     currentSlot.countTexte.text = contentArray[i].count.ToString();
@@ -352,7 +397,6 @@ public class InventorySystem : MonoBehaviour
             }
             else
             {
-                // Case vide du tableau
                 currentSlot.item = null;
                 currentSlot.itemVisual.sprite = emptySlotVisual;
                 if (currentSlot.countTexte != null) currentSlot.countTexte.gameObject.SetActive(false);
@@ -360,7 +404,6 @@ public class InventorySystem : MonoBehaviour
         }
     }
 
-    // Les vérifications de remplissage comptent désormais les slots occupés (non-null)
     public bool IsFullRessources() => contentRessources.Count(i => i.itemData != null) >= InventoryRessourcesCraftSize;
     public bool IsFullCraft() => contentCraft.Count(i => i.itemData != null) >= InventoryRessourcesCraftSize;
     public bool IsFullEquipment() => contentEquipment.Count(i => i.itemData != null) >= EquipmentSize;
@@ -372,6 +415,7 @@ public class InventorySystem : MonoBehaviour
         ResetArray(contentEquipment);
         RefreshContent();
     }
+
     private void ResetArray(ItemInInventory[] array)
     {
         for (int i = 0; i < array.Length; i++)
@@ -438,20 +482,18 @@ public class InventorySystem : MonoBehaviour
             if (savedItem.slotIndex < 0 || savedItem.slotIndex >= array.Length) continue;
             if (string.IsNullOrEmpty(savedItem.itemID)) continue;
 
-            // 1. On récupère le modèle de base (le fichier du projet)
             ItemData baseItemData = itemDatabase.GetItemByID(savedItem.itemID);
             if (baseItemData == null) continue;
 
             ItemData finalItem = baseItemData;
 
-            // 2. Si c'est un équipement (non stackable), on crée une instance unique !
-            if (!baseItemData.stackable)
+            // 🟢 2. Si c'est un équipement OU une flèche, on crée une instance et on restaure son niveau
+            if (!baseItemData.stackable || baseItemData.equipmentType == EquipmentType.Arrow)
             {
                 finalItem = baseItemData.CreateInstance();
-                finalItem.RestoreLevel(savedItem.levelAmelioration); // On applique le niveau sauvegardé
+                finalItem.RestoreLevel(savedItem.levelAmelioration);
             }
 
-            // 3. On place l'objet dans l'inventaire
             array[savedItem.slotIndex].itemData = finalItem;
             array[savedItem.slotIndex].count = savedItem.count;
         }

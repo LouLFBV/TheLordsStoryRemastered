@@ -24,9 +24,7 @@ public class WeaponDamageDetector : MonoBehaviour
         FetchCollider();
     }
 
-    //public void SetDamageFrame(float amount) => damageForThisFrame = amount;
     public void SetDamageFrame(float amount) => damageForThisFrame = amount;
-
 
     private void FetchCollider()
     {
@@ -38,14 +36,14 @@ public class WeaponDamageDetector : MonoBehaviour
 
     public void ToggleCollider(bool state)
     {
-        FetchCollider(); // Sécurité si l'Awake ne s'est pas joué
+        FetchCollider();
         if (myCollider != null) myCollider.enabled = state;
         if (!state) alreadyHit.Clear();
     }
 
     public void DisableDamage()
     {
-        FetchCollider(); // Sécurité si l'Awake ne s'est pas joué
+        FetchCollider();
         if (myCollider != null)
         {
             myCollider.enabled = false;
@@ -58,54 +56,84 @@ public class WeaponDamageDetector : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Évite de se frapper soi-même ou de frapper 2x la même cible
+        // 1. Évite de se frapper soi-même ou de frapper 2x la même cible
         if (other.gameObject == transform.root.gameObject || alreadyHit.Contains(other.gameObject))
             return;
 
-        if (other.TryGetComponent<IDamageable>(out var target))
+        bool isArrow = itemData != null && itemData.equipmentType == EquipmentType.Arrow;
+        bool isDamageable = other.TryGetComponent<IDamageable>(out var target);
+
+        // 2. Évite que les flèches ne s'accrochent aux zones invisibles/déclencheurs (Trigger Zones)
+        if (!isDamageable && other.isTrigger)
+            return;
+
+        // 3. Si la cible prend des dégâts (Ennemi, Joueur, PNJ...)
+        if (isDamageable)
         {
             if (ignoreSelfDamage && (damageLayers.value & (1 << other.gameObject.layer)) != 0)
             {
                 Debug.Log($"[Dégâts Ignorés] {transform.root.name} a touché un objet du même groupe : {other.gameObject.name}");
                 return;
             }
+
             alreadyHit.Add(other.gameObject);
             ExecuteHitLogic(other, target);
+        }
+        // 4. Si ce n'est PAS un IDamageable (Mur, Sol, Arbre...) mais que c'est une flèche : elle s'accroche sans faire de sang
+        else if (isArrow)
+        {
+            alreadyHit.Add(other.gameObject);
+            StickToTarget(other.transform);
         }
     }
 
     private void ExecuteHitLogic(Collider other, IDamageable target)
     {
-        // 1. Détermination des dégâts de cette frame
+        // 1. Détermination des dégâts
         float dmg = hasDamageCollider ? colliderDamage : damageForThisFrame;
 
-        // 2. Création du conteneur d'informations dynamique du coup
-        // On passe 'transform.root.gameObject' pour définir l'attaquant (le joueur ou le monstre global)
+        // 2. Création et envoi des dégâts
         DamageInfo info = new DamageInfo(dmg, itemData.damageType, itemData.effet, itemData.poiseDamage, itemData.stunDuration, transform.root.gameObject);
-
-        // 3. Envoi du paquet à la cible
         target.TakeDamage(info);
 
-        // 4. Camera Shake (Game Feel)
+        // 3. Camera Shake
         CameraEvents.OnCameraShake?.Invoke(itemData.cameraShakeIntensity, itemData.cameraShakeDuration);
 
-        // 5. Logique physique spécifique aux Flèches (Arrow)
-        if (itemData.equipmentType == EquipmentType.Arrow)
+        // 4. Instanciation du sang UNIQUEMENT sur les cibles IDamageable
+        if (bloodPrefab != null)
         {
-            HandleArrowCollision(other);
+            Vector3 hitPoint = other.ClosestPoint(transform.position);
+            Instantiate(bloodPrefab, hitPoint, Quaternion.identity);
         }
-        else if (bloodPrefab != null) // Sang pour le corps à corps
+
+        // 5. Si c'est une flèche, on l'accroche aussi à la cible vivante/mobile
+        if (itemData != null && itemData.equipmentType == EquipmentType.Arrow)
         {
-            Instantiate(bloodPrefab, other.ClosestPoint(transform.position), Quaternion.identity);
+            StickToTarget(other.transform);
         }
     }
 
-    private void HandleArrowCollision(Collider other)
+    /// <summary>
+    /// Stoppe la physique et attache le projectile à l'objet percuté.
+    /// </summary>
+    private void StickToTarget(Transform targetTransform)
     {
-        if (TryGetComponent<Rigidbody>(out var rb)) rb.isKinematic = true;
-        transform.position -= transform.forward * 0.1f;
-        transform.parent = other.transform;
-        if (myCollider != null) myCollider.enabled = false;
-        if (bloodPrefab != null) Instantiate(bloodPrefab, transform.position, Quaternion.identity);
+        // Arrête le Rigidbody de la flèche s'il existe
+        if (TryGetComponent<Rigidbody>(out var rb))
+        {
+            rb.isKinematic = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        // Plante légèrement la flèche dans la surface
+        transform.position -= transform.forward * 0.2f;
+
+        // Maintient la flèche attachée à l'objet (suit les mouvements des ennemis/plateformes)
+        transform.parent = targetTransform;
+
+        // Désactive le collider pour ne plus redéclencher d'impacts
+        if (myCollider != null)
+            myCollider.enabled = false;
     }
 }

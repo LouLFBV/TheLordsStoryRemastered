@@ -59,7 +59,6 @@ public class ForgeronUI : MonoBehaviour
     {
         if (!isOpen) return;
 
-        // On consomme l'input dès la détection pour éviter les déclenchements en boucle
         if (player.Input.EquipActionPressed)
         {
             player.Input.UseEquipActionInput();
@@ -100,14 +99,13 @@ public class ForgeronUI : MonoBehaviour
             _forgeron.isActive.SetActive(false);
         upgradePanel.SetActive(false);
         _forgeron.EndCommerce();
-
     }
 
     public void UpdateForgeronUI(EquipmentType equipmentType)
     {
         List<ItemData> allEligibleItems = new List<ItemData>();
 
-        // 1. Items de l'inventaire filtrés (Utilisation de ta variable locale 'inventory')
+        // 1. Items de l'inventaire filtrés
         var inventoryItems = inventory.GetContentEquipment();
         foreach (var item in GetContentForEquipment(inventoryItems, equipmentType))
         {
@@ -126,7 +124,7 @@ public class ForgeronUI : MonoBehaviour
             }
         }
 
-        // 3. Items équipés (Utilisation de ta variable locale 'equipment')
+        // 3. Items équipés
         foreach (var slotEquip in equipment.equipmentSlots)
         {
             if (slotEquip != null && slotEquip.item != null && slotEquip.item.equipmentType == equipmentType && slotEquip.item.isVendable)
@@ -135,7 +133,7 @@ public class ForgeronUI : MonoBehaviour
             }
         }
 
-        // 4. Remplissage ou nettoyage des slots d'un seul coup (Pas besoin de CleanForgeronUI)
+        // 4. Remplissage des slots
         for (int i = 0; i < slotForgeronUIs.Count; i++)
         {
             if (i < allEligibleItems.Count)
@@ -253,6 +251,7 @@ public class ForgeronUI : MonoBehaviour
             return;
         }
 
+        // 1. Amélioration des statistiques de l'objet
         itemData.levelAmelioration++;
 
         if (itemData.equipmentType == EquipmentType.Weapon || itemData.equipmentType == EquipmentType.Arrow)
@@ -262,20 +261,26 @@ public class ForgeronUI : MonoBehaviour
         else
             itemData.armorPoints += 10;
 
+        if (inventory != null)
+        {
+            inventory.ConsolidateStacks();
+        }
+
+        // 3. Mise à jour de l'interface du forgeron
         UpdateUpgradePanel(itemData);
         if (audioSource != null && upgradeSound != null) audioSource.PlayOneShot(upgradeSound);
         UpdateGoldText();
-        UpdateForgeronUI(itemData.equipmentType); //  Optionnel mais propre : rafraîchit la liste principale
+        UpdateForgeronUI(itemData.equipmentType);
     }
 
     public void DestroyItem(ItemData itemData)
     {
         if (itemData == null) return;
 
-        // 1. On donne les composants recyclés
+        // 1. Don du métal
         inventory.AddItem(metalItemData, itemData.metalCost);
 
-        // 2. Retirer de la Palette de raccourcis si présent dedans
+        // 2. Retirer de la Palette si présent
         if (PaletteSystem.instance != null && PaletteSystem.instance.slotManager != null)
         {
             var weaponsList = PaletteSystem.instance.slotManager.weapons;
@@ -290,7 +295,7 @@ public class ForgeronUI : MonoBehaviour
             }
         }
 
-        // 3.  FIX CRITIQUE : Retirer des slots d'équipement SEULEMENT si cet item précis est actuellement équipé
+        // 3. Retirer des slots d'équipement si actuellement porté
         if (equipment != null && itemData.equipmentType != EquipmentType.Weapon)
         {
             bool isCurrentlyWorn = false;
@@ -299,7 +304,7 @@ public class ForgeronUI : MonoBehaviour
                 if (slotEquip != null && slotEquip.item == itemData)
                 {
                     isCurrentlyWorn = true;
-                    slotEquip.item = null; // Désassignation manuelle préventive
+                    slotEquip.item = null;
                 }
             }
 
@@ -309,7 +314,6 @@ public class ForgeronUI : MonoBehaviour
                 equipment.arrowItemInInventory.itemData = null;
             }
 
-            // On ne déclenche le déséquipement global (visuel/stats du joueur) que s'il le portait vraiment !
             if (isCurrentlyWorn)
             {
                 equipment.DesequipEquipment(itemData.equipmentType);
@@ -341,7 +345,6 @@ public class ForgeronUI : MonoBehaviour
             return;
         }
 
-        //  FIX : Vérification stricte '< 2' pour correspondre à la sécurité de UpgradeItem
         upgradeButton.interactable = _currentItem.levelAmelioration < 2 && player.Wallet.CanSpendGold(_currentItem.prix * (_currentItem.levelAmelioration + 1));
         destroyButton.interactable = true;
 

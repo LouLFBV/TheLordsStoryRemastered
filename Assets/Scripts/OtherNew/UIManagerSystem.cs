@@ -36,8 +36,14 @@ public class UIManagerSystem : MonoBehaviour
 
 
     [Header("Click Settings")]
-    [SerializeField] private float clickCooldown = 0.2f; // Anti-rebond (200ms)
+    [SerializeField] private float clickCooldown = 0.2f; 
     private float lastClickTime;
+
+
+    [Header("Crosshair Settings")]
+    [SerializeField] private RectTransform crosshairRect; // Le RectTransform de l'image de ton viseur
+    [SerializeField] private Vector3 maxCrosshairScale = new Vector3(1.5f, 1.5f, 1f); // Taille au début de la visée (plus grand)
+    [SerializeField] private Vector3 minCrosshairScale = Vector3.one;                  // Taille quand l'arc est armé à 100% (taille normale)
 
     void Awake()
     {
@@ -218,6 +224,26 @@ public class UIManagerSystem : MonoBehaviour
     public void ShowCrosshair(bool show)
     {
         if (crosshair != null) crosshair.SetActive(show);
+    }
+
+
+    /// <summary>
+    /// Réduit la taille du viseur de maxScale à minScale selon l'avancement de la charge (0 à 1).
+    /// </summary>
+    public void UpdateCrosshairScale(float chargeProgress)
+    {
+        if (crosshairRect == null) return;
+
+        // Inversion de Lerp : à progress = 0 il est grand, à progress = 1 il rétrécit
+        crosshairRect.localScale = Vector3.Lerp(maxCrosshairScale, minCrosshairScale, chargeProgress);
+    }
+
+    public void ResetCrosshairScale()
+    {
+        if (crosshairRect != null)
+        {
+            crosshairRect.localScale = maxCrosshairScale;
+        }
     }
 
     public void TriggerRecipeFade(GameObject canvas, CanvasGroup canvasGroup, string itemName, Sprite icon, float fadeDuration, float displayDuration)

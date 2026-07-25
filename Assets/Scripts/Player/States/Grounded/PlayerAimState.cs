@@ -12,6 +12,7 @@ public class PlayerAimState : PlayerGroundedState
         player.Animator.SetBool(aimBool, true);
         UIManagerSystem.Instance.ShowCrosshair(true);
         ThirdPersonCameraController.Instance.SetAimState(true);
+        ThirdPersonCameraController.Instance.ResetFOV();
     }
 
     public override void Update()

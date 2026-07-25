@@ -36,7 +36,7 @@ public class InteractSystem : MonoBehaviour
     {
         if (isBusy) return;
 
-        if (IsInventoryFull(item.itemData))
+        if (IsInventoryFull(item.itemData, item.amount))
         {
             Debug.LogWarning("Inventaire plein !");
             return;
@@ -234,22 +234,12 @@ public class InteractSystem : MonoBehaviour
         audioSource.Play();
     }
 
-    bool IsInventoryFull(ItemData itemData)
+    bool IsInventoryFull(ItemData itemData, int amount = 1)
     {
-        switch (itemData.itemType)
-        {
-            case ItemType.Ressource:
-                return inventory.IsFullRessources();
+        if (itemData == null) return false;
 
-            case ItemType.Craft:
-                return inventory.IsFullCraft();
-
-            case ItemType.Equipment:
-            case ItemType.Consumable:
-                return inventory.IsFullEquipment();
-
-            default:
-                return false;
-        }
+        // On demande directement au système d'inventaire s'il a de la place 
+        // (en prenant en compte les stacks existants et les équipements de flèche)
+        return !inventory.CanAddItem(itemData, amount);
     }
 }

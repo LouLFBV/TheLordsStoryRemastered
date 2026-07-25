@@ -2,8 +2,7 @@ using UnityEngine;
 
 public class PlayerBowChargeState : PlayerGroundedState
 {
-
-    private float currentChargeTime; 
+    private float currentChargeTime;
     private float chargeDuration = 2.067f;
 
     public PlayerBowChargeState(PlayerController player) : base(player) { }
@@ -24,7 +23,8 @@ public class PlayerBowChargeState : PlayerGroundedState
     public override void Update()
     {
         Debug.Log("Attaque maintenue : " + player.Input.AttackHeld);
-        // 1. Gestion de la charge (Inchangé)
+
+        // 1. Gestion de la charge
         if (currentChargeTime < chargeDuration)
         {
             currentChargeTime += Time.deltaTime;
@@ -33,23 +33,22 @@ public class PlayerBowChargeState : PlayerGroundedState
         player.Bow.UpdateChargeProgress(t);
 
         // 2. LOGIQUE DE CAMÉRA DYNAMIQUE
-        // On veut TOUJOURS le pivot à l'épaule quand on charge l'arc
         Vector3 currentTargetPivot = ThirdPersonCameraController.Instance.AimPivotOffset;
 
-        // Mais on ne veut le rapprochement (CamOffset) QUE si on vise activement
         Vector3 currentTargetCamOffset = player.Input.AimHeld ?
                                          ThirdPersonCameraController.Instance.AimCamOffset :
                                          ThirdPersonCameraController.Instance.DefaultCamOffset;
 
-        // On applique ces valeurs directement à ton contrôleur de caméra
         ThirdPersonCameraController.Instance.SetManualOffsets(currentTargetPivot, currentTargetCamOffset);
 
-        // FOV : Zoom progressif seulement si on vise ? 
-        // Ou zoom léger constant ? Ici, zoom progressif uniquement si AimPressed
-        if (player.Input.AimHeld )
+        // FOV & CURSEUR DYNAMIQUE
+        if (player.Input.AimHeld)
         {
             float dynamicFOV = Mathf.Lerp(ThirdPersonCameraController.Instance.DefaultFOV, 40f, t);
+
             UIManagerSystem.Instance.ShowCrosshair(true);
+            UIManagerSystem.Instance.UpdateCrosshairScale(t);
+
             ThirdPersonCameraController.Instance.SetFOV(dynamicFOV);
         }
         else
@@ -58,7 +57,7 @@ public class PlayerBowChargeState : PlayerGroundedState
             ThirdPersonCameraController.Instance.ResetFOV();
         }
 
-        // 3. Rotation et Tir (Inchangé)
+        // 3. Rotation
         RotateTowardsCamera();
 
         // 4. Mouvement & Animation
@@ -69,20 +68,16 @@ public class PlayerBowChargeState : PlayerGroundedState
         float moveSpeedFactor = Mathf.Lerp(1f, 0.5f, t);
         player.Animator.SetFloat(AnimatorHashes.speedHash, input.magnitude * moveSpeedFactor, 0.1f, Time.deltaTime);
 
-        // 5. Condition de tir (Ce qui était dans "HandleShooting")
-        // On stocke si le joueur a relâché le bouton
+        // 5. Condition de tir
         bool autoShootBuffered = !player.Input.AttackAnyHeld;
 
         if (autoShootBuffered)
         {
-            // Dès que l'animation de l'arc est prête (via ton Animation Event "ActiveCanShoot")
-            // on tire automatiquement !
             if (player.Bow.canShoot)
             {
                 player.Bow.ShootArrow();
                 player.StateMachine.ChangeState(PlayerStateType.Idle);
             }
-            // Sécurité : si pour une raison quelconque l'animation est bloquée plus de 1.5s, on reset
             else if (currentChargeTime > 1.5f)
             {
                 player.StateMachine.ChangeState(PlayerStateType.Idle);
@@ -90,14 +85,16 @@ public class PlayerBowChargeState : PlayerGroundedState
         }
     }
 
-
-
     public override void Exit()
     {
         base.Exit();
         player.Animator.SetBool(AnimatorHashes.chargeBool, false);
-        player.Animator.SetFloat(AnimatorHashes.speedHash, 0f); 
+        player.Animator.SetFloat(AnimatorHashes.speedHash, 0f);
         player.Input.ResetAllAttackInputs();
+
+        UIManagerSystem.Instance.ShowCrosshair(false);
+        UIManagerSystem.Instance.ResetCrosshairScale();
+
         // Reset de la caméra
         ThirdPersonCameraController.Instance.SetAimState(false);
         ThirdPersonCameraController.Instance.ResetFOV();
