@@ -28,6 +28,11 @@ public class Marchand : InteractableBase
     //private bool isPlayerInZone;
     private Animator animator;
 
+    [Header("Audio Settings")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip buySound;
+
+
 
     [HideInInspector] public float inputCooldown = 0.2f; // Temps d'attente après lancement du dialogue
     [HideInInspector] public float dialogueStartTime, dialogueEndTime;
@@ -35,6 +40,7 @@ public class Marchand : InteractableBase
     private void Start()
     {       
         animator = GetComponent<Animator>();
+        if (audioSource == null) audioSource = GetComponent<AudioSource>();
     }
     public override void OnInteract(PlayerInteractor player)
     {
@@ -228,6 +234,7 @@ public class Marchand : InteractableBase
             return;
 
         player.Wallet.SpendGold(produit.TotalPrice);
+        if (audioSource != null && buySound != null) audioSource.PlayOneShot(buySound);
         InventorySystem.instance.AddItem(produit, produit.PurchaseAmount);
 
         RefreshProduits();

@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections.Generic;
 using System;
 
@@ -11,6 +10,8 @@ public class PNJAcheteur : PNJParent
 
     private UIProduitMarchand currentSlotProduit;
     [SerializeField] private TextMeshProUGUI goldPlayer;
+
+
 
     public override void OnInteract(PlayerInteractor player)
     {

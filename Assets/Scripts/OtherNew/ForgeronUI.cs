@@ -37,6 +37,10 @@ public class ForgeronUI : MonoBehaviour
     [SerializeField] private Button upgradeButton;
     [SerializeField] private Button destroyButton;
 
+    [Header("Audio Settings")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip upgradeSound, destroySound;
+
     public bool isOpen = false;
     public PlayerController player;
     private ItemData _currentItem;
@@ -48,6 +52,7 @@ public class ForgeronUI : MonoBehaviour
         if (inventory == null) inventory = InventorySystem.instance;
         if (player == null) player = PlayerController.Instance;
         if (_forgeron == null) _forgeron = GetComponent<Forgeron>();
+        if (audioSource == null) audioSource = GetComponent<AudioSource>();
     }
 
     private void Update()
@@ -76,20 +81,26 @@ public class ForgeronUI : MonoBehaviour
     public void OpenForgeonUI()
     {
         isOpen = true;
-        forgeronUIPanel.SetActive(true);
         upgradePanel.SetActive(false);
         UpdateGoldText();
         UpdateForgeronUI(EquipmentType.Weapon);
         player.StateMachine.ChangeState(PlayerStateType.UI);
+
+        _forgeron.OpenProduitsPanel();
     }
 
     public void CloseForgeronUI()
     {
         isOpen = false;
         _currentItem = null;
-        forgeronUIPanel.SetActive(false);
+
+        if (_forgeron.animatorPanelProduits != null)
+            _forgeron.animatorPanelProduits.SetBool("PanelIsOpen", false);
+        if (_forgeron.isActive != null)
+            _forgeron.isActive.SetActive(false);
         upgradePanel.SetActive(false);
         _forgeron.EndCommerce();
+
     }
 
     public void UpdateForgeronUI(EquipmentType equipmentType)
@@ -252,6 +263,7 @@ public class ForgeronUI : MonoBehaviour
             itemData.armorPoints += 10;
 
         UpdateUpgradePanel(itemData);
+        if (audioSource != null && upgradeSound != null) audioSource.PlayOneShot(upgradeSound);
         UpdateGoldText();
         UpdateForgeronUI(itemData.equipmentType); //  Optionnel mais propre : rafraîchit la liste principale
     }
@@ -309,6 +321,7 @@ public class ForgeronUI : MonoBehaviour
 
         // 5. Rafraîchir l'UI
         UpdateForgeronUI(itemData.equipmentType);
+        if (audioSource != null && destroySound != null) audioSource.PlayOneShot(destroySound);
         upgradePanel.SetActive(false);
         _currentItem = null;
     }

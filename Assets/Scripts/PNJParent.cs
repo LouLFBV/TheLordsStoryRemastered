@@ -6,10 +6,10 @@ public class PNJParent : InteractableBase
 {
     [Header("Panel")]
     [SerializeField] protected GameObject parentsProduits;
-    [SerializeField] protected Animator animatorPanelProduits;
+    public Animator animatorPanelProduits;
     [SerializeField] private List<ItemData> produits;
     [SerializeField] protected GameObject produitItemPrefab;
-    [SerializeField] protected GameObject isActive;
+    public GameObject isActive;
 
     [Header("PNJ")]
     public string namePNJ;

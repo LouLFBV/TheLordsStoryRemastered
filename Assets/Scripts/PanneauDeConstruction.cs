@@ -17,6 +17,9 @@ public class PanneauDeConstruction : InteractableBase
     [Header("Recipe Configuration")]
     [SerializeField] private List<CraftingRecipe> requiredIngredients;
 
+    [Header("Audio Settings")]
+    [SerializeField] private AudioClip craftSound;
+
     private void Update()
     {
         if (craftPanel != null && craftPanel.activeInHierarchy)
@@ -134,6 +137,10 @@ public class PanneauDeConstruction : InteractableBase
         }
 
         Debug.Log("<color=green>[CONSTRUCTION] Passage validé et ressources consommées !</color>");
+        if (craftSound != null && AudioPanneauDeConstruction.Instance != null)
+        {
+            AudioPanneauDeConstruction.Instance.PlayCraftSound(craftSound);
+        }
         InventorySystem.instance.RefreshContent();
         ClosePanel();
 

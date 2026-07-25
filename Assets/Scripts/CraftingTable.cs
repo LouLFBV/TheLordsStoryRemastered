@@ -31,6 +31,10 @@ public class CraftingTable : InteractableBase
     [SerializeField] private GameObject ingredientSlotPrefab;
     [SerializeField] private Transform ingredientContainer;
 
+    [Header("Audio Settings")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip craftSound;
+
     private ItemData _currentSelectedTargetItem;
 
     private void Start()
@@ -42,6 +46,8 @@ public class CraftingTable : InteractableBase
 
         // On cache la description au départ tant qu'aucune recette n'est sélectionnée
         if (descriptionPanel != null) descriptionPanel.SetActive(false);
+
+        if (audioSource == null) audioSource = GetComponent<AudioSource>();
     }
 
     private void Update()
@@ -232,6 +238,7 @@ public class CraftingTable : InteractableBase
 
         // 3. On actualise l'UI globale et les stocks restants pour voir si on peut en fabriquer un deuxième
         InventorySystem.instance.RefreshContent();
+        if (audioSource != null && craftSound != null) audioSource.PlayOneShot(craftSound);
         RefreshRequiredIngredients(_currentSelectedTargetItem);
     }
 }
