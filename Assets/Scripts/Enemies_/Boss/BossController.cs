@@ -230,6 +230,16 @@ public class BossController : EnemyControllerBase
         }
     }
 
+    public void AE_ActiveInvinsible()
+    {
+        Health.SetInvulnerable(true);
+    }
+
+    public void AE_DesactiveInvinsible()
+    {
+        Health.SetInvulnerable(false);
+    }
+
     // Sécurité : Si le boss prend un coup ou change d'état brusquement, on coupe le VFX
     public void ForceDisableActiveVisual()
     {

@@ -1,7 +1,5 @@
 using System.Collections;
-using System.Linq;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using TMPro;
 using UnityEngine.UI;
 
@@ -77,18 +75,27 @@ public class Chest : InteractableBase
     }
 
 
-    private void OnDisable()
-    {
-        if (WorldStateManager.Instance != null)
-        {
-            WorldStateManager.Instance.OnWorldStateLoaded -= Apply;
-        }
-    }
+
 
     private void OnEnable()
     {
         if (WorldStateManager.Instance != null)
-            WorldStateManager.Instance.OnWorldStateLoaded += Apply;
+        {
+            //  1. On s'abonne avec Subscribe() au lieu du +=
+            WorldStateManager.Instance.Subscribe(Apply);
+
+            //  2. FIX : On vérifie IMMÉDIATEMENT si le coffre a déjà été ouvert
+            Apply();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (WorldStateManager.Instance != null)
+        {
+            //  On utilise Unsubscribe() au lieu du -=
+            WorldStateManager.Instance.Unsubscribe(Apply);
+        }
     }
 
     public void Apply()
@@ -97,8 +104,8 @@ public class Chest : InteractableBase
         {
             if (WorldStateManager.Instance.IsCollected(worldID.UniqueID))
             {
+                Debug.LogWarning($"<color=orange>[CHEST] Le coffre {name} ({worldID.UniqueID}) a déjà été ouvert. Destruction !</color>");
                 Destroy(gameObject);
-                return;
             }
         }
     }
@@ -125,7 +132,7 @@ public class Chest : InteractableBase
         else if (!isOpen && !isLocked)
             StartCoroutine(OpenChest());
         else if (isLocked)
-            lockedSound.Play();
+            lockedSound.PlayOneShot(lockedSound.clip);
     }
 
     public void TryToOpenWithKey(ItemData key)

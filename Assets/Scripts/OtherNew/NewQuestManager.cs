@@ -5,6 +5,9 @@ public class NewQuestManager : MonoBehaviour
 {
     public static NewQuestManager instance;
 
+
+    [SerializeField] private AllRecipeData allRecipeData;
+
     [Header("Quests Lists")]
     public List<QuestInstance> activeQuests = new List<QuestInstance>();
     public List<QuestInstance> finishedQuests = new List<QuestInstance>();
@@ -159,7 +162,17 @@ public class NewQuestManager : MonoBehaviour
         {
             foreach (var item in questInstance.data.rewards.items)
             {
-                InventorySystem.instance.AddItem(item);
+                if (item.itemType == ItemType.Recipe)
+                {
+
+                    // On ajoute directement à l'unique liste, peu importe ce que c'est !
+                    if (!allRecipeData.unlockedRecipes.Contains(item.recipe))
+                    {
+                        allRecipeData.unlockedRecipes.Add(item.recipe);
+                    }
+                }
+                else
+                    InventorySystem.instance.AddItem(item);
             }
         }
         questInstance.rewardsGiven = true;

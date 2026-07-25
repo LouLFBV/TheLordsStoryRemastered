@@ -21,6 +21,7 @@ public class WorldStateManager : MonoBehaviour
         }
 
         Instance = this;
+        IsWorldStateLoaded = true;
     }
 
     public WorldStateSaveData GetSaveData()

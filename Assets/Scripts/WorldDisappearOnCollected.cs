@@ -8,21 +8,21 @@ public abstract class WorldDisappearOnCollected : MonoBehaviour
     protected virtual void Awake()
     {
         worldID = GetComponent<WorldObjectID>();
-        //Debug.Log($"[Awake] {name} activeSelf={gameObject.activeSelf} activeInHierarchy={gameObject.activeInHierarchy}, with ID : {worldID.UniqueID}");
     }
 
     protected virtual void OnEnable()
     {
-
-        //Debug.Log($"[OnEnable] {name}, with ID : {worldID.UniqueID}");
-
+        if (worldID == null)
+            worldID = GetComponent<WorldObjectID>();
 
         if (worldID == null || WorldStateManager.Instance == null)
             return;
 
+        // On s'abonne aux futurs rechargements (ex: charger une sauvegarde)
         WorldStateManager.Instance.Subscribe(ApplyWorldState);
-    }
 
+        ApplyWorldState();
+    }
 
     protected virtual void OnDisable()
     {
@@ -30,27 +30,22 @@ public abstract class WorldDisappearOnCollected : MonoBehaviour
             WorldStateManager.Instance.Unsubscribe(ApplyWorldState);
     }
 
-
     protected void ApplyWorldState()
     {
         if (worldID != null && WorldStateManager.Instance.IsCollected(worldID.UniqueID))
         {
             StartCoroutine(DestroyNextFrame());
-            Debug.LogWarning($"<color=orange>[{name}] checked world state: Collected = {WorldStateManager.Instance.IsCollected(worldID.UniqueID)}, with ID : {worldID.UniqueID}</color>");
+            Debug.LogWarning($"<color=orange>[{name}] Déjà collecté/détruit -> Suppression avec l'ID : {worldID.UniqueID}</color>");
         }
-        else if (worldID != null)
+        else if (worldID == null)
         {
-            //Debug.LogWarning($"<color=cyan>[{name}] checked world state: Collected = {WorldStateManager.Instance.IsCollected(worldID.UniqueID)}, with ID : {worldID.UniqueID}</color>");
+            Debug.LogWarning($"<color=red>[{name}] Composant WorldObjectID manquant !</color>");
         }
-        else
-        {
-            Debug.LogWarning($"<color=red>[{name}] has no WorldObjectID component!, with ID : {worldID.UniqueID}</color>");
-        }
-        Debug.Log($"[ApplyWorldState] {name} activeSelf={gameObject.activeSelf} activeInHierarchy={gameObject.activeInHierarchy}, with ID : {worldID.UniqueID}");
     }
+
     private IEnumerator DestroyNextFrame()
     {
-        yield return null; // attendre la fin de l'event
-        Destroy(transform.gameObject);
+        yield return null; // attendre la fin du frame
+        Destroy(gameObject);
     }
 }

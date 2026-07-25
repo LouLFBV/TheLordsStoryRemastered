@@ -76,6 +76,7 @@ public class PlayerInputHandler : MonoBehaviour
         if (PlayerPrefs.HasKey("Deadzone"))
             stickDeadzone = PlayerPrefs.GetFloat("Deadzone");
     }
+
     private void OnEnable()
     {
         // --- MOVE avec Deadzone ---
@@ -92,7 +93,12 @@ public class PlayerInputHandler : MonoBehaviour
         input.actions["LookMouse"].performed += ctx => MouseLook = ctx.ReadValue<Vector2>() * mouseSensitivity;
         input.actions["LookMouse"].canceled += _ => MouseLook = Vector2.zero;
 
-        input.actions["LookGamepad"].performed += ctx => rawGamepadLook = ctx.ReadValue<Vector2>();
+        //  LOOK GAMEPAD AVEC DEADZONE
+        input.actions["LookGamepad"].performed += ctx =>
+        {
+            Vector2 raw = ctx.ReadValue<Vector2>();
+            rawGamepadLook = (raw.magnitude < stickDeadzone) ? Vector2.zero : raw;
+        };
         input.actions["LookGamepad"].canceled += _ => rawGamepadLook = Vector2.zero;
 
         // --- NAVIGATE (UI) ---
@@ -120,8 +126,6 @@ public class PlayerInputHandler : MonoBehaviour
         {
             GamepadScroll = Vector2.zero;
         };
-
-
 
         input.actions["Attack"].performed += ctx =>
         {
@@ -169,11 +173,10 @@ public class PlayerInputHandler : MonoBehaviour
         input.actions["LockOn"].performed += ctx => LockOnPressed = true;
         input.actions["LockOn"].canceled += ctx => LockOnPressed = false;
 
-
         input.actions["Aim"].performed += ctx => AimHeld = true;
         input.actions["Aim"].canceled += ctx => AimHeld = false;
 
-        //Palette
+        // Palette
         input.actions["Weapon1"].performed += ctx => Weapon1Pressed = true;
         input.actions["Weapon1"].canceled += ctx => Weapon1Pressed = false;
 
@@ -187,10 +190,6 @@ public class PlayerInputHandler : MonoBehaviour
         input.actions["Object2"].canceled += ctx => Object2Pressed = false;
 
         // UI
-
-        //input.actions["Navigate"].performed += ctx => NavigationInput = ctx.ReadValue<Vector2>(); ;
-        //input.actions["Navigate"].canceled += ctx => NavigationInput = Vector2.zero;
-
         input.actions["Submit"].performed += ctx => SubmitPressed = true;
         input.actions["Submit"].canceled += ctx => SubmitPressed = false;
 
@@ -203,12 +202,10 @@ public class PlayerInputHandler : MonoBehaviour
         input.actions["CloseInventory"].performed += ctx => CloseInventoryPressed = true;
         input.actions["CloseInventory"].canceled += ctx => CloseInventoryPressed = false;
 
-
         input.actions["DialogueNext"].performed += ctx => DialogueNextPressed = true;
         input.actions["DialogueNext"].canceled += ctx => DialogueNextPressed = false;
 
         // Slot Actions 
-
         input.actions["UseAction"].performed += ctx => UseActionPressed = true;
         input.actions["UseAction"].canceled += ctx => UseActionPressed = false;
 
@@ -235,6 +232,7 @@ public class PlayerInputHandler : MonoBehaviour
         // si on ouvre l'inventaire en plein sprint
         MoveInput = Vector2.zero;
         GamepadScroll = Vector2.zero;
+        rawGamepadLook = Vector2.zero;
         AttackPressed = false;
         AttackSpecialPressed = false;
         RollPressed = false;

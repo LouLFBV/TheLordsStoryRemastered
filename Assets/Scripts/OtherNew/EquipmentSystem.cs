@@ -39,6 +39,11 @@ public class EquipmentSystem : MonoBehaviour
         }
 
         equipmentSlots = new Slot[] { headSlot, chestSlot, handsSlot, legsSlot, feetSlot, arrowSlot };
+
+        if (audioSource != null)
+        {
+            audioSource.ignoreListenerPause = true;
+        }
     }
 
     private void RefreshPlayerArmor()
@@ -270,7 +275,10 @@ public class EquipmentSystem : MonoBehaviour
                 InventorySystem.instance.RemoveItem(itemToEquip);
 
             if (!isLoading)
+            {
+                Debug.Log("<color=red> EquipSound</color>");
                 audioSource.PlayOneShot(equipSound);
+            }
 
             if (InventorySystem.instance.GetItemCount(itemToEquip) <= 0)
                 itemActionsSystem.CloseActionPanel();

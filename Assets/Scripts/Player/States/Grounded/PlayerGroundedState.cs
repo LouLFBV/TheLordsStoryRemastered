@@ -99,15 +99,6 @@ public class PlayerGroundedState : PlayerState
             player.StateMachine.ChangeState(PlayerStateType.Roll);
             return;
         }
-
-        // 7. PRIORITÉ : Le LockOn
-        if (player.Input.LockOnPressed)
-        {
-            Debug.Log("LockOn Pressed");
-            player.Input.UseLockOnInput();
-            player.LockOn.ToggleLock();
-            return;
-        }
     }
 
     public override void Exit()

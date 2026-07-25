@@ -1,5 +1,7 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.SceneManagement; // 🟢 Indispensable pour SceneManager et Scene
 
 public class AudioManager : MonoBehaviour
 {
@@ -12,7 +14,17 @@ public class AudioManager : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float fadeDuration = 1.5f;
 
-    // Ces volumes repr�sentent la "balance" voulue pour la musique de cette sc�ne sp�cifique
+    // Scènes où le son d'exploration doit être totalement coupé (volume = 0)
+    private readonly HashSet<string> bossScenes = new HashSet<string>
+    {
+        "Boss1",
+        "Boss2",
+        "Boss3",
+        "BossFinal",
+        "GrotteSecreteBoss"
+    };
+
+    // Volumes max par défaut pour la scène active
     private float _sceneMaxExploVolume = 0.5f;
     private float _sceneMaxChaseVolume = 0.5f;
 
@@ -24,13 +36,68 @@ public class AudioManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            //DontDestroyOnLoad(gameObject);
+            // Décommente cette ligne si ton AudioManager doit être conservé entre les scènes :
+            // DontDestroyOnLoad(gameObject);
         }
         else
         {
             Destroy(gameObject);
             return;
         }
+    }
+
+    #region Gestion des Événements de Scène
+    private void OnEnable()
+    {
+        // 🟢 S'abonne à l'événement de chargement de scène
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        // 🟢 Toujours se désabonner pour éviter les fuites de mémoire
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    /// <summary>
+    /// Exécuté automatiquement par Unity dès qu'une nouvelle scène est chargée.
+    /// </summary>
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // On réinitialise l'état de poursuite au chargement d'une nouvelle scène
+        _isChased = false;
+
+        // Calcule la cible du volume d'exploration pour la scène qui vient de charger
+        float targetExplo = GetTargetExploVolume(scene.name);
+        float targetChase = 0f;
+
+        // Effectue un fondu fluide vers le bon volume
+        if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
+        _fadeCoroutine = StartCoroutine(FadeMusicSequence(targetExplo, targetChase));
+    }
+    #endregion
+
+    /// <summary>
+    /// Vérifie si un nom de scène correspond à une scène de boss.
+    /// </summary>
+    private bool IsBossScene(string sceneName)
+    {
+        return bossScenes.Contains(sceneName);
+    }
+
+    /// <summary>
+    /// Calcule le volume cible pour l'exploration.
+    /// </summary>
+    private float GetTargetExploVolume(string sceneName = null)
+    {
+        string currentScene = sceneName ?? SceneManager.GetActiveScene().name;
+
+        // Si on est en poursuite OU dans une scène de boss, le volume passe à 0
+        if (_isChased || IsBossScene(currentScene))
+        {
+            return 0f;
+        }
+        return _sceneMaxExploVolume;
     }
 
     public void ChangeSceneTracks(AudioClip newExploClip, AudioClip newChaseClip, float exploVolume, float chaseVolume)
@@ -49,6 +116,7 @@ public class AudioManager : MonoBehaviour
         float startExploVol = explorationSource.volume;
         float startChaseVol = chaseSource.volume;
 
+        // Phase 1 : Fade Out
         while (timer < fadeDuration / 2f)
         {
             timer += Time.deltaTime;
@@ -64,18 +132,20 @@ public class AudioManager : MonoBehaviour
         if (newExplo != null) explorationSource.Play();
         if (newChase != null) chaseSource.Play();
 
+        float targetExplo = GetTargetExploVolume();
+
+        // Phase 2 : Fade In
         timer = 0f;
         while (timer < fadeDuration / 2f)
         {
             timer += Time.deltaTime;
             float t = timer / (fadeDuration / 2f);
-            // On fait le fondu vers le volume max autoris� par la sc�ne
-            explorationSource.volume = Mathf.Lerp(0f, _sceneMaxExploVolume, t);
+            explorationSource.volume = Mathf.Lerp(0f, targetExplo, t);
             chaseSource.volume = 0f;
             yield return null;
         }
 
-        explorationSource.volume = _sceneMaxExploVolume;
+        explorationSource.volume = targetExplo;
         chaseSource.volume = 0f;
     }
 
@@ -86,8 +156,7 @@ public class AudioManager : MonoBehaviour
 
         if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
 
-        // C'est ici que �a change : le fondu respecte le volume max de la sc�ne
-        float targetExplo = _isChased ? 0f : _sceneMaxExploVolume;
+        float targetExplo = GetTargetExploVolume();
         float targetChase = _isChased ? _sceneMaxChaseVolume : 0f;
 
         _fadeCoroutine = StartCoroutine(FadeMusicSequence(targetExplo, targetChase));

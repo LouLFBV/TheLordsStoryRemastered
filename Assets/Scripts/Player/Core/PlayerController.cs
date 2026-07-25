@@ -148,6 +148,16 @@ public class PlayerController : MonoBehaviour, ICombatant
         StateMachine.Update();
         PaletteSystem.instance.HandlePaletteLogic(this);
 
+
+
+        // 7. PRIORITÉ : Le LockOn
+        if (Input.LockOnPressed)
+        {
+            Debug.Log("LockOn Pressed");
+            Input.UseLockOnInput();
+            LockOn.ToggleLock();
+        }
+
         // --- LOGIQUE D'OUVERTURE ---
         if (Input.MenuPressed || Input.InventoryPressed)
         {
