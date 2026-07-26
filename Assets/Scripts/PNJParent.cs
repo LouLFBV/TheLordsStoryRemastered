@@ -9,7 +9,6 @@ public class PNJParent : InteractableBase
     public Animator animatorPanelProduits;
     [SerializeField] private List<ItemData> produits;
     [SerializeField] protected GameObject produitItemPrefab;
-    public GameObject isActive;
 
     [Header("PNJ")]
     public string namePNJ;
@@ -48,8 +47,6 @@ public class PNJParent : InteractableBase
         dialogueEndTime = Time.time;
         if (animatorPanelProduits!= null ) 
             animatorPanelProduits.SetBool("PanelIsOpen", false);
-        if (isActive != null)
-            isActive.SetActive(false);
         animator.SetBool("isTalking", false);
     }
     public void EndDiscussion(bool haveItems = true)
@@ -91,6 +88,5 @@ public class PNJParent : InteractableBase
     public void OpenProduitsPanel()
     {
         animatorPanelProduits.SetBool("PanelIsOpen", true);
-        isActive.SetActive(true);
     }
 }

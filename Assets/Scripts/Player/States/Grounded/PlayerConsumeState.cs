@@ -3,8 +3,8 @@
 public class PlayerConsumeState : PlayerState
 {
     private float _stateTimer;
-    private float _animationDuration = 0.1f; // Durée de ton animation en secondes (à ajuster)
-    private int _targetSlot;
+    private float _animationDuration = 0.5f; // 🟢 Légèrement augmenté pour laisser le temps à l'animation de jouer
+    private int _targetSlot = -1;
     private ItemData _consumableItem;
 
     public PlayerConsumeState(PlayerController player) : base(player) { }
@@ -15,8 +15,13 @@ public class PlayerConsumeState : PlayerState
         _stateTimer = 0f;
 
         var palette = PaletteSystem.instance;
+        if (palette == null || palette.slotManager == null)
+        {
+            player.StateMachine.ChangeState(PlayerStateType.Idle);
+            return;
+        }
 
-        // 1. On récupère l'item du bon slot d'objet
+        // 1. Récupération de l'objet et du slot équipé
         if (palette.slotManager.objectSlots[0].isEquipped)
         {
             _targetSlot = 1;
@@ -34,7 +39,7 @@ public class PlayerConsumeState : PlayerState
             return;
         }
 
-        // 2. EFFET IMMÉDIAT : On applique la logique de soin tout de suite
+        // 2. Application immédiate de la consommation
         ExecuteImmediateConsumption();
         player.Animator.SetTrigger("UnequipConsumable");
     }
@@ -43,7 +48,6 @@ public class PlayerConsumeState : PlayerState
     {
         base.Update();
 
-        // On incrémente le timer pour bloquer le joueur le temps de l'anim
         _stateTimer += Time.deltaTime;
 
         if (_stateTimer >= _animationDuration)
@@ -54,28 +58,26 @@ public class PlayerConsumeState : PlayerState
 
     private void ExecuteImmediateConsumption()
     {
-        // Application du soin
-        player.Health.Heal(_consumableItem.healthEffect);
-
-        var palette = PaletteSystem.instance;
-
-        // Recherche de l'objet dans l'inventaire (Boucle sans LINQ)
-        ItemInInventory[] objectsList = palette.slotManager.objects;
-        ItemInInventory itemInInventory = null;
-
-        for (int i = 0; i < objectsList.Length; i++)
+        // 1. Application du soin
+        if (player.Health != null)
         {
-            if (objectsList[i] != null && objectsList[i].itemData == _consumableItem)
-            {
-                itemInInventory = objectsList[i];
-                break;
-            }
+            player.Health.Heal(_consumableItem.healthEffect);
         }
 
-        // Nettoyage visuel si c'était le dernier exemplaire
-        if (itemInInventory != null && itemInInventory.count == 1)
+        var palette = PaletteSystem.instance;
+        if (palette == null || palette.equipmentManager == null) return;
+
+        // 2. Retrait de l'objet de l'inventaire D'ABORD
+        palette.equipmentManager.RemoveObject(_targetSlot);
+
+        // 3. Vérification de la quantité RESTANTE dans l'inventaire
+        ItemInInventory itemInInventory = FindItemInInventory(_consumableItem);
+
+        // 🟢 Si l'item n'existe plus ou que son stock est tombé à 0 :
+        if (itemInInventory == null || itemInInventory.count <= 0)
         {
-            EquipmentLibraryItem libraryItem = player.equipmentLibrary.Get(_consumableItem);
+            // Désactivation visuelle du modèle 3D en main
+            EquipmentLibraryItem libraryItem = player.equipmentLibrary?.Get(_consumableItem);
             if (libraryItem != null && libraryItem.itemPrefab != null)
             {
                 libraryItem.itemPrefab.SetActive(false);
@@ -83,18 +85,46 @@ public class PlayerConsumeState : PlayerState
 
             player.Animator.SetBool("CarryingConsumable", false);
 
-            if (_targetSlot == 1) palette.slotManager.objectSlots[0].isEquipped = false;
-            else palette.slotManager.objectSlots[1].isEquipped = false;
+            // Libération de l'état "isEquipped" du slot de la palette
+            int slotIndex = _targetSlot - 1;
+            if (slotIndex >= 0 && slotIndex < palette.slotManager.objectSlots.Length)
+            {
+                palette.slotManager.objectSlots[slotIndex].isEquipped = false;
+            }
+
+            // 🟢 NETTOYAGE CRUCIAL : Réinitialisation des variables du PlayerController !
+            // Sans ceci, le Player garde en mémoire qu'il tient toujours cet objet.
+            if (player.PendingWeaponItem == _consumableItem)
+            {
+                player.PendingWeaponItem = null;
+                player.PendingLibraryItem = null;
+            }
         }
 
-        // Retrait de l'objet et rafraîchissement UI
-        palette.equipmentManager.RemoveObject(_targetSlot);
+        // 4. Rafraîchissement de l'affichage UI
         palette.slotManager.UpdateImageSeleted();
+    }
+
+    private ItemInInventory FindItemInInventory(ItemData item)
+    {
+        var palette = PaletteSystem.instance;
+        if (palette == null || palette.slotManager == null || palette.slotManager.objects == null)
+            return null;
+
+        foreach (var invItem in palette.slotManager.objects)
+        {
+            if (invItem != null && invItem.itemData == item)
+            {
+                return invItem;
+            }
+        }
+        return null;
     }
 
     public override void Exit()
     {
         base.Exit();
         _consumableItem = null;
+        _targetSlot = -1;
     }
 }

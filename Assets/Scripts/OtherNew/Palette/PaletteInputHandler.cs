@@ -7,9 +7,9 @@ public class PaletteInputHandler : MonoBehaviour
 
     public void HandleInput(PlayerController player)
     {
-        if (player.StateMachine.CurrentState is not PlayerGroundedState ||
-            player.StateMachine.CurrentState is PlayerEquipState)
-            return;
+        if (player == null || equipmentManager == null) return;
+
+        if (!CanChangeWeapon(player)) return;
 
         if (player.Input.Weapon1Pressed)
         {
@@ -31,5 +31,17 @@ public class PaletteInputHandler : MonoBehaviour
             equipmentManager.ToggleObject(1, player);
             player.Input.UseObject2Pressed();
         }
+    }
+
+    private bool CanChangeWeapon(PlayerController player)
+    {
+        // Empêche le changement d'arme pendant Equip/Unequip et s'assure qu'on est au sol
+        var currentState = player.StateMachine.CurrentState;
+
+        if (currentState is PlayerEquipState || currentState is PlayerUnequipState)
+            return false;
+
+        // Si tu as un état d'attaque, d'esquive ou de dégât, ajoute-le ici ou utilise une propriété player.CanSwitchWeapon
+        return currentState is PlayerGroundedState;
     }
 }

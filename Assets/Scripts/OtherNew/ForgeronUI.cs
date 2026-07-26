@@ -95,8 +95,6 @@ public class ForgeronUI : MonoBehaviour
 
         if (_forgeron.animatorPanelProduits != null)
             _forgeron.animatorPanelProduits.SetBool("PanelIsOpen", false);
-        if (_forgeron.isActive != null)
-            _forgeron.isActive.SetActive(false);
         upgradePanel.SetActive(false);
         _forgeron.EndCommerce();
     }

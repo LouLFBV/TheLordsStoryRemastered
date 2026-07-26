@@ -17,12 +17,17 @@ public class PanneauDeConstruction : InteractableBase
     [Header("Recipe Configuration")]
     [SerializeField] private List<CraftingRecipe> requiredIngredients;
 
+
+    [Header("Animation Panel")]
+    [SerializeField] private Animator animatorPanelProduits;
+
+
     [Header("Audio Settings")]
     [SerializeField] private AudioClip craftSound;
 
     private void Update()
     {
-        if (craftPanel != null && craftPanel.activeInHierarchy)
+        if (craftPanel != null && animatorPanelProduits.GetBool("PanelIsOpen"))
         {
             if (PlayerController.Instance != null && PlayerController.Instance.Input != null)
             {
@@ -48,10 +53,13 @@ public class PanneauDeConstruction : InteractableBase
 
     private void OpenPanel()
     {
-        if (craftPanel != null && !craftPanel.activeInHierarchy)
+        if (craftPanel != null && !animatorPanelProduits.GetBool("PanelIsOpen"))
         {
             RefreshRecipeRequirements();
             craftPanel.SetActive(true);
+
+            if (animatorPanelProduits != null)
+                animatorPanelProduits.SetBool("PanelIsOpen", true);
 
             if (PlayerController.Instance != null)
             {
@@ -63,13 +71,11 @@ public class PanneauDeConstruction : InteractableBase
 
     public void ClosePanel()
     {
-        if (craftPanel != null) craftPanel.SetActive(false);
+        //if (craftPanel != null) craftPanel.SetActive(false);
 
-        foreach (Transform child in ingredientContainer)
-        {
-            child.SetParent(null);
-            Destroy(child.gameObject);
-        }
+        if (animatorPanelProduits != null)
+            animatorPanelProduits.SetBool("PanelIsOpen", false);
+
 
         // Sécurité UI : On désactive l'interactivité du bouton à la fermeture
         if (destroyButton != null) destroyButton.interactable = false;
@@ -82,11 +88,10 @@ public class PanneauDeConstruction : InteractableBase
 
     public void RefreshRecipeRequirements()
     {
-        // Nettoyage des lignes UI précédentes
-        foreach (Transform child in ingredientContainer)
+        // On parcourt de la fin vers le début pour ne pas casser les index
+        for (int i = ingredientContainer.childCount - 1; i >= 0; i--)
         {
-            child.SetParent(null);
-            Destroy(child.gameObject);
+            Destroy(ingredientContainer.GetChild(i).gameObject);
         }
 
         if (requiredIngredients == null || requiredIngredients.Count == 0)

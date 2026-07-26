@@ -10,6 +10,7 @@ public class PlayerStunnedState : PlayerState
     public override void Enter()
     {
         base.Enter();
+        if (player.IsDead)  return; 
         stunTimer = 0f;
 
         // 1. On coupe TOUT

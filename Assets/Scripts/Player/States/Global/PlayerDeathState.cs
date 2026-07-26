@@ -9,6 +9,7 @@ public class PlayerDeathState : PlayerState
         // 1. On arrête les mouvements
 
         // 2. On lance l'animation de mort
+        player.Animator.SetBool("IsStunned", false);
         player.Animator.SetTrigger("Die");
         player.IsDead = true;
         Debug.Log($"{player.gameObject.name} est mort.");

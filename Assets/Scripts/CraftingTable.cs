@@ -27,6 +27,9 @@ public class CraftingTable : InteractableBase
     [SerializeField] private TextMeshProUGUI itemDescription;
     [SerializeField] private Button craftButton;
 
+    [Header("Animation Panel")]
+    [SerializeField] private Animator animatorPanelProduits;
+
     [Header("Ingredients Panel")]
     [SerializeField] private GameObject ingredientSlotPrefab;
     [SerializeField] private Transform ingredientContainer;
@@ -53,7 +56,7 @@ public class CraftingTable : InteractableBase
     private void Update()
     {
         // Détection de la touche fermeture (Échap / Manette)
-        if (craftPanel != null && craftPanel.activeInHierarchy)
+        if (craftPanel != null && animatorPanelProduits.GetBool("PanelIsOpen"))
         {
             if (PlayerController.Instance != null && PlayerController.Instance.Input != null)
             {
@@ -68,9 +71,13 @@ public class CraftingTable : InteractableBase
 
     public override void OnInteract(PlayerInteractor player)
     {
-        if (craftPanel != null && !craftPanel.activeInHierarchy)
+        if (craftPanel != null && !animatorPanelProduits.GetBool("PanelIsOpen"))
         {
             craftPanel.SetActive(true);
+
+            if (animatorPanelProduits != null)
+                animatorPanelProduits.SetBool("PanelIsOpen", true);
+
             if (PlayerController.Instance != null && PlayerController.Instance.StateMachine != null)
             {
                 PlayerController.Instance.RequestedPanelType = UIPanelType.Dialogue;
@@ -96,8 +103,12 @@ public class CraftingTable : InteractableBase
         if (craftPanel != null) craftPanel.SetActive(false);
 
         // Sécurité UI : On cache le panneau de description pour la prochaine ouverture
-        if (descriptionPanel != null) descriptionPanel.SetActive(false);
+        //if (descriptionPanel != null) descriptionPanel.SetActive(false);
         _currentSelectedTargetItem = null;
+
+
+        if (animatorPanelProduits != null)
+            animatorPanelProduits.SetBool("PanelIsOpen", false);
 
         if (PlayerController.Instance != null && PlayerController.Instance.StateMachine != null)
         {

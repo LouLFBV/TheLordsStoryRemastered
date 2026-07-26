@@ -19,6 +19,10 @@ public class WeaponDamageDetector : MonoBehaviour
     [SerializeField] private LayerMask damageLayers;
     [SerializeField] private bool ignoreSelfDamage = true;
 
+    [Header("Multi-Hit Settings")]
+    [Tooltip("Permet à une cible de subir des dégâts à chaque fois qu'elle rentre à nouveau dans le collider.")]
+    [SerializeField] private bool allowMultipleHits = false; // 🟢 Nouveau booléen
+
     private void Awake()
     {
         FetchCollider();
@@ -56,7 +60,7 @@ public class WeaponDamageDetector : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // 1. Évite de se frapper soi-même ou de frapper 2x la même cible
+        // 1. Évite de se frapper soi-même ou de frapper 2x la même cible pendant qu'elle est déjà dans la zone
         if (other.gameObject == transform.root.gameObject || alreadyHit.Contains(other.gameObject))
             return;
 
@@ -87,17 +91,39 @@ public class WeaponDamageDetector : MonoBehaviour
         }
     }
 
+    // 🟢 Déclenché lorsque la cible sort du Trigger Collider
+    private void OnTriggerExit(Collider other)
+    {
+        // Si l'option est activée, on retire la cible de la liste dès qu'elle sort.
+        // Elle pourra ainsi reprendre des dégâts si elle rentre à nouveau.
+        if (allowMultipleHits && alreadyHit.Contains(other.gameObject))
+        {
+            alreadyHit.Remove(other.gameObject);
+        }
+    }
+
     private void ExecuteHitLogic(Collider other, IDamageable target)
     {
         // 1. Détermination des dégâts
-        float dmg = hasDamageCollider ? (itemData.equipmentType == EquipmentType.Arrow ? itemData.attackPoints : colliderDamage) : damageForThisFrame;
+        float dmg = hasDamageCollider ? (itemData != null && itemData.equipmentType == EquipmentType.Arrow ? itemData.attackPoints : colliderDamage) : damageForThisFrame;
         Debug.Log(dmg);
+
         // 2. Création et envoi des dégâts
-        DamageInfo info = new DamageInfo(dmg, itemData.damageType, itemData.effet, itemData.poiseDamage, itemData.stunDuration, transform.root.gameObject);
+        DamageInfo info = new DamageInfo(
+            dmg,
+            itemData != null ? itemData.damageType : default,
+            itemData != null ? itemData.effet : default,
+            itemData != null ? itemData.poiseDamage : 0f,
+            itemData != null ? itemData.stunDuration : 0f,
+            transform.root.gameObject
+        );
         target.TakeDamage(info);
 
         // 3. Camera Shake
-        CameraEvents.OnCameraShake?.Invoke(itemData.cameraShakeIntensity, itemData.cameraShakeDuration);
+        if (itemData != null)
+        {
+            CameraEvents.OnCameraShake?.Invoke(itemData.cameraShakeIntensity, itemData.cameraShakeDuration);
+        }
 
         // 4. Instanciation du sang UNIQUEMENT sur les cibles IDamageable
         if (bloodPrefab != null)

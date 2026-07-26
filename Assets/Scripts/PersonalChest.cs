@@ -23,6 +23,10 @@ public class PersonalChest : InteractableBase
 
     private Coroutine activeChestCoroutine = null;
 
+
+    [Header("Animation Panel")]
+    [SerializeField] private Animator animatorPanelProduits;
+
     private void Start()
     {
         closedRotation = topChest.transform.rotation;
@@ -47,7 +51,7 @@ public class PersonalChest : InteractableBase
 
     private void Update()
     {
-        if (chestPanel != null && chestPanel.activeInHierarchy)
+        if (chestPanel != null && animatorPanelProduits.GetBool("PanelIsOpen"))
         {
             if (PlayerController.Instance != null && PlayerController.Instance.Input != null)
             {
@@ -71,6 +75,9 @@ public class PersonalChest : InteractableBase
         {
             Debug.Log("Activating chest panel");
             chestPanel.SetActive(true);
+
+            if (animatorPanelProduits != null)
+                animatorPanelProduits.SetBool("PanelIsOpen", true);
         }
 
         if (chestInventory != null)
@@ -131,8 +138,12 @@ public class PersonalChest : InteractableBase
         PlayerController.Instance.StateMachine.ChangeState(PlayerStateType.Idle);
         isOpen = false;
 
-        if (chestPanel != null)
-            chestPanel.SetActive(false);
+        //if (chestPanel != null)
+        //    chestPanel.SetActive(false);
+
+
+        if (animatorPanelProduits != null)
+            animatorPanelProduits.SetBool("PanelIsOpen", false);
 
         if (PaletteSystem.instance != null && PaletteSystem.instance.slotManager != null)
         {

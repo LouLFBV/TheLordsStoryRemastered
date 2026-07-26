@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerEquipState : PlayerGroundedState
 {
@@ -7,19 +7,30 @@ public class PlayerEquipState : PlayerGroundedState
     private float sprintSpeed = 7f;
     private bool isSprinting;
     private bool changedFOV;
+    private bool hasSwitchedWeapon; // 🟢 Sécurité pour suivre si l'event d'animation a été appelé
 
     public PlayerEquipState(PlayerController player) : base(player) { }
 
     public override void Enter()
     {
         base.Enter();
+        hasSwitchedWeapon = false;
         player.Animator.applyRootMotion = true;
+
+        // 🟢 Sécurité Null Check sur le PendingItem
+        if (player.PendingWeaponItem == null)
+        {
+            Debug.LogError("[PlayerEquipState] PendingWeaponItem est NULL à l'entrée de l'état !");
+            player.StateMachine.ChangeState(PlayerStateType.Idle);
+            return;
+        }
 
         if (player.PendingWeaponItem.itemType == ItemType.Consumable)
         {
             player.Animator.SetTrigger("EquipConsumable");
             return;
         }
+
         PlayEquipAnimation(player.PendingWeaponType);
     }
 
@@ -30,26 +41,29 @@ public class PlayerEquipState : PlayerGroundedState
         Vector2 input = player.Input.MoveInput;
         cachedInput = input;
 
-        // --- GESTION DU D�PLACEMENT & ROTATION ---
+        // --- GESTION DU DÉPLACEMENT & ROTATION ---
         player.Motor.RotateTowardsInput(input);
 
         // Sprint
         isSprinting = CanSprint(input);
         float animSpeed = isSprinting ? sprintSpeed : runSpeed;
 
-        // FOV Sprint
-        if (isSprinting && !changedFOV)
+        // FOV Sprint (Sécurisé avec ?.)
+        if (ThirdPersonCameraController.Instance != null)
         {
-            ThirdPersonCameraController.Instance.SetFOV(ThirdPersonCameraController.Instance.SprintFOV);
-            changedFOV = true;
-        }
-        else if (!isSprinting && changedFOV)
-        {
-            ThirdPersonCameraController.Instance.ResetFOV();
-            changedFOV = false;
+            if (isSprinting && !changedFOV)
+            {
+                ThirdPersonCameraController.Instance.SetFOV(ThirdPersonCameraController.Instance.SprintFOV);
+                changedFOV = true;
+            }
+            else if (!isSprinting && changedFOV)
+            {
+                ThirdPersonCameraController.Instance.ResetFOV();
+                changedFOV = false;
+            }
         }
 
-        // Mise � jour de l'Animator
+        // Mise à jour de l'Animator
         player.Animator.SetFloat(AnimatorHashes.hHash, input.x, 0.1f, Time.deltaTime);
         player.Animator.SetFloat(AnimatorHashes.vHash, input.y, 0.1f, Time.deltaTime);
         player.Animator.SetFloat(AnimatorHashes.speedHash, input.magnitude * (animSpeed / sprintSpeed), 0.1f, Time.deltaTime);
@@ -90,31 +104,42 @@ public class PlayerEquipState : PlayerGroundedState
         }
     }
 
+    /// <summary>
+    /// Appelé via Animation Event quand le joueur attrape l'arme.
+    /// </summary>
     public void HandleWeaponSwitch()
     {
-        if (player.PendingLibraryItem != null)
+        hasSwitchedWeapon = true;
+
+        if (player.PendingLibraryItem != null && player.PendingLibraryItem.itemPrefab != null)
         {
             GameObject weaponObj = player.PendingLibraryItem.itemPrefab;
             weaponObj.SetActive(true);
 
-            WeaponDamageDetector newDetector = weaponObj.GetComponent<WeaponDamageDetector>();
-
-            if (newDetector != null)
+            if (weaponObj.TryGetComponent<WeaponDamageDetector>(out var newDetector))
             {
                 player.Combat.UpdateWeaponDetector(newDetector);
             }
-            else if (player.PendingWeaponItem.itemType != ItemType.Consumable)
+            else if (player.PendingWeaponItem != null && player.PendingWeaponItem.itemType != ItemType.Consumable)
             {
-                Debug.LogWarning($"Le prefab {weaponObj.name} n'a pas de WeaponDamageDetector!");
+                Debug.LogWarning($"[PlayerEquipState] Le prefab {weaponObj.name} n'a pas de WeaponDamageDetector !");
             }
 
-            foreach (var element in player.PendingLibraryItem.elementsToDisable)
+            if (player.PendingLibraryItem.elementsToDisable != null)
             {
-                element.SetActive(false);
+                foreach (var element in player.PendingLibraryItem.elementsToDisable)
+                {
+                    if (element != null) element.SetActive(false);
+                }
             }
 
             player.StateMachine.ChangeState(player.Input.MoveInput != Vector2.zero
                 ? PlayerStateType.Move : PlayerStateType.Idle);
+        }
+        else
+        {
+            Debug.LogError("[PlayerEquipState] PendingLibraryItem ou itemPrefab est NULL !");
+            player.StateMachine.ChangeState(PlayerStateType.Idle);
         }
     }
 
@@ -122,10 +147,12 @@ public class PlayerEquipState : PlayerGroundedState
     {
         base.Exit();
 
-        ThirdPersonCameraController.Instance.ResetFOV();
+        ThirdPersonCameraController.Instance?.ResetFOV();
         changedFOV = false;
 
-        if (!player.PendingLibraryItem.itemPrefab.activeSelf)
+        // 🟢 Fallback de sécurité : Si l'état est interrompu (coup subi, chute...) avant l'événement d'animation, 
+        // on applique l'activation pour éviter d'avoir une arme invisible.
+        if (!hasSwitchedWeapon && player.PendingLibraryItem != null && player.PendingLibraryItem.itemPrefab != null)
         {
             player.PendingLibraryItem.itemPrefab.SetActive(true);
         }
