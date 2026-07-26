@@ -83,7 +83,6 @@ public class EquipmentSystem : MonoBehaviour
             ActiveItemVisuel(equipmentLibraryItem, false);
         }
 
-
         if (itemToDisable.equipmentType == EquipmentType.Arrow)
         {
             if (arrowItemInInventory.count > 0)
@@ -147,14 +146,25 @@ public class EquipmentSystem : MonoBehaviour
                 break;
             case EquipmentType.Arrow:
                 currentItem = arrowItemInInventory.itemData;
+                arrowSlot.item = null; // 🟢 FIX : Réinitialiser la donnée du slot
                 arrowSlot.itemVisual.sprite = InventorySystem.instance.emptySlotVisual;
                 arrowSlot.itemTypeVisual.gameObject.SetActive(true);
                 arrowItemInInventory.itemData = null;
-                palette.slotManager.arrowSlot.slotItemData = null;
-                palette.slotManager.arrowSlot.SlotImage.sprite = InventorySystem.instance.emptySlotVisual;
-                palette.slotManager.arrowSlot.slotInEquipment.item = null;
-                palette.slotManager.arrowSlot.slotInEquipment.itemVisual.sprite = InventorySystem.instance.emptySlotVisual;
-                palette.slotManager.arrowSlot.countText.text = "";
+
+                if (palette != null && palette.slotManager != null && palette.slotManager.arrowSlot != null)
+                {
+                    palette.slotManager.arrowSlot.slotItemData = null;
+                    palette.slotManager.arrowSlot.SlotImage.sprite = InventorySystem.instance.emptySlotVisual;
+                    if (palette.slotManager.arrowSlot.slotInEquipment != null)
+                    {
+                        palette.slotManager.arrowSlot.slotInEquipment.item = null;
+                        palette.slotManager.arrowSlot.slotInEquipment.itemVisual.sprite = InventorySystem.instance.emptySlotVisual;
+                    }
+                    if (palette.slotManager.arrowSlot.countText != null)
+                    {
+                        palette.slotManager.arrowSlot.countText.text = "";
+                    }
+                }
                 break;
         }
 
@@ -250,8 +260,16 @@ public class EquipmentSystem : MonoBehaviour
                 case EquipmentType.Arrow:
                     DisablePreviousEquipedEquipment(arrowItemInInventory.itemData);
                     arrowSlot.itemVisual.sprite = itemToEquip.visual;
+                    arrowSlot.item = itemToEquip; // 🟢 FIX : Assigner le ItemData au Slot
+                    arrowSlot.itemTypeVisual.gameObject.SetActive(false); // 🟢 FIX : Masquer l'icône de fond !
                     arrowItemInInventory.itemData = itemToEquip;
-                    arrowItemInInventory.count = InventorySystem.instance.GetContent().Find(x => x.itemData == itemToEquip).count;
+
+                    var inventoryEntry = InventorySystem.instance.GetContent().Find(x => x.itemData == itemToEquip);
+                    if (inventoryEntry != null)
+                    {
+                        arrowItemInInventory.count = inventoryEntry.count;
+                    }
+
                     PaletteSystem.instance.slotManager.AddArrow(itemToEquip);
                     PaletteSystem.instance.slotManager.UpdateCountArrow(arrowItemInInventory.count);
                     for (int i = 0; i < arrowItemInInventory.count; i++)
@@ -260,7 +278,10 @@ public class EquipmentSystem : MonoBehaviour
                     }
                     UpdateArrowsText();
                     ActiveItemVisuel(equipmentLibraryItem);
-                    BowBehaviour.instance.UpdateQuiverVisual(arrowItemInInventory.count);
+                    if (BowBehaviour.instance != null)
+                    {
+                        BowBehaviour.instance.UpdateQuiverVisual(arrowItemInInventory.count);
+                    }
                     break;
             }
 
@@ -332,6 +353,7 @@ public class EquipmentSystem : MonoBehaviour
         handsSlot.item = null;
         legsSlot.item = null;
         feetSlot.item = null;
+        arrowSlot.item = null; // 🟢 FIX : Réinitialiser le slot de flèche
         arrowItemInInventory.itemData = null;
         arrowItemInInventory.count = 0;
 
@@ -341,6 +363,14 @@ public class EquipmentSystem : MonoBehaviour
         legsSlot.itemVisual.sprite = InventorySystem.instance.emptySlotVisual;
         feetSlot.itemVisual.sprite = InventorySystem.instance.emptySlotVisual;
         arrowSlot.itemVisual.sprite = InventorySystem.instance.emptySlotVisual;
+
+        // 🟢 FIX : Réactiver par défaut les icônes de fond de tous les slots au démarrage de la réinitialisation
+        headSlot.itemTypeVisual.gameObject.SetActive(true);
+        chestSlot.itemTypeVisual.gameObject.SetActive(true);
+        handsSlot.itemTypeVisual.gameObject.SetActive(true);
+        legsSlot.itemTypeVisual.gameObject.SetActive(true);
+        feetSlot.itemTypeVisual.gameObject.SetActive(true);
+        arrowSlot.itemTypeVisual.gameObject.SetActive(true);
 
         if (data == null)
         {
@@ -358,20 +388,37 @@ public class EquipmentSystem : MonoBehaviour
         if (!string.IsNullOrEmpty(data.arrowID))
         {
             ItemData arrowBase = ItemDataDatabase.Instance.GetItemByID(data.arrowID);
-            ItemData finalArrow = arrowBase;
+            if (arrowBase != null)
+            {
+                ItemData finalArrow = arrowBase;
 
-            // Si tes flèches peuvent être améliorées (et ne sont pas stackables), décommente ceci :
-            // if (!arrowBase.stackable) {
-            //     finalArrow = arrowBase.CreateInstance();
-            //     finalArrow.RestoreLevel(data.arrowLevel);
-            // }
+                arrowSlot.item = finalArrow; // 🟢 FIX 1 : Assigner l'item au Slot
+                arrowSlot.itemVisual.sprite = finalArrow.visual;
+                arrowSlot.itemTypeVisual.gameObject.SetActive(false); // 🟢 FIX 2 : Désactiver l'icône de fond
 
-            arrowItemInInventory.itemData = finalArrow;
-            arrowItemInInventory.count = data.arrowCount;
+                arrowItemInInventory.itemData = finalArrow;
+                arrowItemInInventory.count = data.arrowCount;
 
-            arrowSlot.itemVisual.sprite = finalArrow.visual;
-            UpdateArrowsText();
-            BowBehaviour.instance.UpdateQuiverVisual(data.arrowCount);
+                // 🟢 FIX 3 : Synchroniser avec la palette rapide
+                if (PaletteSystem.instance != null && PaletteSystem.instance.slotManager != null)
+                {
+                    PaletteSystem.instance.slotManager.AddArrow(finalArrow);
+                    PaletteSystem.instance.slotManager.UpdateCountArrow(data.arrowCount);
+                }
+
+                // 🟢 FIX 4 : Activer le visuel 3D du carquois/flèche si configuré dans la bibliothèque
+                EquipmentLibraryItem equipmentLibraryItem = equipmentLibrary.Get(finalArrow);
+                if (equipmentLibraryItem != null)
+                {
+                    ActiveItemVisuel(equipmentLibraryItem);
+                }
+
+                UpdateArrowsText();
+                if (BowBehaviour.instance != null)
+                {
+                    BowBehaviour.instance.UpdateQuiverVisual(data.arrowCount);
+                }
+            }
         }
 
         isLoading = false;
@@ -387,14 +434,13 @@ public class EquipmentSystem : MonoBehaviour
         {
             ItemData finalItem = baseItem;
 
-            // On clone si c'est un équipement unique
             if (!baseItem.stackable)
             {
                 finalItem = baseItem.CreateInstance();
                 finalItem.RestoreLevel(savedLevel);
             }
 
-            EquipAction(finalItem); 
+            EquipAction(finalItem);
         }
     }
     #endregion

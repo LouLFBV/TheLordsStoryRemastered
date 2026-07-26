@@ -90,8 +90,8 @@ public class WeaponDamageDetector : MonoBehaviour
     private void ExecuteHitLogic(Collider other, IDamageable target)
     {
         // 1. Détermination des dégâts
-        float dmg = hasDamageCollider ? colliderDamage : damageForThisFrame;
-
+        float dmg = hasDamageCollider ? (itemData.equipmentType == EquipmentType.Arrow ? itemData.attackPoints : colliderDamage) : damageForThisFrame;
+        Debug.Log(dmg);
         // 2. Création et envoi des dégâts
         DamageInfo info = new DamageInfo(dmg, itemData.damageType, itemData.effet, itemData.poiseDamage, itemData.stunDuration, transform.root.gameObject);
         target.TakeDamage(info);

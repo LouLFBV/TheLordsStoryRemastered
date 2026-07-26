@@ -65,7 +65,9 @@ public class PlayerUIManager : MonoBehaviour
 
     private void UpdateLowHealthVolume()
     {
+        Debug.Log("<color=orange> Ecran Rouge Méthode</color>");
         if (lowHealthVolume == null || player.Health.CurrentHealth >= player.Health.MaxHealth/2) return;
+        Debug.Log("<color=orange> Ecran Rouge Affiché</color>");
         lowHealthVolume.SetTrigger("TakeDamage");
     }
 

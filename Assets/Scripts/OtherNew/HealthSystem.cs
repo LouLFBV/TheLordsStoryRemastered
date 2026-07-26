@@ -7,6 +7,7 @@ public class HealthSystem : MonoBehaviour
     [SerializeField] private ParticleSystem healEffect;
 
     private bool _isInvulnerable;
+    public bool IsInvulnerable => _isInvulnerable;
     public float CurrentHealth { get; private set; }
     public float MaxHealth => maxHealthVar; // Propriété en lecture seule pour le maxHealth
     public bool IsDead => CurrentHealth <= 0;

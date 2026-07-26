@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement; // 🟢 Ajouté pour gérer le changement de scène
 
 public class NewQuestLog : MonoBehaviour
 {
@@ -33,19 +34,86 @@ public class NewQuestLog : MonoBehaviour
     [SerializeField] private GameObject rewardQuestPrefab;
 
     [System.NonSerialized] public QuestInstance currentlyTrackedQuest;
-    [System.NonSerialized] public QuestInstance currentlySelectedQuest; 
+    [System.NonSerialized] public QuestInstance currentlySelectedQuest;
+
+    private readonly HashSet<string> bossScenes = new HashSet<string>
+    {
+        "Boss1",
+        "Boss2",
+        "Boss3",
+        "BossFinal",
+        "GrotteSecreteBoss"
+    };
+
+    private bool _wasHUDActiveBeforeBoss = false;
+    private bool _isInBossScene = false;
 
     private void Awake()
     {
-        if (instance == null) instance = this;
-        else Destroy(gameObject);
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
+
+    #region Gestion du Masquage du HUD en Scène de Boss
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        bool isBossScene = bossScenes.Contains(scene.name);
+
+        if (isBossScene)
+        {
+            // Si on vient d'une scène normale et qu'on rentre chez un boss
+            if (!_isInBossScene)
+            {
+                // On enregistre si le panneau était affiché ou non
+                _wasHUDActiveBeforeBoss = (panelQuestActive != null && panelQuestActive.activeSelf);
+                _isInBossScene = true;
+            }
+
+            // On masque le panneau pendant le combat de boss
+            if (panelQuestActive != null)
+            {
+                panelQuestActive.SetActive(false);
+            }
+        }
+        else
+        {
+            // Si on vient de sortir d'une scène de boss vers une scène normale
+            if (_isInBossScene)
+            {
+                _isInBossScene = false;
+
+                // On réactive le panneau uniquement s'il était actif avant ET qu'on a toujours une quête suivie
+                if (_wasHUDActiveBeforeBoss && currentlyTrackedQuest != null && panelQuestActive != null)
+                {
+                    panelQuestActive.SetActive(true);
+                }
+
+                _wasHUDActiveBeforeBoss = false;
+            }
+        }
+    }
+    #endregion
 
     private void ShowQuest(QuestInstance quest)
     {
         if (quest == null) return;
 
-        // On mémorise quelle quête est actuellement ouverte dans le menu
         currentlySelectedQuest = quest;
 
         ClearChildren(rewardsList);
@@ -70,7 +138,6 @@ public class NewQuestLog : MonoBehaviour
             obj.GetComponent<TextMeshProUGUI>().text = $"- {reward}";
         }
 
-        // --- GESTION DU TOGGLE DE SUIVI (AFFICHER SUR L'ÉCRAN) ---
         if (questToggle != null)
         {
             questToggle.onValueChanged.RemoveAllListeners();
@@ -95,7 +162,6 @@ public class NewQuestLog : MonoBehaviour
         panelDescriptionQuest.SetActive(true);
     }
 
-    // Affiche la quête sur l'écran du joueur (HUD)
     public void TrackQuestOnHUD(QuestInstance quest)
     {
         if (quest == null) return;
@@ -104,7 +170,17 @@ public class NewQuestLog : MonoBehaviour
         QuestActiveText.text = quest.data.questName;
         objectifQuestActiveText.text = quest.data.objectif;
 
-        panelQuestActive.gameObject.SetActive(true);
+        // Si on est dans une scène de boss, on enregistre l'intention d'afficher le HUD
+        // mais on ne l'affiche pas tout de suite pour ne pas encombrer le combat de boss.
+        if (_isInBossScene)
+        {
+            _wasHUDActiveBeforeBoss = true;
+            panelQuestActive.gameObject.SetActive(false);
+        }
+        else
+        {
+            panelQuestActive.gameObject.SetActive(true);
+        }
 
         if (UIManagerSystem.Instance != null && !UIManagerSystem.Instance.hudElements.Contains(panelQuestActive))
             UIManagerSystem.Instance.hudElements.Add(panelQuestActive);
@@ -112,22 +188,24 @@ public class NewQuestLog : MonoBehaviour
         UpdateHUDToggleState();
     }
 
-    // Désactive le suivi de la quête sur l'écran
     public void UntrackQuest()
     {
         currentlyTrackedQuest = null;
         panelQuestActive.gameObject.SetActive(false);
 
+        if (_isInBossScene)
+        {
+            _wasHUDActiveBeforeBoss = false;
+        }
+
         if (UIManagerSystem.Instance != null)
             UIManagerSystem.Instance.hudElements.Remove(panelQuestActive);
 
-        // On rafraîchit les éléments pour s'assurer que les visuels soient clean
         UpdateHUDToggleState();
     }
 
     public void UpdateHUDToggleState()
     {
-        // 1️⃣ GESTION DU HUD (Écran de jeu)
         if (currentlyTrackedQuest != null && questActiveToggle != null)
         {
             bool isHUDQuestComplete = NewQuestManager.instance.CanCompleteQuest(currentlyTrackedQuest);
@@ -136,7 +214,6 @@ public class NewQuestLog : MonoBehaviour
 
         if (currentlySelectedQuest != null)
         {
-            // Case de l'objectif de description
             if (questObjectifToggle != null)
             {
                 bool isMenuQuestComplete = NewQuestManager.instance.CanCompleteQuest(currentlySelectedQuest);
@@ -166,7 +243,7 @@ public class NewQuestLog : MonoBehaviour
         {
             case 1: slot.questIcon.sprite = questLevel1; break;
             case 2: slot.questIcon.sprite = questLevel2; break;
-            case 3: slot.questIcon.sprite   = questLevel3; break;
+            case 3: slot.questIcon.sprite = questLevel3; break;
             case 4: slot.questIcon.sprite = questLevel4; break;
             case 5: slot.questIcon.sprite = questLevel5; break;
             default: slot.questIcon.sprite = questLevel1; break;
@@ -180,7 +257,7 @@ public class NewQuestLog : MonoBehaviour
 
     public void DesactivePanel()
     {
-        currentlySelectedQuest = null; // On oublie la sélection quand on ferme le panel
+        currentlySelectedQuest = null;
         panelDescriptionQuest.SetActive(false);
     }
 
@@ -207,7 +284,8 @@ public class NewQuestLog : MonoBehaviour
         bool hudActive = false;
         if (panelQuestActive != null)
         {
-            hudActive = panelQuestActive.activeSelf;
+            // En scène de boss, la valeur sauvegardée est l'état mémorisé d'avant le boss
+            hudActive = _isInBossScene ? _wasHUDActiveBeforeBoss : panelQuestActive.activeSelf;
         }
         else
         {
@@ -227,7 +305,6 @@ public class NewQuestLog : MonoBehaviour
             }
         }
 
-        // 3. Retour des données sécurisées
         return new QuestLogSaveData
         {
             trackedQuestID = questID,
@@ -248,7 +325,18 @@ public class NewQuestLog : MonoBehaviour
         if (loadedQuest != null)
         {
             TrackQuestOnHUD(loadedQuest);
-            panelQuestActive.gameObject.SetActive(data.isHUDPanelActive);
+
+            // Si on charge le jeu pendant un boss, on garde le HUD masqué mais on enregistre qu'il doit réapparaître après
+            string currentScene = SceneManager.GetActiveScene().name;
+            if (bossScenes.Contains(currentScene))
+            {
+                _wasHUDActiveBeforeBoss = data.isHUDPanelActive;
+                panelQuestActive.gameObject.SetActive(false);
+            }
+            else
+            {
+                panelQuestActive.gameObject.SetActive(data.isHUDPanelActive);
+            }
         }
         else
         {

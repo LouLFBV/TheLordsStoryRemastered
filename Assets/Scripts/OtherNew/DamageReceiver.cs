@@ -31,7 +31,7 @@ public class DamageReceiver : MonoBehaviour, IDamageable
         if (_health != null) _health.TakeDamage(finalPhysicalDamage);
 
         // Logique de Poise / Hit classique
-        if (_poise != null && _poise.ApplyPoiseDamage(damageInfo.poiseDamage))
+        if (_poise != null && _poise.ApplyPoiseDamage(damageInfo.poiseDamage) && !_health.IsInvulnerable)
         {
             TriggerHitReaction();
         }
@@ -93,7 +93,7 @@ public class DamageReceiver : MonoBehaviour, IDamageable
         for (int i = 0; i < 5; i++)
         {
             yield return new WaitForSeconds(1f);
-            if (_health != null) _health.TakeDamage(baseDamage * 0.2f);
+            if (_health != null) _health.TakeDamage(baseDamage * 0.3f);
         }
         if (burnGameObject != null) burnGameObject.SetActive(false);
     }

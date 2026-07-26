@@ -271,5 +271,7 @@ public class Chest : InteractableBase
 
         descriptionCanvasGroup.alpha = 0;
         descriptionPanel.SetActive(false);
+        if (UIManagerSystem.Instance != null)
+            UIManagerSystem.Instance.hudElements.Remove(descriptionPanel);
     }
 }
