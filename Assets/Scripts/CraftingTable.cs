@@ -10,20 +10,15 @@ public class CraftingTable : InteractableBase
     [Header("Global Database Reference")]
     [SerializeField] private AllRecipeData allRecipeData;
 
-    [Header("Recipes Data")]
-    [SerializeField] private List<ItemData> potionsRecipe;
-    [SerializeField] private List<ItemData> weaponsRecipe;
-    [SerializeField] private List<ItemData> equipmentsRecipe;
-
     [Header("Containers & Prefabs")]
     [SerializeField] private GameObject slotRecipePrefab;
-    [SerializeField] private Transform recipeSlotContainer; // Le container pour ranger les slots de recettes !
+    [SerializeField] private Transform recipeSlotContainer; // Container pour ranger les slots de recettes !
     [SerializeField] private Button equipmentButton, weaponButton, potionButton;
 
     [Header("Description Panel")]
     [SerializeField] private GameObject descriptionPanel;
     [SerializeField] private TextMeshProUGUI itemName;
-    [SerializeField] private Image itemIcone; // Changé de Sprite à Image pour le Canvas UI
+    [SerializeField] private Image itemIcone;
     [SerializeField] private TextMeshProUGUI itemDescription;
     [SerializeField] private Button craftButton;
 
@@ -56,7 +51,7 @@ public class CraftingTable : InteractableBase
     private void Update()
     {
         // Détection de la touche fermeture (Échap / Manette)
-        if (craftPanel != null && animatorPanelProduits.GetBool("PanelIsOpen"))
+        if (craftPanel != null && animatorPanelProduits != null && animatorPanelProduits.GetBool("PanelIsOpen"))
         {
             if (PlayerController.Instance != null && PlayerController.Instance.Input != null)
             {
@@ -71,12 +66,10 @@ public class CraftingTable : InteractableBase
 
     public override void OnInteract(PlayerInteractor player)
     {
-        if (craftPanel != null && !animatorPanelProduits.GetBool("PanelIsOpen"))
+        if (craftPanel != null && animatorPanelProduits != null && !animatorPanelProduits.GetBool("PanelIsOpen"))
         {
             craftPanel.SetActive(true);
-
-            if (animatorPanelProduits != null)
-                animatorPanelProduits.SetBool("PanelIsOpen", true);
+            animatorPanelProduits.SetBool("PanelIsOpen", true);
 
             if (PlayerController.Instance != null && PlayerController.Instance.StateMachine != null)
             {
@@ -88,11 +81,10 @@ public class CraftingTable : InteractableBase
             if (weaponButton != null)
             {
                 weaponButton.onClick.Invoke();
-                weaponButton.Select(); 
+                weaponButton.Select();
             }
             else
             {
-                // Sécurité au cas où le bouton n'est pas branché dans l'inspecteur
                 RefreshDisplay(CraftingType.Weapons);
             }
         }
@@ -100,12 +92,8 @@ public class CraftingTable : InteractableBase
 
     public void ClosePanel()
     {
-        if (craftPanel != null) craftPanel.SetActive(false);
-
-        // Sécurité UI : On cache le panneau de description pour la prochaine ouverture
-        //if (descriptionPanel != null) descriptionPanel.SetActive(false);
+        if (descriptionPanel != null) descriptionPanel.SetActive(false);
         _currentSelectedTargetItem = null;
-
 
         if (animatorPanelProduits != null)
             animatorPanelProduits.SetBool("PanelIsOpen", false);
@@ -118,13 +106,12 @@ public class CraftingTable : InteractableBase
 
     private void RefreshDisplay(CraftingType craftingType)
     {
-        // 1. Nettoyage de l'UI
-        foreach (Transform child in recipeSlotContainer)
-        {
-            child.SetParent(null);
-            Destroy(child.gameObject);
-        }
-        descriptionPanel.SetActive(false);
+        // 1. Nettoyage PROPRE de l'UI
+        ClearContainer(recipeSlotContainer);
+
+        if (descriptionPanel != null) descriptionPanel.SetActive(false);
+        _currentSelectedTargetItem = null;
+
         if (allRecipeData == null)
         {
             Debug.LogError("[CRAFT] AllRecipeData n'est pas assigné dans la CraftingTable !");
@@ -142,22 +129,19 @@ public class CraftingTable : InteractableBase
             switch (craftingType)
             {
                 case CraftingType.Potions:
-                    // On n'affiche que si le résultat est un consommable
                     if (item.itemType != ItemType.Consumable) continue;
                     break;
 
                 case CraftingType.Weapons:
-                    // On n'affiche que si c'est un équipement de type Arme
                     if (item.itemType != ItemType.Equipment || item.equipmentType != EquipmentType.Weapon) continue;
                     break;
 
                 case CraftingType.Equipments:
-                    // On n'affiche que si c'est une armure/bouclier (Équipement, mais PAS une arme)
                     if (item.itemType != ItemType.Equipment || item.equipmentType == EquipmentType.Weapon) continue;
                     break;
             }
 
-            // 4. Si la recette a passé les filtres ci-dessus, on crée son bouton dans l'UI
+            // 4. Si la recette a passé les filtres, on crée son bouton dans l'UI
             GameObject newSlot = Instantiate(slotRecipePrefab, recipeSlotContainer);
             if (newSlot.TryGetComponent<SlotRecipe>(out var slotScript))
             {
@@ -171,7 +155,6 @@ public class CraftingTable : InteractableBase
     {
         _currentSelectedTargetItem = selectedItem;
 
-
         // Mise à jour des textes et visuels globaux de l'item ciblé
         if (itemName != null) itemName.text = selectedItem.itemName;
         if (itemIcone != null) itemIcone.sprite = selectedItem.visual;
@@ -184,40 +167,36 @@ public class CraftingTable : InteractableBase
 
     private void RefreshRequiredIngredients(ItemData targetItem)
     {
-        // Nettoyage de la zone des ingrédients requis
-        foreach (Transform child in ingredientContainer)
+        // Nettoyage propre du conteneur d'ingrédients
+        ClearContainer(ingredientContainer);
+
+        if (targetItem == null) return;
+
+        // Récupération de la recette : Soit sur l'ItemData, soit recherche fallback dans AllRecipeData
+        RecipeData recipe = targetItem.recipe;
+        if (recipe == null && allRecipeData != null)
         {
-            child.SetParent(null);
-            Destroy(child.gameObject);
+            recipe = allRecipeData.unlockedRecipes.Find(r => r != null && r.craftableItem == targetItem);
         }
 
-        // On vérifie si l'item possède bien une recette (RecipeData) assignée
-        if (targetItem.recipe == null || targetItem.recipe.ingredients == null || targetItem.recipe.ingredients.Count == 0)
+        if (recipe == null || recipe.ingredients == null || recipe.ingredients.Count == 0)
         {
-            Debug.LogWarning($"[CRAFT] {targetItem.itemName} n'a pas de RecipeData assigné !");
+            Debug.LogWarning($"[CRAFT] {targetItem.itemName} n'a pas de RecipeData valide !");
             if (craftButton != null) craftButton.interactable = false;
             return;
         }
 
         bool canCraftAll = true;
 
-        foreach (Transform child in ingredientContainer)
-        {
-            child.SetParent(null);
-            Destroy(child.gameObject);
-        }
-
-        foreach (var ingredient in targetItem.recipe.ingredients)
+        foreach (var ingredient in recipe.ingredients)
         {
             if (ingredient.itemNeeded == null) continue;
-
-            
 
             GameObject ingredUI = Instantiate(ingredientSlotPrefab, ingredientContainer);
 
             if (ingredUI.TryGetComponent<SlotRecette>(out var slotScript))
             {
-                int currentStock = InventorySystem.instance.GetItemCount(ingredient.itemNeeded);
+                int currentStock = InventorySystem.instance != null ? InventorySystem.instance.GetItemCount(ingredient.itemNeeded) : 0;
 
                 // Initialisation visuelle (Vert / Rouge)
                 bool hasEnough = slotScript.SetupIngredient(ingredient.itemNeeded, ingredient.amountNeededItem, currentStock);
@@ -234,9 +213,19 @@ public class CraftingTable : InteractableBase
     {
         if (_currentSelectedTargetItem == null || craftButton == null || !craftButton.interactable) return;
 
-        // 1. On consomme les ingrédients requis (💡 Utilisation de var ici aussi)
-        foreach (var ingredient in _currentSelectedTargetItem.recipe.ingredients)
+        RecipeData recipe = _currentSelectedTargetItem.recipe;
+        if (recipe == null && allRecipeData != null)
         {
+            recipe = allRecipeData.unlockedRecipes.Find(r => r != null && r.craftableItem == _currentSelectedTargetItem);
+        }
+
+        if (recipe == null || recipe.ingredients == null) return;
+
+        // 1. Consommation des ingrédients requis
+        foreach (var ingredient in recipe.ingredients)
+        {
+            if (ingredient.itemNeeded == null) continue;
+
             for (int i = 0; i < ingredient.amountNeededItem; i++)
             {
                 InventorySystem.instance.RemoveItem(ingredient.itemNeeded);
@@ -244,15 +233,30 @@ public class CraftingTable : InteractableBase
         }
 
         // 2. On donne l'objet crafté au joueur
-        InventorySystem.instance.AddItem(_currentSelectedTargetItem, _currentSelectedTargetItem.recipe.craftableAmount);
-        Debug.Log($"<color=green>[CRAFT] Réussite ! +1 {_currentSelectedTargetItem.itemName} ajouté à l'inventaire.</color>");
+        int amountToCraft = recipe.craftableAmount > 0 ? recipe.craftableAmount : 1;
+        InventorySystem.instance.AddItem(_currentSelectedTargetItem, amountToCraft);
+        Debug.Log($"<color=green>[CRAFT] Réussite ! +{amountToCraft} {_currentSelectedTargetItem.itemName} ajouté à l'inventaire.</color>");
 
-        // 3. On actualise l'UI globale et les stocks restants pour voir si on peut en fabriquer un deuxième
-        InventorySystem.instance.RefreshContent();
+        // 3. Actualisation de l'UI et du son
+        if (InventorySystem.instance != null) InventorySystem.instance.RefreshContent();
         if (audioSource != null && craftSound != null) audioSource.PlayOneShot(craftSound);
         RefreshRequiredIngredients(_currentSelectedTargetItem);
     }
+
+    /// <summary>
+    /// Méthode utilitaire inversée pour vider un conteneur UI sans détruire l'itération de la boucle.
+    /// </summary>
+    private void ClearContainer(Transform container)
+    {
+        if (container == null) return;
+
+        for (int i = container.childCount - 1; i >= 0; i--)
+        {
+            Destroy(container.GetChild(i).gameObject);
+        }
+    }
 }
+
 public enum CraftingType
 {
     Potions,

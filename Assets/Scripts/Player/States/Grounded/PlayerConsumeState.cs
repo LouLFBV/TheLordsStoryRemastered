@@ -3,9 +3,10 @@
 public class PlayerConsumeState : PlayerState
 {
     private float _stateTimer;
-    private float _animationDuration = 0.5f; // 🟢 Légèrement augmenté pour laisser le temps à l'animation de jouer
+    private float _animationDuration = 0.5f;
     private int _targetSlot = -1;
     private ItemData _consumableItem;
+    private bool _isEmptyAfterConsume;
 
     public PlayerConsumeState(PlayerController player) : base(player) { }
 
@@ -13,6 +14,7 @@ public class PlayerConsumeState : PlayerState
     {
         base.Enter();
         _stateTimer = 0f;
+        _isEmptyAfterConsume = false;
 
         var palette = PaletteSystem.instance;
         if (palette == null || palette.slotManager == null)
@@ -21,7 +23,7 @@ public class PlayerConsumeState : PlayerState
             return;
         }
 
-        // 1. Récupération de l'objet et du slot équipé
+        // 1. Récupération de l'objet et du slot équipé (Slot 0 -> 1, Slot 1 -> 2)
         if (palette.slotManager.objectSlots[0].isEquipped)
         {
             _targetSlot = 1;
@@ -39,9 +41,8 @@ public class PlayerConsumeState : PlayerState
             return;
         }
 
-        // 2. Application immédiate de la consommation
+        // 2. Application de la consommation et vérification du stock restant
         ExecuteImmediateConsumption();
-        player.Animator.SetTrigger("UnequipConsumable");
     }
 
     public override void Update()
@@ -52,7 +53,17 @@ public class PlayerConsumeState : PlayerState
 
         if (_stateTimer >= _animationDuration)
         {
-            player.StateMachine.ChangeState(PlayerStateType.Idle);
+            if (_isEmptyAfterConsume)
+            {
+                // 🟢 PLUS DE STOCK : On passe par PrepareUnequip pour transitionner vers UnequipState.
+                // UnequipState jouera le déséquipement et l'AE_UnequipWeapon coupera le modèle 3D.
+                player.PrepareUnequip(_consumableItem);
+            }
+            else
+            {
+                // 🟢 IL RESTE DES POTIONS : L'item reste équipé en main, on repasse simplement en Idle.
+                player.StateMachine.ChangeState(PlayerStateType.Idle);
+            }
         }
     }
 
@@ -67,41 +78,37 @@ public class PlayerConsumeState : PlayerState
         var palette = PaletteSystem.instance;
         if (palette == null || palette.equipmentManager == null) return;
 
-        // 2. Retrait de l'objet de l'inventaire D'ABORD
+        // 2. Retrait d'une potion de l'inventaire
         palette.equipmentManager.RemoveObject(_targetSlot);
 
-        // 3. Vérification de la quantité RESTANTE dans l'inventaire
+        // 3. Vérification de la quantité restante
         ItemInInventory itemInInventory = FindItemInInventory(_consumableItem);
 
-        // 🟢 Si l'item n'existe plus ou que son stock est tombé à 0 :
+        // Si le stock est tombé à 0 ou que l'item n'est plus présent :
         if (itemInInventory == null || itemInInventory.count <= 0)
         {
-            // Désactivation visuelle du modèle 3D en main
-            EquipmentLibraryItem libraryItem = player.equipmentLibrary?.Get(_consumableItem);
-            if (libraryItem != null && libraryItem.itemPrefab != null)
-            {
-                libraryItem.itemPrefab.SetActive(false);
-            }
+            _isEmptyAfterConsume = true;
 
-            player.Animator.SetBool("CarryingConsumable", false);
-
-            // Libération de l'état "isEquipped" du slot de la palette
+            // Libération du slot dans la palette
             int slotIndex = _targetSlot - 1;
             if (slotIndex >= 0 && slotIndex < palette.slotManager.objectSlots.Length)
             {
                 palette.slotManager.objectSlots[slotIndex].isEquipped = false;
             }
 
-            // 🟢 NETTOYAGE CRUCIAL : Réinitialisation des variables du PlayerController !
-            // Sans ceci, le Player garde en mémoire qu'il tient toujours cet objet.
+            // Nettoyage des références d'attente sur le Player
             if (player.PendingWeaponItem == _consumableItem)
             {
                 player.PendingWeaponItem = null;
-                player.PendingLibraryItem = null;
             }
+            player.Animator.SetTrigger("UnequipConsumable");
+        }
+        else
+        {
+            _isEmptyAfterConsume = false;
         }
 
-        // 4. Rafraîchissement de l'affichage UI
+        // 4. Rafraîchissement de l'UI
         palette.slotManager.UpdateImageSeleted();
     }
 

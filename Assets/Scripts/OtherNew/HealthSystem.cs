@@ -6,6 +6,10 @@ public class HealthSystem : MonoBehaviour
     [SerializeField] private float maxHealthVar = 100f; 
     [SerializeField] private ParticleSystem healEffect;
 
+    [Header("Audio Settings")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip healSound;
+
     private bool _isInvulnerable;
     public bool IsInvulnerable => _isInvulnerable;
     public float CurrentHealth { get; private set; }
@@ -46,6 +50,8 @@ public class HealthSystem : MonoBehaviour
             if (healEffect != null) healEffect.Play();
 
             CurrentHealth = Mathf.Min(CurrentHealth + amount, MaxHealth);
+
+            if (audioSource != null && healSound != null) audioSource.PlayOneShot(healSound);
 
             OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
         }
