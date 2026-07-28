@@ -80,9 +80,9 @@ public class ItemData : ScriptableObject
         {
             levelAmelioration++;
             if (equipmentType != EquipmentType.Weapon)
-                armorPoints += 10;
+                armorPoints += 5;
             else
-                attackPoints += 10;
+                attackPoints += 5;
 
             // Si tu as d'autres stats qui montent (comme la portée de l'arc), ajoute-les ici
             if (handWeaponType == HandWeapon.Bow)

@@ -246,37 +246,54 @@ public class UIManagerSystem : MonoBehaviour
         }
     }
 
-    public void TriggerRecipeFade(GameObject canvas, CanvasGroup canvasGroup, string itemName, Sprite icon, float fadeDuration, float displayDuration)
+    public void TriggerRecipeFade(GameObject canvas, CanvasGroup canvasGroup, float fadeDuration, float displayDuration)
     {
-        StartCoroutine(GlobalFadeRoutine(canvas, canvasGroup, itemName, icon, fadeDuration, displayDuration));
+        if (canvas == null || canvasGroup == null) return;
+
+        // On gère l'ajout au HUD
+        if (!hudElements.Contains(canvas))
+        {
+            hudElements.Add(canvas);
+        }
+
+        // On lance la Coroutine DEPUIS le UIManagerSystem (qui ne sera pas détruit)
+        StartCoroutine(RoutineRecipeFade(canvas, canvasGroup, fadeDuration, displayDuration));
     }
 
-    private IEnumerator GlobalFadeRoutine(GameObject canvas, CanvasGroup canvasGroup, string itemName, Sprite icon, float fade, float display)
+    private IEnumerator RoutineRecipeFade(GameObject canvas, CanvasGroup canvasGroup, float fadeDuration, float displayDuration)
     {
         canvas.SetActive(true);
-        canvasGroup.alpha = 0;
+        canvasGroup.alpha = 0f;
 
-        float t = 0;
-        while (t < fade)
+        // --- FADE IN ---
+        float t = 0f;
+        while (t < fadeDuration)
         {
             t += Time.deltaTime;
-            canvasGroup.alpha = t / fade;
+            canvasGroup.alpha = t / fadeDuration;
             yield return null;
         }
-        canvasGroup.alpha = 1;
+        canvasGroup.alpha = 1f;
 
-        yield return new WaitForSeconds(display);
+        // --- ATTENTE ---
+        yield return new WaitForSeconds(displayDuration);
 
-        t = 0;
-        while (t < fade)
+        // --- FADE OUT ---
+        t = 0f;
+        while (t < fadeDuration)
         {
             t += Time.deltaTime;
-            canvasGroup.alpha = 1 - (t / fade);
+            canvasGroup.alpha = 1f - (t / fadeDuration);
             yield return null;
         }
-        canvasGroup.alpha = 0;
+
+        canvasGroup.alpha = 0f;
         canvas.SetActive(false);
+
+        // Nettoyage du HUD
+        hudElements.Remove(canvas);
     }
+
 
     #region --- Méthodes d'ouverture spécifiques (Boutons d'onglets) ---
     public void OpenInventoryAndCloseOthers()

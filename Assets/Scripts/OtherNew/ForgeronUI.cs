@@ -208,7 +208,7 @@ public class ForgeronUI : MonoBehaviour
         if (itemData.equipmentType == EquipmentType.Weapon || itemData.equipmentType == EquipmentType.Arrow)
         {
             resistanceItem.text = "Dégats : " + itemData.attackPoints.ToString();
-            resistanceItemUpgrade.text = (itemData.attackPoints + 10).ToString();
+            resistanceItemUpgrade.text = (itemData.attackPoints + 5).ToString();
         }
         else if (itemData.handWeaponType == HandWeapon.Bow)
         {
@@ -218,7 +218,7 @@ public class ForgeronUI : MonoBehaviour
         else
         {
             resistanceItem.text = "Résistance : " + itemData.armorPoints.ToString();
-            resistanceItemUpgrade.text = (itemData.armorPoints + 10).ToString();
+            resistanceItemUpgrade.text = (itemData.armorPoints + 5).ToString();
         }
 
         prixUpgradeItem.text = (itemData.prix * (itemData.levelAmelioration + 1)).ToString();
@@ -253,11 +253,11 @@ public class ForgeronUI : MonoBehaviour
         itemData.levelAmelioration++;
 
         if (itemData.equipmentType == EquipmentType.Weapon || itemData.equipmentType == EquipmentType.Arrow)
-            itemData.attackPoints += 10;
+            itemData.attackPoints += 5;
         else if (itemData.handWeaponType == HandWeapon.Bow)
             itemData.rangeMax += 5;
         else
-            itemData.armorPoints += 10;
+            itemData.armorPoints += 5;
 
         if (inventory != null)
         {
