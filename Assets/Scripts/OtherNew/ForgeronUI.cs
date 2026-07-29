@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class ForgeronUI : MonoBehaviour
 {
+    [SerializeField] private float upgradePercent = 0.15f;
+
     [Header("References")]
     [SerializeField] private EquipmentSystem equipment;
     [SerializeField] private InventorySystem inventory;
@@ -205,20 +207,26 @@ public class ForgeronUI : MonoBehaviour
         levelItem.text = (itemData.levelAmelioration + 1).ToString() + "/3";
         levelItemUpgrade.text = (itemData.levelAmelioration + 2).ToString() + "/3";
 
+        // Exemple avec +15% par niveau d'amélioration (multiplier = 0.15f)
+        float upgradePercent = 0.15f;
+
         if (itemData.equipmentType == EquipmentType.Weapon || itemData.equipmentType == EquipmentType.Arrow)
         {
-            resistanceItem.text = "Dégats : " + itemData.attackPoints.ToString();
-            resistanceItemUpgrade.text = (itemData.attackPoints + 5).ToString();
+            int bonusDmg = Mathf.Max(1, Mathf.RoundToInt(itemData.attackPoints * upgradePercent));
+            resistanceItem.text = "Dégâts : " + itemData.attackPoints;
+            resistanceItemUpgrade.text = (itemData.attackPoints + bonusDmg).ToString();
         }
         else if (itemData.handWeaponType == HandWeapon.Bow)
         {
-            resistanceItem.text = "Portée : " + itemData.rangeMax.ToString();
-            resistanceItemUpgrade.text = (itemData.rangeMax + 5).ToString();
+            int bonusRange = Mathf.Max(1, Mathf.RoundToInt(itemData.rangeMax * upgradePercent));
+            resistanceItem.text = "Portée : " + itemData.rangeMax;
+            resistanceItemUpgrade.text = (itemData.rangeMax + bonusRange).ToString();
         }
-        else
+        else // Armures
         {
-            resistanceItem.text = "Résistance : " + itemData.armorPoints.ToString();
-            resistanceItemUpgrade.text = (itemData.armorPoints + 5).ToString();
+            int bonusArmor = Mathf.Max(1, Mathf.RoundToInt(itemData.armorPoints * upgradePercent));
+            resistanceItem.text = "Résistance : " + itemData.armorPoints;
+            resistanceItemUpgrade.text = (itemData.armorPoints + bonusArmor).ToString();
         }
 
         prixUpgradeItem.text = (itemData.prix * (itemData.levelAmelioration + 1)).ToString();
@@ -239,34 +247,29 @@ public class ForgeronUI : MonoBehaviour
 
         int cost = itemData.prix * (itemData.levelAmelioration + 1);
 
-        if (player.Wallet.CanSpendGold(cost))
-        {
-            player.Wallet.SpendGold(cost);
-        }
-        else
-        {
-            Debug.LogWarning("Pas assez de gold pour améliorer cet item");
-            return;
-        }
+        if (!player.Wallet.CanSpendGold(cost)) return;
+        player.Wallet.SpendGold(cost);
 
-        // 1. Amélioration des statistiques de l'objet
         itemData.levelAmelioration++;
 
+        // Calcul du bonus (au moins +1 de stat garanti, même sur les très petites armes)
         if (itemData.equipmentType == EquipmentType.Weapon || itemData.equipmentType == EquipmentType.Arrow)
-            itemData.attackPoints += 5;
-        else if (itemData.handWeaponType == HandWeapon.Bow)
-            itemData.rangeMax += 5;
-        else
-            itemData.armorPoints += 5;
-
-        if (inventory != null)
         {
-            inventory.ConsolidateStacks();
+            int bonus = Mathf.Max(1, Mathf.RoundToInt(itemData.attackPoints * upgradePercent));
+            itemData.attackPoints += bonus;
+        }
+        else if (itemData.handWeaponType == HandWeapon.Bow)
+        {
+            int bonus = Mathf.Max(1, Mathf.RoundToInt(itemData.rangeMax * upgradePercent));
+            itemData.rangeMax += bonus;
+        }
+        else // Armures
+        {
+            int bonus = Mathf.Max(1, Mathf.RoundToInt(itemData.armorPoints * upgradePercent));
+            itemData.armorPoints += bonus;
         }
 
-        // 3. Mise à jour de l'interface du forgeron
         UpdateUpgradePanel(itemData);
-        if (audioSource != null && upgradeSound != null) audioSource.PlayOneShot(upgradeSound);
         UpdateGoldText();
         UpdateForgeronUI(itemData.equipmentType);
     }

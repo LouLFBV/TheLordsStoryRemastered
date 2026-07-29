@@ -75,18 +75,29 @@ public class ItemData : ScriptableObject
     // Fonction pour recalculer les stats quand on charge une sauvegarde
     public void RestoreLevel(int savedLevel)
     {
-        // On simule les améliorations du forgeron pour retomber sur les bonnes stats
+        levelAmelioration = 0;
+        float upgradePercent = 0.15f; // Doit correspondre au taux de ton ForgeronUI (+15%)
+
+        // On rejoue chaque niveau d'amélioration un par un pour appliquer les mêmes arrondis
         for (int i = 0; i < savedLevel; i++)
         {
             levelAmelioration++;
-            if (equipmentType != EquipmentType.Weapon)
-                armorPoints += 5;
-            else
-                attackPoints += 5;
 
-            // Si tu as d'autres stats qui montent (comme la portée de l'arc), ajoute-les ici
-            if (handWeaponType == HandWeapon.Bow)
-                rangeMax += 5;
+            if (equipmentType == EquipmentType.Weapon || equipmentType == EquipmentType.Arrow)
+            {
+                int bonus = Mathf.Max(1, Mathf.RoundToInt(attackPoints * upgradePercent));
+                attackPoints += bonus;
+            }
+            else if (handWeaponType == HandWeapon.Bow)
+            {
+                int bonus = Mathf.Max(1, Mathf.RoundToInt(rangeMax * upgradePercent));
+                rangeMax += bonus;
+            }
+            else // Armures, Boucliers, etc.
+            {
+                int bonus = Mathf.Max(1, Mathf.RoundToInt(armorPoints * upgradePercent));
+                armorPoints += bonus;
+            }
         }
     }
 

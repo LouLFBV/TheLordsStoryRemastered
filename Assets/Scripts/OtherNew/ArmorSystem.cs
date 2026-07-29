@@ -3,21 +3,24 @@ using System.Collections.Generic;
 
 public class ArmorSystem : MonoBehaviour
 {
-    [Header("Physical Resistances (0 to 100 %)")]
+    [Header("Physical Resistances")]
     public float armorClassique = 10f;
     public float armorTranchant = 5f;
     public float armorContendant = 5f;
     public float armorPercant = 0f;
 
+    [Header("Équilibrage de la Réduction Naturelle")]
+    [Tooltip("Constante K. Plus elle est élevée, plus il faut d'armure pour réduire les dégâts.\n50 = 50% de réduction à 50 d'armure.\n60 = 50% de réduction à 60 d'armure.")]
+    [SerializeField] private float armorFactor = 50f;
+
     /// <summary>
-    /// Calcule la réduction des dégâts physiques sur une base linéaire où 100 armure = 100% de réduction.
-    /// Les effets (Feu, Glace...) ignorent cette réduction.
+    /// Calcule la réduction des dégâts via une courbe à rendement décroissant (pas de hard cap).
     /// </summary>
     public float CalculateReducedDamage(DamageInfo damageInfo, out float physicalReduced)
     {
         float physicalDefensePoints = 0f;
 
-        // 1. On récupère les points de la bonne défense selon le type de dégât reçu
+        // 1. Récupération des points d'armure correspondants
         switch (damageInfo.physicalType)
         {
             case DamageType.Tranchant: physicalDefensePoints = armorTranchant; break;
@@ -26,16 +29,17 @@ public class ArmorSystem : MonoBehaviour
             case DamageType.Classique: physicalDefensePoints = armorClassique; break;
         }
 
-        float reductionPercent = Mathf.Clamp(physicalDefensePoints, 0f, 100f) / 100f;
+        // 2. Formule à rendement décroissant : Multiplicateur = K / (K + Armure)
+        float armor = Mathf.Max(0f, physicalDefensePoints);
+        float physicalMultiplier = armorFactor / (armorFactor + armor);
 
-        // Calcul du multiplicateur : si 100% de réduction, le multiplicateur vaut 0 (0 dégât)
-        float physicalMultiplier = 1f - reductionPercent;
-
-        // Application sur les dégâts bruts
+        // 3. Calcul des dégâts finaux
         float finalPhysicalDamage = damageInfo.rawPhysicalDamage * physicalMultiplier;
 
-        // Quantité de dégâts absorbée par l'armure
+        // Dégâts absorbés par l'armure
         physicalReduced = damageInfo.rawPhysicalDamage - finalPhysicalDamage;
+
+        // Garantit au moins 1 dégât minimum par coup
         return Mathf.Max(finalPhysicalDamage, 1f);
     }
 
@@ -44,8 +48,10 @@ public class ArmorSystem : MonoBehaviour
     /// </summary>
     public void RefreshArmorStats(List<ItemData> equippedItems)
     {
-        // On remet à zéro avant de recalculer
-        armorClassique = 0f; armorTranchant = 0f; armorContendant = 0f; armorPercant = 0f;
+        armorClassique = 0f;
+        armorTranchant = 0f;
+        armorContendant = 0f;
+        armorPercant = 0f;
 
         if (equippedItems == null) return;
 
@@ -53,7 +59,6 @@ public class ArmorSystem : MonoBehaviour
         {
             if (piece == null || piece.itemType != ItemType.Equipment) continue;
 
-            // On cumule les points d'armure selon l'armorType de la pièce d'armure
             switch (piece.armorType)
             {
                 case DamageType.Classique: armorClassique += piece.armorPoints; break;
