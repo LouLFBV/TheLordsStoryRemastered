@@ -1,5 +1,12 @@
 fileFormatVersion: 2
 guid: 7d9adb40345690748b146e9bc81419d7
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323021
+  packageName: Ultimate Crafting Stations - FREE Demo Pack
+  packageVersion: 1.0
+  assetPath: Assets/OnePotatoKingdom_CraftingTablePack_Demo/Textures/SimpleCookingStation_Demo/C_Heater2_MetallicSmoothness.png
+  uploadId: 771489
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -89,6 +96,19 @@ TextureImporter:
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
     overridden: 0
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
@@ -115,10 +135,3 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 323021
-  packageName: Ultimate Crafting Stations - FREE Demo Pack
-  packageVersion: 1.0
-  assetPath: Assets/OnePotatoKingdom_CraftingTablePack_Demo/Textures/SimpleCookingStation_Demo/C_Heater2_MetallicSmoothness.png
-  uploadId: 771489
