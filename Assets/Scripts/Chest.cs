@@ -229,13 +229,13 @@ public class Chest : InteractableBase
 
         if (rewardAmount > 1)
         {
-            amountText.text = $"x{rewardAmount}";
+            amountText.text = $"+{rewardAmount}";
             for (int i = 0; i < rewardAmount; i++)
                 InventorySystem.instance.AddItem(rewardItem);
         }
         else
         {
-            amountText.text = "";
+            amountText.text = "+1";
             InventorySystem.instance.AddItem(rewardItem);
         }
 

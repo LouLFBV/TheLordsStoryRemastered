@@ -37,18 +37,19 @@ public class InputRebindUI : MonoBehaviour
         string path = binding.effectivePath;
 
         rebindOperation = action.PerformInteractiveRebinding(bindingIndex)
-        .WithCancelingThrough("<Keyboard>/escape")
-        .OnMatchWaitForAnother(0.1f);
+            .WithCancelingThrough("<Keyboard>/escape")
+            .WithTimeout(5f) // <--- AJOUTÉ ICI : Annule automatiquement après 5 secondes
+            .OnMatchWaitForAnother(0.1f);
 
-        //  BLOQUAGE CROISÉ CLAVIER / MANETTE
+        // BLOQUAGE CROISÉ CLAVIER / MANETTE
         if (!string.IsNullOrEmpty(path))
         {
-            // Si c'est un binding clavier / souris  on interdit la manette
+            // Si c'est un binding clavier / souris on interdit la manette
             if (path.Contains("<Keyboard>") || path.Contains("<Mouse>"))
             {
                 rebindOperation.WithControlsExcluding("<Gamepad>");
             }
-            // Si c'est un binding manette  on interdit clavier + souris
+            // Si c'est un binding manette on interdit clavier + souris
             else if (path.Contains("<Gamepad>"))
             {
                 rebindOperation
@@ -62,7 +63,6 @@ public class InputRebindUI : MonoBehaviour
         {
             operation.Dispose();
             playerInput.actions.Enable();
-            // 2. Réactive le curseur après la saisie
             if (UIManagerSystem.Instance != null) UIManagerSystem.Instance.ToggleCursor(true);
             FinishRebind();
         })
@@ -70,22 +70,18 @@ public class InputRebindUI : MonoBehaviour
         {
             operation.Dispose();
             playerInput.actions.Enable();
-            // 2. Réactive le curseur après annulation
             if (UIManagerSystem.Instance != null) UIManagerSystem.Instance.ToggleCursor(true);
             RefreshDisplay();
         });
 
         rebindOperation.Start();
-
     }
-
-
 
     private void FinishRebind()
     {
         // Sauvegarder automatiquement
         InputRebindManager.SaveRebinds(playerInput);
-        
+
         RefreshDisplay();
     }
 
@@ -93,10 +89,9 @@ public class InputRebindUI : MonoBehaviour
     {
         InputAction action = playerInput.actions[actionName];
         InputBindingDisplay.UpdateDisplay(
-        action,
-        bindingIndex,
-        iconField
-    );
+            action,
+            bindingIndex,
+            iconField
+        );
     }
-
 }
