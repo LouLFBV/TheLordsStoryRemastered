@@ -246,7 +246,7 @@ public class Marchand : InteractableBase
 
         bool canBuy = CanBuy(produit);
 
-        buttonImage.color = canBuy ? Color.green : Color.red;
+        //buttonImage.color = canBuy ? Color.green : Color.red;
         buyButton.interactable = canBuy;
     }
     private bool CanBuy(ItemData produit)

@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.InputSystem.Processors;
 
 public class ForgeronUI : MonoBehaviour
 {
@@ -41,7 +42,7 @@ public class ForgeronUI : MonoBehaviour
 
     [Header("Audio Settings")]
     [SerializeField] private AudioSource audioSource;
-    [SerializeField] private AudioClip upgradeSound, destroySound;
+    [SerializeField] private AudioClip upgradeSound, destroySound, updatePanel;
 
     public bool isOpen = false;
     public PlayerController player;
@@ -101,8 +102,9 @@ public class ForgeronUI : MonoBehaviour
         _forgeron.EndCommerce();
     }
 
-    public void UpdateForgeronUI(EquipmentType equipmentType)
+    public void UpdateForgeronUI(EquipmentType equipmentType, bool isFromButton = false)
     {
+        if(isFromButton) audioSource.PlayOneShot(updatePanel);
         List<ItemData> allEligibleItems = new List<ItemData>();
 
         // 1. Items de l'inventaire filtrés
@@ -305,19 +307,22 @@ public class ForgeronUI : MonoBehaviour
                 if (slotEquip != null && slotEquip.item == itemData)
                 {
                     isCurrentlyWorn = true;
-                    slotEquip.item = null;
+                    // On supprime la ligne : slotEquip.item = null; 
+                    // Car sinon EquipmentSystem ne trouve plus l'item à éteindre !
                 }
             }
 
             if (equipment.arrowItemInInventory != null && equipment.arrowItemInInventory.itemData == itemData)
             {
                 isCurrentlyWorn = true;
-                equipment.arrowItemInInventory.itemData = null;
+                // On supprime la ligne : equipment.arrowItemInInventory.itemData = null;
             }
 
             if (isCurrentlyWorn)
             {
-                equipment.DesequipEquipment(itemData.equipmentType);
+                // On laisse EquipmentSystem nettoyer les variables ET le visuel.
+                // On passe 'false' pour empêcher qu'il soit remis dans l'inventaire (vu qu'on le détruit)
+                equipment.DesequipEquipment(itemData.equipmentType, false);
             }
         }
 

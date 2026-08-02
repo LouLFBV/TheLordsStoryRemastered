@@ -308,6 +308,14 @@ private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         isTransitioning = true;
         isNewGame = false;
         TransitionPanel.Instance.PlayTransitionOut();
+
+        // Appelle la méthode "ResetTransitioning" après 2 secondes
+        Invoke(nameof(ResetTransitioning), 2f);
+    }
+
+    private void ResetTransitioning()
+    {
+        isTransitioning = false;
     }
     public void SaveGame() 
     {

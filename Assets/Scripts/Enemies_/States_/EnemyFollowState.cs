@@ -41,11 +41,17 @@ public class EnemyFollowState : EnemyState
         agent.speed = enemy.enemyData.chaseSpeed * currentSlow;
         enemy.Animator.speed = currentSlow;
 
-        // 4. Gestion de la première Aggro
-        if (!enemy.HasAggroedOnce && distance <= enemy.enemyData.visionRange)
+        //  4.  : On enregistre si le joueur est ENFIN entré dans la zone de vision
+        if (distance <= enemy.enemyData.visionRange)
         {
-            enemy.HasAggroedOnce = true;
-            Debug.Log($"<color=orange>[AGGRO]</color> {enemy.gameObject.name} a atteint le joueur. Mode normal activé.");
+            enemy.HasPlayerEnteredVisionZone = true;
+
+            // On gère aussi la première aggro naturelle (si le joueur s'est approché sans attaquer)
+            if (!enemy.HasAggroedOnce)
+            {
+                enemy.HasAggroedOnce = true;
+                Debug.Log($"<color=orange>[AGGRO]</color> {enemy.gameObject.name} a atteint le joueur. Mode normal activé.");
+            }
         }
 
         // 5. PRIORITÉ 1 EN COMBAT : Est-ce qu'on peut attaquer ?
@@ -78,9 +84,14 @@ public class EnemyFollowState : EnemyState
             return;
         }
 
-        // 8. Perte de l'aggro si le joueur s'enfuit trop loin
-        if (enemy.HasAggroedOnce && distance > enemy.enemyData.visionRange * 1.5f)
+        // 8 : Perte de l'aggro UNIQUEMENT s'il est déjà entré dans la zone de vision
+        if (enemy.HasAggroedOnce && enemy.HasPlayerEnteredVisionZone && distance > enemy.enemyData.visionRange * 1.5f)
         {
+            // Le joueur a fuité hors de la zone après y être entré : on réinitialise tout
+            enemy.HasAggroedOnce = false;
+            enemy.HasPlayerEnteredVisionZone = false;
+            enemy.target = null;
+
             enemy.StateMachine.ChangeState(EnemyStateType.Idle);
             return;
         }

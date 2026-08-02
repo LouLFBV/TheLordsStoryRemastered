@@ -9,6 +9,6 @@ public class EquipmentForgeronUI : MonoBehaviour
     {
         Debug.Log("Bouton cliqué pour le type d'équipement : " + equipmentType);
 
-        forgeronUI.UpdateForgeronUI(equipmentType);
+        forgeronUI.UpdateForgeronUI(equipmentType, true);
     }
 }

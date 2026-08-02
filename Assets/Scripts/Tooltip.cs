@@ -44,7 +44,8 @@ public class Tooltip : MonoBehaviour
         {
             itemName.text = itemData.itemName;
             itemDescription.text = itemData.description;
-            itemStock.text = $"Stock : {stock}/{itemData.maxStack}";
+
+            itemStock.text = $"Stock : {stock}/{(itemData.maxStack == 0 ? 1 : itemData.maxStack)}";
         }
     }
 

@@ -106,7 +106,15 @@ public class InteractSystem : MonoBehaviour
         EnableToolSound(currentTool);
         currentHarvestable = harvestable;
 
-        Debug.Log($"Starting harvest on {harvestable.name} with tool {currentTool}. canAxe: {canAxe}, canPickaxe: {canPickaxe}, canSuperPickaxe: {canSuperPickaxe}");
+        Vector3 directionToHarvestable = harvestable.transform.position - player.transform.position;
+
+        directionToHarvestable.y = 0f;
+
+        if (directionToHarvestable.sqrMagnitude > 0.01f)
+        {
+            player.transform.rotation = Quaternion.LookRotation(directionToHarvestable);
+        }
+
         player.Animator.SetTrigger("Harvest");
         // On bloque le mouvement via la StateMachine si possible, ou via canMove
         // player.StateMachine.ChangeState(PlayerStateType.Busy); 
@@ -116,7 +124,7 @@ public class InteractSystem : MonoBehaviour
     {
         switch (toolType)
         {
-            case Tool.Pickaxe: audioSource.clip = pickaxeSound; break;
+            case Tool.Pickaxe: case Tool.SuperPickaxe:  audioSource.clip = pickaxeSound; break;
             case Tool.Axe: audioSource.clip = axeSound; break;
         }
     }
@@ -151,7 +159,7 @@ public class InteractSystem : MonoBehaviour
                 GameObject instantiatedRessource = Instantiate(ressource.itemData.prefab);
 
                 // Rayon max du décalage (à ajuster)
-                float spawnRadius = 0.2f;
+                float spawnRadius = 0.5f;
 
                 // Génère un décalage aléatoire dans un petit rayon (sur le sol uniquement, Y = 0)
                 Vector3 randomOffset = new Vector3(

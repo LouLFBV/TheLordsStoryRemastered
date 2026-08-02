@@ -51,7 +51,8 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
 
     [Header("Patrol Settings")]
     public Transform patrolCenterPoint;
-    public bool HasAggroedOnce { get; set; } = false;
+    public bool HasAggroedOnce { get; set; } = false; 
+    public bool HasPlayerEnteredVisionZone { get; set; } = false;
 
     [Header("Other")]
     [SerializeField] private bool canRespawn = false;
@@ -165,29 +166,26 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
             target = PlayerController.Instance.transform;
         }
 
-        // Sécurité au cas où le joueur n'existe pas dans la scène
         if (target == null) return;
 
         float distance = Vector3.Distance(transform.position, target.position);
-
         Vector3 dirToPlayer = (target.position - transform.position).normalized;
-
         float angleToPlayer = Vector3.Angle(transform.forward, dirToPlayer);
-        // LOGIQUE DE TRANSITION :
 
-        // 1. Si je suis en Idle ou Patrol et que je vois le joueur -> Poursuite
-        if ((distance <= enemyData.visionRange && angleToPlayer < enemyData.visionAngle / 2f) || distance <= enemyData.detectionRange)
+        // 🟢 On vérifie si le joueur est visible OU si l'ennemi a déjà pris un coup
+        bool isPlayerVisible = (distance <= enemyData.visionRange && angleToPlayer < enemyData.visionAngle / 2f) || distance <= enemyData.detectionRange;
+
+        // 1. Si le joueur est repéré OU qu'on a été attaqué -> Poursuite
+        if (isPlayerVisible || HasAggroedOnce)
         {
             if (StateMachine.CurrentState == IdleState || StateMachine.CurrentState == PatrolState)
             {
                 StateMachine.ChangeState(EnemyStateType.Follow);
             }
         }
-
-        // 2. Si je suis en Idle trop longtemps -> Patrouille (Optionnel)
-        if (StateMachine.CurrentState == IdleState)
+        // 2. Si je suis en Idle trop longtemps -> Patrouille
+        else if (StateMachine.CurrentState == IdleState)
         {
-            // Tu peux ajouter un petit timer ici pour passer en Patrol automatiquement
             StateMachine.ChangeState(EnemyStateType.Patrol);
         }
     }
@@ -330,6 +328,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         if (Health != null)
         {
             Health.OnDeath += HandleDeath;
+            Health.OnHit += HandleHitAggro;
         }
     }
 
@@ -339,6 +338,7 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         if (Health != null)
         {
             Health.OnDeath -= HandleDeath;
+            Health.OnHit -= HandleHitAggro;
         }
     }
 
@@ -377,6 +377,24 @@ public abstract class EnemyControllerBase : WorldDisappearOnCollected, ICombatan
         }
 
         StateMachine.ChangeState(EnemyStateType.Hit);
+    }
+
+    private void HandleHitAggro()
+    {
+        if (Health.IsDead) return;
+
+        // On réveille l'ennemi définitivement
+        HasAggroedOnce = true;
+        Debug.Log($"<color=orange>[CORE]</color> {name} has been hit and is now aggroed!");
+
+        // Sécurité : on s'assure d'avoir la cible si on a été attaqué de loin (ex: flèche)
+        if (target == null && PlayerController.Instance != null)
+        {
+            target = PlayerController.Instance.transform;
+        }
+
+        // On déclenche le HitState (s'il n'est pas déjà appelé ailleurs par ton CombatSystem)
+        GoToHitState();
     }
 
     public void SetLockOnIndicator(bool isLocked)

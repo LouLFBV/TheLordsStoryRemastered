@@ -102,15 +102,18 @@ public class EquipmentSystem : MonoBehaviour
         }
     }
 
-    public void DesequipEquipment(EquipmentType equipmentType)
+    // Ajout du paramètre "bool putBackInInventory = true"
+    public void DesequipEquipment(EquipmentType equipmentType, bool putBackInInventory = true)
     {
-        if (InventorySystem.instance.IsFullEquipment())
+        // On ne bloque l'action pour inventaire plein QUE si on essaie de le ranger
+        if (putBackInInventory && InventorySystem.instance.IsFullEquipment())
         {
             Debug.LogWarning("Cannot desequip item, inventory is full.");
             return;
         }
 
         ItemData currentItem = null;
+        int arrowsToReturn = 0;
 
         switch (equipmentType)
         {
@@ -146,7 +149,9 @@ public class EquipmentSystem : MonoBehaviour
                 break;
             case EquipmentType.Arrow:
                 currentItem = arrowItemInInventory.itemData;
-                arrowSlot.item = null; // 🟢 FIX : Réinitialiser la donnée du slot
+                arrowsToReturn = arrowItemInInventory.count; // 2. On sauvegarde le compte actuel
+                arrowItemInInventory.count = 0;              // 3. On peut maintenant le mettre à 0 sans danger
+                arrowSlot.item = null;
                 arrowSlot.itemVisual.sprite = InventorySystem.instance.emptySlotVisual;
                 arrowSlot.itemTypeVisual.gameObject.SetActive(true);
                 arrowItemInInventory.itemData = null;
@@ -155,6 +160,7 @@ public class EquipmentSystem : MonoBehaviour
                 {
                     palette.slotManager.arrowSlot.slotItemData = null;
                     palette.slotManager.arrowSlot.SlotImage.sprite = InventorySystem.instance.emptySlotVisual;
+
                     if (palette.slotManager.arrowSlot.slotInEquipment != null)
                     {
                         palette.slotManager.arrowSlot.slotInEquipment.item = null;
@@ -186,9 +192,10 @@ public class EquipmentSystem : MonoBehaviour
 
             if (currentItem.equipmentType == EquipmentType.Arrow)
             {
-                if (arrowItemInInventory.count > 0)
+                // 4. On utilise notre sauvegarde "arrowsToReturn" pour la boucle
+                if (putBackInInventory && arrowsToReturn > 0)
                 {
-                    for (int i = 0; i < arrowItemInInventory.count; i++)
+                    for (int i = 0; i < arrowsToReturn; i++)
                     {
                         InventorySystem.instance.AddItem(currentItem);
                     }
@@ -197,7 +204,10 @@ public class EquipmentSystem : MonoBehaviour
             }
             else
             {
-                InventorySystem.instance.AddItem(currentItem);
+                if (putBackInInventory)
+                {
+                    InventorySystem.instance.AddItem(currentItem);
+                }
             }
         }
     }

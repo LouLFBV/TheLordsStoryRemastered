@@ -16,6 +16,10 @@ public class NewQuestManager : MonoBehaviour
     public Dictionary<string, int> globalKillHistory = new Dictionary<string, int>();
     public HashSet<string> globalInteractionHistory = new HashSet<string>();
 
+    [Header("Audio Settings")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip rewardGived;
+
     private void Awake()
     {
         if (instance == null) instance = this;
@@ -155,26 +159,42 @@ public class NewQuestManager : MonoBehaviour
     {
         if (questInstance.data.rewards == null) return;
 
-        if (questInstance.data.rewards.gold > 0)
-            PlayerController.Instance.Wallet.AddGold(questInstance.data.rewards.gold);
+        bool hasGivenReward = false;
 
-        if (questInstance.data.rewards.items != null)
+        // 1. Récompense en or
+        if (questInstance.data.rewards.gold > 0)
         {
-            foreach (var item in questInstance.data.rewards.items)
+            PlayerController.Instance.Wallet.AddGold(questInstance.data.rewards.gold);
+            hasGivenReward = true;
+        }
+
+        // 2. Récompense en objets (Sécurité null-check '?.')
+        var items = questInstance.data.rewards.items;
+        if (items != null && items.Length > 0)
+        {
+            foreach (var item in items)
             {
                 if (item.itemType == ItemType.Recipe)
                 {
-
-                    // On ajoute directement à l'unique liste, peu importe ce que c'est !
                     if (!allRecipeData.unlockedRecipes.Contains(item.recipe))
                     {
                         allRecipeData.unlockedRecipes.Add(item.recipe);
                     }
                 }
                 else
+                {
                     InventorySystem.instance.AddItem(item);
+                }
             }
+            hasGivenReward = true;
         }
+
+        // 3. Son joué uniquement si AU MOINS une récompense a été donnée
+        if (hasGivenReward && audioSource != null && rewardGived != null)
+        {
+            audioSource.PlayOneShot(rewardGived);
+        }
+
         questInstance.rewardsGiven = true;
     }
 

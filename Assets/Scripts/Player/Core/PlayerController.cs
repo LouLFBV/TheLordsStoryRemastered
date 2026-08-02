@@ -338,6 +338,33 @@ public class PlayerController : MonoBehaviour, ICombatant
         StateMachine.ChangeState(PlayerStateType.Death);
     }
 
+    private void ResetAllWeaponVisuals()
+    {
+        if (equipmentLibrary == null) return;
+
+        // On parcourt tous les items de ta librairie (adapte ".items" selon le nom de ta liste dans EquipmentLibrary)
+        foreach (var item in equipmentLibrary.content) // <-- Remplace "items" par le vrai nom de ta liste/tableau
+        {
+            if (item.itemPrefab != null)
+            {
+                item.itemPrefab.SetActive(false);
+            }
+
+            // On réactive les éléments du corps (mains, gants, etc.) s'ils avaient été masqués
+            if (item.elementsToDisable != null)
+            {
+                foreach (var element in item.elementsToDisable)
+                {
+                    if (element != null) element.SetActive(true);
+                }
+            }
+        }
+
+        // On nettoie les variables en attente
+        PendingWeaponItem = null;
+        PendingLibraryItem = null;
+    }
+
     #region Save Sytem
 
     public PlayerControllerSaveData GetSaveData()
@@ -357,6 +384,7 @@ public class PlayerController : MonoBehaviour, ICombatant
     {
         PlayerUIManager.Instance.CloseDeathPanel();
         IsDead = false;
+        ResetAllWeaponVisuals();
         Health.SetHealth(data.currentHealth);
         Stamina.SetStamania(data.currentEndurance);
         Wallet.SetGoldAmount(data.gold);

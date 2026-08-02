@@ -6,6 +6,7 @@ public class BossController : EnemyControllerBase
 {
     [Header("Boss UI & Audio")]
     [SerializeField] private AudioSource bossAudioSource;
+    [SerializeField] private AudioSource bossCreamAudioSource;
     [SerializeField] private float musicFadeDuration = 1.5f;
 
     [Header("Phase Management")]
@@ -143,10 +144,10 @@ public class BossController : EnemyControllerBase
         // On récupère les données de la phase actuelle
         BossPhase currentPhase = phases[currentPhaseIndex];
 
-        if (currentPhase.phaseScreamSound != null && bossAudioSource != null)
+        if (currentPhase.phaseScreamSound != null && bossCreamAudioSource != null)
         {
             // On utilise PlayOneShot pour ne pas couper la musique de fond qui s'atténue (Fade)
-            bossAudioSource.PlayOneShot(currentPhase.phaseScreamSound);
+            bossCreamAudioSource.PlayOneShot(currentPhase.phaseScreamSound);
             Debug.Log($"<color=yellow>[AUDIO BOSS]</color> Lecture du cri : {currentPhase.phaseScreamSound.name}");
         }
     }

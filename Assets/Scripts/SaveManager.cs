@@ -67,6 +67,7 @@ public class SaveManager : MonoBehaviour
         if (!File.Exists(path))
         {
             Debug.LogWarning($"No save file in slot {slot}");
+            SceneManager.LoadScene("MainMenu");
             return;
         }
 
