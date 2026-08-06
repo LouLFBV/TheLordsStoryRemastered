@@ -45,7 +45,6 @@ public class SlotChest : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     {
         Tooltip.Instance.Hide();
         ChestInventory.Instance.SetCurrentSlot(null);
-
     }
 
 }

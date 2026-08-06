@@ -216,6 +216,26 @@ public class InventorySystem : MonoBehaviour
         return remaining <= capacity;
     }
 
+    public void RemoveItemFromSlot(ItemType itemType, int slotIndex, int amount = 1)
+    {
+        ItemInInventory[] targetArray = GetTargetArray(itemType);
+
+        if (slotIndex < 0 || slotIndex >= targetArray.Length) return;
+
+        if (targetArray[slotIndex].itemData != null)
+        {
+            targetArray[slotIndex].count -= amount;
+
+            if (targetArray[slotIndex].count <= 0)
+            {
+                targetArray[slotIndex].itemData = null;
+                targetArray[slotIndex].count = 0;
+            }
+
+            RefreshContent();
+        }
+    }
+
     public void RemoveItem(ItemData item)
     {
         if (item == null) return;

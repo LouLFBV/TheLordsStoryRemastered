@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+Ôªøusing System.Collections.Generic;
 using UnityEngine;
 
 public class ChestInventory : MonoBehaviour
@@ -86,7 +86,7 @@ public class ChestInventory : MonoBehaviour
         if (InventorySystem.instance == null) return;
         Sprite emptySprite = InventorySystem.instance.emptySlotVisual;
 
-        // On synchronise les donnÈes depuis la source rÈelle (Le joueur)
+        // On synchronise les donn√©es depuis la source r√©elle (Le joueur)
         FetchAndSyncPlayerInventory();
 
         RefreshGrid(inventoryPlayerSlotsRessourcesParent, contentRessourcePlayer, emptySprite, false, true);
@@ -103,7 +103,7 @@ public class ChestInventory : MonoBehaviour
         RefreshGrid(inventoryChestSlotsCraftParent, contentCraftChest, emptySprite, true, false);
     }
 
-    // --- M…THODE G…N…RIQUE POUR METTRE ¿ JOUR L'UI ---
+    // --- M√âTHODE G√âN√âRIQUE POUR METTRE √Ä JOUR L'UI ---
     private void RefreshGrid(Transform slotsParent, ItemInInventory[] dataArray, Sprite emptySprite, bool isChest, bool isResource)
     {
         if (slotsParent == null) return;
@@ -155,12 +155,12 @@ public class ChestInventory : MonoBehaviour
             }
         }
     }
-    // --- GESTION UNIQUE DES TRANSFERTS DIRECTS CORRIG…E ---
+    // --- GESTION UNIQUE DES TRANSFERTS DIRECTS CORRIG√âE ---
     private void HandleSlotClick(int arrayIndex, bool sourceIsChest, bool sourceIsResource)
     {
         if (InventorySystem.instance == null) return;
 
-        // DÈtermination du tableau source
+        // D√©termination du tableau source
         ItemInInventory[] sourceArray = sourceIsChest
             ? (sourceIsResource ? contentRessourcesChest : contentCraftChest)
             : (sourceIsResource ? contentRessourcePlayer : contentCraftPlayer);
@@ -183,11 +183,10 @@ public class ChestInventory : MonoBehaviour
                 return;
             }
 
-            // 1. On modifie D'ABORD les donnÈes locales du coffre
+            // 1. On modifie D'ABORD les donn√©es locales du coffre
             if (itemToTransfer.count > 1)
             {
                 itemToTransfer.count--;
-                // ACTUALISATION TOOLTIP : L'item est toujours prÈsent dans le coffre, on met ‡ jour l'affichage de sa quantitÈ
                 Tooltip.Instance.SetText(itemToTransfer.itemData, itemToTransfer.count);
             }
             else
@@ -196,53 +195,56 @@ public class ChestInventory : MonoBehaviour
                 sourceArray[arrayIndex] = null;
             }
 
-            // 2. On l'ajoute ensuite au systËme du joueur (qui peut dÈclencher ses propres events)
             InventorySystem.instance.AddItem(itemToTransfer.itemData);
         }
         else
         {
             // --- TRIPLE ACTION : JOUEUR -> COFFRE ---
-            bool success = AddToChestArray(itemToTransfer.itemData, 1);
+            bool success = AddToChestArray(itemToTransfer.itemData, 1, out int modifiedChestSlotIndex);
 
             if (success)
             {
-                InventorySystem.instance.RemoveItem(itemToTransfer.itemData);
+                Debug.Log($"Item envoy√© dans le coffre au slot n¬∞{modifiedChestSlotIndex}");
 
-                int remainingPlayerCount = InventorySystem.instance.GetItemCount(itemToTransfer.itemData);
-                if (remainingPlayerCount <= 0)
+                // üü¢ CORRECTION 1 : On cible le slot pr√©cis au lieu du premier item trouv√© !
+                InventorySystem.instance.RemoveItemFromSlot(itemToTransfer.itemData.itemType, arrayIndex, 1);
+
+                // Note : RemoveItemFromSlot modifie automatiquement itemToTransfer.count car ce sont les m√™mes r√©f√©rences m√©moires.
+                if (itemToTransfer.itemData == null || itemToTransfer.count <= 0)
                 {
                     Tooltip.Instance.Hide();
                 }
                 else
                 {
-                    // ACTUALISATION TOOLTIP : L'item est toujours prÈsent chez le joueur, on met ‡ jour l'affichage de sa quantitÈ restante
-                    Tooltip.Instance.SetText(itemToTransfer.itemData, remainingPlayerCount);
+                    Tooltip.Instance.SetText(itemToTransfer.itemData, itemToTransfer.count);
                 }
             }
         }
 
-        // 3. RAFRAŒCHISSEMENT VISUEL RIGIDE (On s'assure que le joueur n'Ècrase pas le coffre)
-        // On met ‡ jour les scripts du joueur d'abord
+        // 3. RAFRA√éCHISSEMENT VISUEL RIGIDE (On s'assure que le joueur n'√©crase pas le coffre)
         InventorySystem.instance.RefreshContent();
-
-        // On synchronise et reconstruit l'UI du joueur dans le coffre
         RefreshContentPlayerInventory();
-
-        // On applique l'UI du coffre EN DERNIER pour qu'elle ait le dernier mot sur l'affichage
         RefreshContentChestInventory();
     }
 
-    private bool AddToChestArray(ItemData data, int amount)
+    /// <summary>
+    /// Ajoute un item dans le tableau du coffre.
+    /// </summary>
+    /// <param name="data">Donn√©es de l'item √† ajouter</param>
+    /// <param name="amount">Quantit√© √† ajouter</param>
+    /// <param name="modifiedSlotIndex">Index du slot qui a √©t√© modifi√© (-1 si √©chec)</param>
+    /// <returns>True si l'ajout a r√©ussi, False si le coffre est plein</returns>
+    private bool AddToChestArray(ItemData data, int amount, out int modifiedSlotIndex)
     {
+        modifiedSlotIndex = -1;
         ItemInInventory[] targetArray = (data.itemType == ItemType.Ressource) ? contentRessourcesChest : contentCraftChest;
         string arrayName = (data.itemType == ItemType.Ressource) ? "Ressources" : "Craft";
 
-        Debug.Log($"[AddToChestArray] DÈbut de l'ajout. Item: {data.itemName} | QuantitÈ ‡ ajouter: {amount} | Tableau ciblÈ: {arrayName} (Taille: {targetArray.Length})");
+        Debug.Log($"[AddToChestArray] D√©but de l'ajout. Item: {data.itemName} | Quantit√©: {amount} | Tableau: {arrayName}");
 
-        // --- …TAPE 1 : TENTATIVE D'EMPILAGE (STACK) ---
+        // --- √âTAPE 1 : TENTATIVE D'EMPILAGE (STACK) ---
         if (data.stackable)
         {
-            Debug.Log($"[AddToChestArray] L'item est stackable (MaxStack: {data.maxStack}). Recherche d'un stack existant...");
             for (int i = 0; i < targetArray.Length; i++)
             {
                 if (targetArray[i] != null && targetArray[i].itemData == data && targetArray[i].count < data.maxStack)
@@ -250,36 +252,28 @@ public class ChestInventory : MonoBehaviour
                     int spaceLeft = data.maxStack - targetArray[i].count;
                     int amountToAdd = Mathf.Min(spaceLeft, amount);
 
-                    Debug.Log($"[AddToChestArray] Stack trouvÈ ‡ l'index {i}. QuantitÈ actuelle: {targetArray[i].count} | Espace libre: {spaceLeft} | Ajout de: {amountToAdd}");
-
                     targetArray[i].count += amountToAdd;
                     amount -= amountToAdd;
+                    modifiedSlotIndex = i; // Enregistre l'index du slot empil√©
+
+                    Debug.Log($"[AddToChestArray] Empil√© dans le slot {modifiedSlotIndex}. Nouvelle quantit√©: {targetArray[i].count}");
 
                     if (amount <= 0)
                     {
-                        Debug.Log("[AddToChestArray] Tout l'item a ÈtÈ empilÈ avec succËs. Retour TRUE.");
                         return true;
                     }
                 }
             }
         }
-        else
-        {
-            Debug.Log("[AddToChestArray] L'item n'est pas stackable.");
-        }
 
-        // --- …TAPE 2 : RECHERCHE DE PLACES VIDES ---
+        // --- √âTAPE 2 : RECHERCHE DE PLACES VIDES ---
         if (amount > 0)
         {
-            Debug.Log($"[AddToChestArray] Il reste {amount} unitÈs ‡ placer. Recherche d'emplacements vides...");
-
             while (amount > 0)
             {
                 int emptyIndex = -1;
                 for (int i = 0; i < targetArray.Length; i++)
                 {
-                    // S…CURIT… : On vÈrifie si la case complËte est null 
-                    // OU si l'objet ItemInInventory ‡ l'intÈrieur n'a pas de Data
                     if (targetArray[i] == null || targetArray[i].itemData == null)
                     {
                         emptyIndex = i;
@@ -289,21 +283,20 @@ public class ChestInventory : MonoBehaviour
 
                 if (emptyIndex == -1)
                 {
-                    Debug.LogWarning($"[AddToChestArray] …CHEC : Plus aucune place vide trouvÈe dans le tableau {arrayName}. Retour FALSE.");
+                    Debug.LogWarning($"[AddToChestArray] √âCHEC : Plus de place dans le tableau {arrayName}.");
                     return false;
                 }
 
                 int currentStackCount = data.stackable ? Mathf.Min(data.maxStack, amount) : 1;
 
-                Debug.Log($"[AddToChestArray] Emplacement vide trouvÈ ‡ l'index {emptyIndex}. CrÈation / Remplacement par un nouvel ItemInInventory (QuantitÈ: {currentStackCount}).");
-
-                // On instancie proprement pour Ècraser l'ancien Ètat (qu'il ait ÈtÈ null ou avec un itemData null)
                 targetArray[emptyIndex] = new ItemInInventory { itemData = data, count = currentStackCount };
                 amount -= currentStackCount;
+                modifiedSlotIndex = emptyIndex; // Enregistre l'index du nouveau slot rempli
+
+                Debug.Log($"[AddToChestArray] Plac√© dans le nouveau slot {modifiedSlotIndex} (Quantit√©: {currentStackCount}).");
             }
         }
 
-        Debug.Log("[AddToChestArray] Tous les nouveaux emplacements ont ÈtÈ crÈÈs avec succËs. Retour TRUE.");
         return true;
     }
 
@@ -370,7 +363,7 @@ public class ChestInventory : MonoBehaviour
 [System.Serializable]
 public class ChestInventoryData
 {
-    // SÈparation des donnÈes de sauvegarde pour reconstruire les listes fidËlement au chargement
+    // S√©paration des donn√©es de sauvegarde pour reconstruire les listes fid√®lement au chargement
     public List<ItemInInventorySave> ressourcesItems = new List<ItemInInventorySave>();
     public List<ItemInInventorySave> craftItems = new List<ItemInInventorySave>();
 }

@@ -52,15 +52,27 @@ public class SlotInventory : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         // Si la souris est sur ce slot, qu'il y a un item, et qu'on appuie sur Jeter
         if (_isHovered && item != null && PlayerController.Instance.Input.DropActionPressed && item.isVendable)
         {
-            // Code pour instancier l'objet au sol...
+            // Instancier l'objet au sol...
             GameObject instantiatedItem = Instantiate(item.prefab);
             instantiatedItem.transform.position = PlayerController.Instance.dropPoint.position;
             instantiatedItem.GetComponent<Item>().enableFloating = true;
-            InventorySystem.instance.RemoveItem(item);
+
+            // 🟢 Suppression ciblée uniquement sur CE slot précis
+            InventorySystem.instance.RemoveItemFromSlot(item.itemType, arrayIndex);
+
             PlayerController.Instance.Input.UseDropActionInput();
 
-            // Update le tooltip ou le cache si le slot devient vide
-            if (item == null) Tooltip.Instance.Hide();
+            // 🟢 Mise à jour dynamique du Tooltip après suppression
+            if (item == null)
+            {
+                Tooltip.Instance.Hide();
+            }
+            else
+            {
+                // Met à jour la nouvelle quantité affichée dans le tooltip
+                Tooltip.Instance.Show(item, count, false);
+                Tooltip.Instance.UpdateTooltipPosition(transform.position);
+            }
         }
     }
 }
